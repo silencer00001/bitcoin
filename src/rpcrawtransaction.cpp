@@ -75,6 +75,8 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, Object& entry)
         vin.push_back(in);
     }
     entry.push_back(Pair("vin", vin));
+    CCoins coins;
+    pcoinsTip->GetCoins(tx.GetHash(), coins);
     Array vout;
     for (unsigned int i = 0; i < tx.vout.size(); i++)
     {
@@ -85,6 +87,8 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, Object& entry)
         Object o;
         ScriptPubKeyToJSON(txout.scriptPubKey, o, true);
         out.push_back(Pair("scriptPubKey", o));
+        bool fSpendable = coins.IsAvailable(i) && txout.nValue > 0;
+        out.push_back(Pair("spendable", fSpendable));
         vout.push_back(out);
     }
     entry.push_back(Pair("vout", vout));

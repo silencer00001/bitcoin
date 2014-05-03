@@ -109,6 +109,13 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, Object& entry)
             }
             else
                 entry.push_back(Pair("confirmations", 0));
+                
+            CBlock block;
+            if (ReadBlockFromDisk(block, pindex))
+            {
+                int pos = std::find(block.vtx.begin(), block.vtx.end(), tx) - block.vtx.begin();
+                entry.push_back(Pair("position", (boost::int64_t)pos));
+            }
         }
     }
 }

@@ -268,6 +268,7 @@ extern json_spirit::Value sendchangeissuer_OMNI(const json_spirit::Array& params
 
 //! Address index extensions
 extern json_spirit::Value searchrawtransactions(const json_spirit::Array& params, bool fHelp); // in rcprawtransaction.cpp
+extern json_spirit::Value listallunspent(const json_spirit::Array& params, bool fHelp);
 
 // in rest.cpp
 extern bool HTTPReq_REST(AcceptedConnection *conn,

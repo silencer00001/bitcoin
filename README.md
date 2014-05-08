@@ -1,9 +1,36 @@
-Bitcoin Core integration/staging tree
-=====================================
+Bitcoin Core address-indexed/minimal
+====================================
 
 http://www.bitcoin.org
 
 Copyright (c) 2009-2013 Bitcoin Core Developers
+
+Modifications
+-------------
+
+This branch is based on [release v0.9.1](https://github.com/bitcoin/bitcoin/tree/0.9.1) and includes the minimal required changes to allow transaction lookups based on an address.
+
+### Setup and configuration
+
+Use `-addrindex=1` to enable address-based indexing of transactions.
+Reindexing via `-reindex` is required the first time.
+
+### RPC commands
+
+The following new query command is available:
+
+```
+> listalltransactions "address" (verbose skip count)
+
+Description:
+Returns array of all transactions associated with address.
+
+Arguments:
+1. address (string, required) The Bitcoin address
+2. verbose (numeric, optional, default=0) If 0, return only transaction hex
+3. skip (numeric, optional, default=0) The number of transactions to skip
+4. count (numeric, optional, default=100) The number of transactions to return
+```
 
 What is Bitcoin?
 ----------------

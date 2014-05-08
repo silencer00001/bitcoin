@@ -177,6 +177,12 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     if (strMethod == "keypoolrefill"          && n > 0) ConvertTo<int64_t>(params[0]);
     if (strMethod == "getrawmempool"          && n > 0) ConvertTo<bool>(params[0]);
 
+    // address-indexed extension
+    if (strMethod == "listalltransactions"    && n > 1) ConvertTo<int64_t>(params[1]);
+    if (strMethod == "listalltransactions"    && n > 2) ConvertTo<int64_t>(params[2]);
+    if (strMethod == "listalltransactions"    && n > 3) ConvertTo<int64_t>(params[3]);
+    if (strMethod == "listalltransactions"    && n > 4) ConvertTo<int64_t>(params[4]);
+
     // master core conversions
     if (strMethod == "getcrowdsale_MP"        && n > 0) ConvertTo<int64_t>(params[0]);
     if (strMethod == "getcrowdsale_MP"        && n > 1) ConvertTo<bool>(params[1]);

@@ -87,6 +87,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "estimatepriority", 0 },
     { "prioritisetransaction", 1 },
     { "prioritisetransaction", 2 },
+    { "listalltransactions", 1 },
+    { "listalltransactions", 2 },
+    { "listalltransactions", 3 },
+    { "listalltransactions", 4 },
 };
 
 class CRPCConvertTable
@@ -139,4 +143,3 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
 
     return params;
 }
-

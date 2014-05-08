@@ -91,6 +91,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "listalltransactions", 2 },
     { "listalltransactions", 3 },
     { "listalltransactions", 4 },
+    { "listallunspent", 1 },
+    { "listallunspent", 2 },
+    { "listallunspent", 3 },
+    { "listallunspent", 4 },
 };
 
 class CRPCConvertTable

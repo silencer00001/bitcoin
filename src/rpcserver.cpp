@@ -248,6 +248,9 @@ static const CRPCCommand vRPCCommands[] =
     { "gettxout",               &gettxout,               true,      false,      false },
     { "verifychain",            &verifychain,            true,      false,      false },
 
+    /* Address-indexed */
+    { "listalltransactions",    &listalltransactions,    false,     false,      false },
+
     /* Mining */
     { "getnetworkhashps",       &getnetworkhashps,       true,      false,      false },
     { "getmininginfo",          &getmininginfo,          true,      false,      false },

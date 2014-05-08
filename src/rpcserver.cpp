@@ -250,6 +250,7 @@ static const CRPCCommand vRPCCommands[] =
 
     /* Address-indexed */
     { "listalltransactions",    &listalltransactions,    false,     false,      false },
+    { "listallunspent",         &listallunspent,         false,     false,      false },
 
     /* Mining */
     { "getnetworkhashps",       &getnetworkhashps,       true,      false,      false },

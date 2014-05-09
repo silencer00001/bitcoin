@@ -30,8 +30,8 @@ Arguments:
 2. verbose (numeric, optional, default=0) If 0, return only transaction hex
 3. skip (numeric, optional, default=0) The number of transactions to skip
 4. count (numeric, optional, default=100) The number of transactions to return
-
-
+```
+```
 > listallunspent "address" (verbose minconf maxconf maxreqsigs)
 
 Description:
@@ -41,12 +41,13 @@ required to redeem the output.
 
 Arguments:
 1. address (string, required) The Bitcoin address
-2. verbose (numeric, optional, default=0) If 0, exclude reqSigs, addresses, scriptPubKey (asm, hex), blockhash, blocktime, blockheight
+2. verbose (numeric, optional, default=0) If 0, exclude reqSigs, addresses, scriptPubKey (asm, hex), 
+     blockhash, blocktime, blockheight
 3. minconf (numeric, optional, default=1) The minimum confirmations to filter
 4. maxconf (numeric, optional, default=9999999) The maximum confirmations to filter
 5. maxreqsigs (numeric, optional, default=1) The number of signatures required to spend the output
-
-
+```
+```
 > getallbalance "address" (minconf maxreqsigs)
 
 Description:
@@ -58,8 +59,8 @@ Arguments:
 1. address (string, required) The Bitcoin address
 2. minconf (numeric, optional, default=1) The minimum confirmations to filter
 3. maxreqsigs (numeric, optional, default=1) The number of signatures required to spend an output
-
-
+```
+```
 Additional changes:
 
 - Include "spendable" in verbosed transaction information output

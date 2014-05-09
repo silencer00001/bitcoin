@@ -42,7 +42,7 @@ required to redeem the output.
 Arguments:
 1. address (string, required) The Bitcoin address
 2. verbose (numeric, optional, default=0) If 0, exclude reqSigs, addresses, 
-   scriptPubKey (asm, hex), blockhash, blocktime, blockheight
+     scriptPubKey (asm, hex), blockhash, blocktime, blockheight
 3. minconf (numeric, optional, default=1) The minimum confirmations to filter
 4. maxconf (numeric, optional, default=9999999) The maximum confirmations to filter
 5. maxreqsigs (numeric, optional, default=1) The number of signatures required to spend the output

@@ -266,6 +266,7 @@ static const CRPCCommand vRPCCommands[] =
     /* Address-indexed extension */
     { "listalltransactions",    &listalltransactions,    false,     false,      false },
     { "listallunspent",         &listallunspent,         false,     false,      false },
+    { "getallbalance",          &getallbalance,          false,     false,      false },
 
     /* Utility functions */
     { "createmultisig",         &createmultisig,         true,      true ,      false },

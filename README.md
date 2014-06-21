@@ -64,7 +64,10 @@ Known Issues:
 
 * Feel free to open more Github issues with other new bugs or improvement suggestions
 
+* Make sure send_MP returns an appropriate error code when out of funds
 Pending additions:
+
+* Bug on fee calculation in gettransaction_MP - unreliable
 ------------------
 
 * gettransaction_MP output should display matched sell offer txid

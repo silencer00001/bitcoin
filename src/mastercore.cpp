@@ -91,7 +91,7 @@ static int BitcoinCore_errors = 0;    // TODO: watch this count, check returns o
 // disable TMSC handling for now, has more legacy corner cases
 static int ignore_all_but_MSC = 1;
 static int disableLevelDB = 0;
-static int disable_Persistence = 0;
+static int disable_Persistence = 1;
 
 // this is the internal format for the offer primary key (TODO: replace by a class method)
 #define STR_SELLOFFER_ADDR_CURR_COMBO(x) ( x + "-" + strprintf("%d", curr))
@@ -1212,6 +1212,15 @@ vector<unsigned char> vec_chars;
   }
 }
 
+static bool getTransactionType(const CScript& scriptPubKey, txnouttype& whichTypeRet)
+{
+vector<vector<unsigned char> > vSolutions;
+
+  if (!Solver(scriptPubKey, whichTypeRet, vSolutions)) return false;
+
+  return true;
+}
+
 // idx is position within the block, 0-based
 // int msc_tx_push(const CTransaction &wtx, int nBlock, unsigned int idx)
 
@@ -1220,7 +1229,6 @@ vector<unsigned char> vec_chars;
 int msc_tx_populate(const CTransaction &wtx, int nBlock, unsigned int idx, CMPTransaction *mp_tx)
 {
 string strSender;
-uint64_t nMax = 0;
 // class A: data & address storage -- combine them into a structure or something
 vector<string>script_data;
 vector<string>address_data;
@@ -1322,6 +1330,8 @@ uint64_t txFee = 0;
               fprintf(mp_fp, "value_data.size=%lu\n", value_data.size());
             }
 
+            int inputs_errors = 0;
+            map <string, uint64_t> inputs_sum_of_values;
             // now go through inputs & identify the sender, collect input amounts
             // go through inputs, find the largest per Mastercoin protocol, the Sender
             for (unsigned int i = 0; i < wtx.vin.size(); i++)
@@ -1339,35 +1349,59 @@ uint64_t txFee = 0;
             }
 
             unsigned int n = wtx.vin[i].prevout.n;
+
             CTxDestination source;
 
             uint64_t nValue = txPrev.vout[n].nValue;
+            txnouttype whichType;
 
-             inAll += nValue;
+              inAll += nValue;
 
-             if (ExtractDestination(txPrev.vout[n].scriptPubKey, source))  // extract the destination of the previous transaction's vout[n]
-             {
-                CBitcoinAddress addressSource(source);              // convert this to an address
-   
-                if (nValue > nMax)
+              if (ExtractDestination(txPrev.vout[n].scriptPubKey, source))  // extract the destination of the previous transaction's vout[n]
+              {
+                // we only allow pay-to-pubkeyhash & probably pay-to-pubkey (?)
                 {
-                  nMax = nValue;
-                  strSender = addressSource.ToString();
+                  if (!getTransactionType(txPrev.vout[n].scriptPubKey, whichType)) ++inputs_errors;
+                  if ((TX_PUBKEYHASH != whichType) /* || (TX_PUBKEY != whichType) */ ) ++inputs_errors;
+
+                  if (inputs_errors) break;
                 }
-             }
+
+                CBitcoinAddress addressSource(source);              // convert this to an address
+
+                inputs_sum_of_values[addressSource.ToString()] += nValue;
+              }
               if (msc_debug) fprintf(mp_fp, "vin=%d:%s\n", i, wtx.vin[i].ToString().c_str());
             } // end of inputs for loop
 
             txFee = inAll - outAll; // this is the fee paid to miners for this TX
 
+            if (inputs_errors)  // not a valid MP TX
+            {
+              return -101;
+            }
+
+            // largest by sum of values
+            uint64_t nMax = 0;
+            for(map<string, uint64_t>::iterator my_it = inputs_sum_of_values.begin(); my_it != inputs_sum_of_values.end(); ++my_it)
+            {
+            uint64_t nTemp = my_it->second;
+
+                if (nTemp > nMax)
+                {
+                  nMax = nTemp;
+                  strSender = my_it->first;
+                }
+            }
+
             if (!strSender.empty())
             {
-              if (msc_debug2) fprintf(mp_fp, "The Sender: %s : His Input Value= %lu.%08lu ; fee= %lu.%08lu\n",
+              if (msc_debug2) fprintf(mp_fp, "The Sender: %s : His Input Sum of Values= %lu.%08lu ; fee= %lu.%08lu\n",
                strSender.c_str(), nMax / COIN, nMax % COIN, txFee/COIN, txFee%COIN);
             }
             else
             {
-              fprintf(mp_fp, "The sender is EMPTY !!! txid: %s\n", wtx.GetHash().GetHex().c_str());
+              fprintf(mp_fp, "The sender is still EMPTY !!! txid: %s\n", wtx.GetHash().GetHex().c_str());
               return -5;
             }
 
@@ -2283,7 +2317,7 @@ const bool bTestnet = TestNet();
 #else
   mp_fp = fopen ("/tmp/mastercore.log", "a");
 #endif
-  fprintf(mp_fp, "\n%s MASTERCORE INIT\n\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()).c_str());
+  fprintf(mp_fp, "\n%s MASTERCORE INIT, build date: " __DATE__ " " __TIME__ "\n\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()).c_str());
 
   if (bTestnet)
   {
@@ -2360,7 +2394,7 @@ int mastercore_shutdown()
 
   if (mp_fp)
   {
-    fprintf(mp_fp, "\n%s MASTERCORE SHUTDOWN\n\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()).c_str());
+    fprintf(mp_fp, "\n%s MASTERCORE SHUTDOWN, build date: " __DATE__ " " __TIME__ "\n\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()).c_str());
     fclose(mp_fp); mp_fp = NULL;
   }
 

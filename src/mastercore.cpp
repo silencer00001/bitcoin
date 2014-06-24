@@ -3086,6 +3086,7 @@ bool addressFilter;
                 bool valid;
                 uint64_t curId;  //using 64 instead of 32 here as json::sprint chokes on 32 - research why
                 bool divisible;
+                bool selloffer = false;
                 uint64_t amount;
                 string result;
                 bool outgoingTransaction = false;
@@ -3113,6 +3114,7 @@ bool addressFilter;
                                 curId = mp_obj.getCurrency();
                                 divisible = true; // hard coded for now until SP support
                                 amount = mp_obj.getAmount(); // need to go to leveldb for selloffers and accepts
+                                if (MSC_TYPE_TRADE_OFFER == mp_obj.getType()) selloffer=true;
                         }
                 }
 
@@ -3143,12 +3145,13 @@ bool addressFilter;
                         }
 
                         // are we filtering by address, if so compare
-                        if ((!addressFilter) || (selectedAddress == addressParam))
+                        if ((!addressFilter) || (senderAddress == addressParam) || (refAddress == addressParam))
                         {
                                 // add the transaction object to the array
                                 Object txobj;
                                 txobj.push_back(Pair("txid", wtxid.GetHex()));
-                                txobj.push_back(Pair("address", selectedAddress));
+                                txobj.push_back(Pair("sendingaddress", senderAddress));
+                                if (!selloffer) txobj.push_back(Pair("referenceaddress", refAddress));
                                 if (outgoingTransaction)
                                 {
                                         txobj.push_back(Pair("direction", "out"));

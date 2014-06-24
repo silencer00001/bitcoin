@@ -12,10 +12,10 @@ As all existing Bitcoin Core functionality is inherent to Master Core, the RPC p
 Simple send allows a Master Protocol currency to be transferred from address to address in a one-to-one transaction.  Simple send transactions are exposed via the **send_MP** RPC call.
 
 **Required Parameters**
-- *sender address (string):* A valid bitcoin address containing a sufficient balance to support the transaction
-- *recipient address (string):* A valid bitcoin address - the receiving party of the transaction
-- *currency/property ID (integer):* A valid Master Protocol currency/property ID
-- *amount (float):* The amount to transfer (note if sending individisble tokens any decimals will be truncated)
+- **sender address (string):** A valid bitcoin address containing a sufficient balance to support the transaction
+- **recipient address (string):** A valid bitcoin address - the receiving party of the transaction
+- **currency/property ID (integer):** A valid Master Protocol currency/property ID
+- **amount (float):** The amount to transfer (note if sending individisble tokens any decimals will be truncated)
    
 **Additional Optional Parameters**
 - There are currently no supported optional parameters for this call.
@@ -31,6 +31,14 @@ $src/mastercored send_MP 1MCHESTxYkPSLoJ57WBQot7vz3xkNahkcb 1MCHESTbJhJK27Ygqj4q
 *Please note, the private key for the requested sender address must be available in the wallet.*
 
 ###getbalance_MP
+The getbalance_MP call allows for retrieval of a Master Protocol balance for a given address and currency/property ID.
+
+**Required Parameters**
+- **address (string):** A valid bitcoin address 
+- **currency/property ID (integer):** A valid Master Protocol currency/property ID
+
+**Additional Optional Parameters**
+- There are currently no supported optional parameters for this call.
 
 **Examples**
 ```
@@ -65,7 +73,7 @@ $src/mastercored gettransaction_MP d2907fe2c716fc6d510d63b52557907445c784cb2e8ae
 {"jsonrpc":"1.0","id":"1","method":"gettransaction_MP","params":["d2907fe2c716fc6d510d63b52557907445c784cb2e8ae6ea9ef61e909c978cd7"]}
 {"result":{"txid":"d2907fe2c716fc6d510d63b52557907445c784cb2e8ae6ea9ef61e909c978cd7","sendingaddress":"myN6HXmFhmMRo1bzfNXBDxTALYsh3EjXxk","referenceaddress":"mhgrKJ3WyX1RMYiUpgA3M3iF48zSeSRkri","direction":"out","confirmations":884,"fee":0.00010000,"blocktime":1403298479,"blockindex":49,"type":"Simple Send","currency":1,"divisible":true,"amount":50.00000000,"valid":true},"error":null,"id":"1"}
 ```
-*Please note, gettransaction_MP currently supports transactions available in the wallet only."
+*Please note, gettransaction_MP currently supports transactions available in the wallet only.*
 
 ###listtransactions_MP
 

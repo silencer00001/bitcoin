@@ -12,10 +12,10 @@ As all existing Bitcoin Core functionality is inherent to Master Core, the RPC p
 Simple send allows a Master Protocol currency to be transferred from address to address in a one-to-one transaction.  Simple send transactions are exposed via the **send_MP** RPC call.
 
 **Required Parameters**
- * **sender address (string):** A valid bitcoin address containing a sufficient balance to support the transaction
- * **recipient address (string):** A valid bitcoin address - the receiving party of the transaction
- * **currency/property ID (integer):** A valid Master Protocol currency/property ID
- * **amount (float):** The amount to transfer (note if sending individisble tokens any decimals will be truncated)
+- **_sender address (string):_** A valid bitcoin address containing a sufficient balance to support the transaction
+- **_recipient address (string):_** A valid bitcoin address - the receiving party of the transaction
+- **_currency/property ID (integer):_** A valid Master Protocol currency/property ID
+- **_amount (float):_** The amount to transfer (note if sending individisble tokens any decimals will be truncated)
    
 **Additional Optional Parameters**
 - There are currently no supported optional parameters for this call.

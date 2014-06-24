@@ -22,11 +22,11 @@ Simple send allows a Master Protocol currency to be transferred from address to 
 
 **Examples**
 ```
-$src/mastercored send_MP 1MCHESTxYkPSLoJ57WBQot7vz3xkNahkcb 1MCHESTbJhJK27Ygqj4qKkx4Z4ZxhnP826 1 0.005
-7a06ef1bb62230b04f4b7839f3b677397629cd433c03a0534d7ba57500efec1f
+$src/mastercored send_MP myN6HXmFhmMRo1bzfNXBDxTALYsh3EjXxk mvKKTXj8Z1GVwjN1Ejw8yx6n7pBujdXG2Q 1 1.234
+d300bb52c099c664459a75908255c8ec6a58575ac8efb07080bd81d8e6c9af40
 
-{"jsonrpc":"1.0","id":"1","method":"send_MP","params":["1MCHESTxYkPSLoJ57WBQot7vz3xkNahkcb","1MCHESTbJhJK27Ygqj4qKkx4Z4ZxhnP826",1,0.005]}
-{"result":"7a06ef1bb62230b04f4b7839f3b677397629cd433c03a0534d7ba57500efec1f","error":null,"id":"1"}
+{"jsonrpc":"1.0","id":"1","method":"send_MP","params":["myN6HXmFhmMRo1bzfNXBDxTALYsh3EjXxk","mvKKTXj8Z1GVwjN1Ejw8yx6n7pBujdXG2Q",1,1.234]}
+{"result":"d300bb52c099c664459a75908255c8ec6a58575ac8efb07080bd81d8e6c9af40","error":null,"id":"1"}
 ```
 *Please note, the private key for the requested sender address must be available in the wallet.*
 
@@ -50,7 +50,7 @@ $src/mastercored getbalance_MP mvKKTXj8Z1GVwjN1Ejw8yx6n7pBujdXG2Q 1
 ```
 
 ###Retrieving a Master Protocol Transaction
-The **gettransaction_MP** call allows for retrieval of a Master Protocol transaction and it's associated details and validity.  
+The **gettransaction_MP** call allows for retrieval of a Master Protocol transaction and its associated details and validity.  
 
 **Required Parameters**
 - **_transaction ID (string):_** A valid Master Protocol transaction ID
@@ -102,9 +102,10 @@ $src/mastercored listtransactions_MP mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3
 [
     {
         "txid" : "fda128e34edc48426ca930df6167e4560cef9cda2192e37be69c965e9c5dd9d1",
-        "address" : "mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3",
+        "sendingaddress" : "mscsir9qKUYry5SqaW19T7fTriDw2BzYvD",
+        "referenceaddress" : "mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3",
         "direction" : "in",
-        "confirmations" : 1453,
+        "confirmations" : 1457,
         "blocktime" : 1403126898,
         "blockindex" : 7,
         "type" : "Simple Send",
@@ -115,9 +116,10 @@ $src/mastercored listtransactions_MP mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3
     },
     {
         "txid" : "33e4ea9a43102f9ad43b086d2bcf9478c67b5a1e64ce7dfc64bfe3f94b7f9222",
-        "address" : "mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3",
+        "sendingaddress" : "mscsir9qKUYry5SqaW19T7fTriDw2BzYvD",
+        "referenceaddress" : "mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3",
         "direction" : "in",
-        "confirmations" : 1450,
+        "confirmations" : 1454,
         "blocktime" : 1403129492,
         "blockindex" : 4,
         "type" : "Simple Send",
@@ -128,9 +130,10 @@ $src/mastercored listtransactions_MP mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3
     },
     {
         "txid" : "c93a8622b6784b4cd5e109bea423553ed729b675965b6820837f80513be04852",
-        "address" : "mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3",
+        "sendingaddress" : "myN6HXmFhmMRo1bzfNXBDxTALYsh3EjXxk",
+        "referenceaddress" : "mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3",
         "direction" : "out",
-        "confirmations" : 902,
+        "confirmations" : 906,
         "blocktime" : 1403293908,
         "blockindex" : 2,
         "type" : "Simple Send",
@@ -142,7 +145,7 @@ $src/mastercored listtransactions_MP mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3
 ]
 
 {"jsonrpc":"1.0","id":"1","method":"listtransactions_MP","params":["mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3"]}
-{"result":[{"txid":"fda128e34edc48426ca930df6167e4560cef9cda2192e37be69c965e9c5dd9d1","address":"mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3","direction":"in","confirmations":1453,"blocktime":1403126898,"blockindex":7,"type":"Simple Send","currency":1,"divisible":true,"amount":123456.00000000,"valid":true},{"txid":"33e4ea9a43102f9ad43b086d2bcf9478c67b5a1e64ce7dfc64bfe3f94b7f9222","address":"mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3","direction":"in","confirmations":1450,"blocktime":1403129492,"blockindex":4,"type":"Simple Send","currency":1,"divisible":true,"amount":222.00000000,"valid":true},{"txid":"c93a8622b6784b4cd5e109bea423553ed729b675965b6820837f80513be04852","address":"mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3","direction":"out","confirmations":902,"blocktime":1403293908,"blockindex":2,"type":"Simple Send","currency":1,"divisible":true,"amount":50.12340000,"valid":true}],"error":null,"id":"1"}
+{"result":[{"txid":"fda128e34edc48426ca930df6167e4560cef9cda2192e37be69c965e9c5dd9d1","sendingaddress":"mscsir9qKUYry5SqaW19T7fTriDw2BzYvD","referenceaddress":"mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3","direction":"in","confirmations":1457,"blocktime":1403126898,"blockindex":7,"type":"Simple Send","currency":1,"divisible":true,"amount":123456.00000000,"valid":true},{"txid":"33e4ea9a43102f9ad43b086d2bcf9478c67b5a1e64ce7dfc64bfe3f94b7f9222","sendingaddress":"mscsir9qKUYry5SqaW19T7fTriDw2BzYvD","referenceaddress":"mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3","direction":"in","confirmations":1454,"blocktime":1403129492,"blockindex":4,"type":"Simple Send","currency":1,"divisible":true,"amount":222.00000000,"valid":true},{"txid":"c93a8622b6784b4cd5e109bea423553ed729b675965b6820837f80513be04852","sendingaddress":"myN6HXmFhmMRo1bzfNXBDxTALYsh3EjXxk","referenceaddress":"mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3","direction":"out","confirmations":906,"blocktime":1403293908,"blockindex":2,"type":"Simple Send","currency":1,"divisible":true,"amount":50.12340000,"valid":true}],"error":null,"id":"1"}
 ```
 *Please note, listtransactions_MP currently supports transactions available in the wallet only.*
 

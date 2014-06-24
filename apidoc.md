@@ -34,8 +34,8 @@ $src/mastercored send_MP 1MCHESTxYkPSLoJ57WBQot7vz3xkNahkcb 1MCHESTbJhJK27Ygqj4q
 The getbalance_MP call allows for retrieval of a Master Protocol balance for a given address and currency/property ID.
 
 **Required Parameters**
-- **address (string):** A valid bitcoin address 
-- **currency/property ID (integer):** A valid Master Protocol currency/property ID
+- **_address (string):_** A valid bitcoin address 
+- **_currency/property ID (integer):_** A valid Master Protocol currency/property ID
 
 **Additional Optional Parameters**
 - There are currently no supported optional parameters for this call.
@@ -50,6 +50,13 @@ $src/mastercored getbalance_MP mvKKTXj8Z1GVwjN1Ejw8yx6n7pBujdXG2Q 1
 ```
 
 ###gettransaction_MP
+The gettransaction_MP call allows for retrieval of a Master Protocol transaction and it's associated details and validity.  
+
+**Required Parameters**
+- **_transaction ID (string):_** A valid Master Protocol transaction ID
+
+**Additional Optional Parameters**
+- There are currently no supported optional parameters for this call.
 
 **Examples**
 ```
@@ -76,8 +83,21 @@ $src/mastercored gettransaction_MP d2907fe2c716fc6d510d63b52557907445c784cb2e8ae
 *Please note, gettransaction_MP currently supports transactions available in the wallet only.*
 
 ###listtransactions_MP
+The listtransactions_MP call allows for retrieval of the last n Master Protocol transactions, if desired filtered on address.
+
+**Required Parameters**
+- There are no required parameters for this call.  Calling with no parameters will default to all addresses in the wallet and the last 10 transactions.
+
+**Additional Optional Parameters**
+**_address (string):_** A valid bitcoin address to filter on
+**_count (integer):_** The number of recent transactions to return
+**_skip (integer):_** The number of recent transactions to skip 
 
 **Examples**
+Optional parameters can be combined as follows:
+``listtransactions_MP "*" 50 100``
+Would list the 50 most recent transactions, skipping the first 100 
+
 ```
 $src/mastercored listtransactions_MP mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3
 [

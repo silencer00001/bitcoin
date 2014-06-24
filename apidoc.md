@@ -94,7 +94,8 @@ The listtransactions_MP call allows for retrieval of the last n Master Protocol 
 - **_skip (integer):_** The number of recent transactions to skip 
 
 **Examples**
-Optional parameters can be combined as follows ```listtransactions_MP "*" 50 100``` to list the 50 most recent transactions across all addresses in the wallet, skipping the first 100 
+
+Optional parameters can be combined as follows ```listtransactions_MP "*" 50 100``` to list the 50 most recent transactions across all addresses in the wallet, skipping the first 100. 
 
 ```
 $src/mastercored listtransactions_MP mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3

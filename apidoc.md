@@ -33,9 +33,8 @@ $src/mastercored send_MP 1MCHESTxYkPSLoJ57WBQot7vz3xkNahkcb 1MCHESTbJhJK27Ygqj4q
 ###getbalance_MP
 
 **Examples**
-
 ```
-$src/bitcoind getbalance_MP mvKKTXj8Z1GVwjN1Ejw8yx6n7pBujdXG2Q 1
+$src/mastercored getbalance_MP mvKKTXj8Z1GVwjN1Ejw8yx6n7pBujdXG2Q 1
 300000000.00000000
 
 {"jsonrpc":"1.0","id":"1","method":"getbalance_MP","params":["mvKKTXj8Z1GVwjN1Ejw8yx6n7pBujdXG2Q",1]}
@@ -47,9 +46,6 @@ $src/bitcoind getbalance_MP mvKKTXj8Z1GVwjN1Ejw8yx6n7pBujdXG2Q 1
 **Examples**
 ```
 $src/mastercored gettransaction_MP d2907fe2c716fc6d510d63b52557907445c784cb2e8ae6ea9ef61e909c978cd7
-or
-{"jsonrpc":"1.0","id":"1","method":"gettransaction_MP","params":["d2907fe2c716fc6d510d63b52557907445c784cb2e8ae6ea9ef61e909c978cd7"]}
-
 {
     "txid" : "d2907fe2c716fc6d510d63b52557907445c784cb2e8ae6ea9ef61e909c978cd7",
     "sendingaddress" : "myN6HXmFhmMRo1bzfNXBDxTALYsh3EjXxk",
@@ -65,8 +61,63 @@ or
     "amount" : 50.00000000,
     "valid" : true
 }
+
+{"jsonrpc":"1.0","id":"1","method":"gettransaction_MP","params":["d2907fe2c716fc6d510d63b52557907445c784cb2e8ae6ea9ef61e909c978cd7"]}
+{"result":{"txid":"d2907fe2c716fc6d510d63b52557907445c784cb2e8ae6ea9ef61e909c978cd7","sendingaddress":"myN6HXmFhmMRo1bzfNXBDxTALYsh3EjXxk","referenceaddress":"mhgrKJ3WyX1RMYiUpgA3M3iF48zSeSRkri","direction":"out","confirmations":884,"fee":0.00010000,"blocktime":1403298479,"blockindex":49,"type":"Simple Send","currency":1,"divisible":true,"amount":50.00000000,"valid":true},"error":null,"id":"1"}
 ```
-*Please note, the transaction ID requested must currently be available in the wallet.*
+*Please note, gettransaction_MP currently supports transactions available in the wallet only."
 
 ###listtransactions_MP
+
+**Examples**
+```
+$src/mastercored listtransactions_MP mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3
+[
+    {
+        "txid" : "fda128e34edc48426ca930df6167e4560cef9cda2192e37be69c965e9c5dd9d1",
+        "address" : "mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3",
+        "direction" : "in",
+        "confirmations" : 1453,
+        "blocktime" : 1403126898,
+        "blockindex" : 7,
+        "type" : "Simple Send",
+        "currency" : 1,
+        "divisible" : true,
+        "amount" : 123456.00000000,
+        "valid" : true
+    },
+    {
+        "txid" : "33e4ea9a43102f9ad43b086d2bcf9478c67b5a1e64ce7dfc64bfe3f94b7f9222",
+        "address" : "mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3",
+        "direction" : "in",
+        "confirmations" : 1450,
+        "blocktime" : 1403129492,
+        "blockindex" : 4,
+        "type" : "Simple Send",
+        "currency" : 1,
+        "divisible" : true,
+        "amount" : 222.00000000,
+        "valid" : true
+    },
+    {
+        "txid" : "c93a8622b6784b4cd5e109bea423553ed729b675965b6820837f80513be04852",
+        "address" : "mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3",
+        "direction" : "out",
+        "confirmations" : 902,
+        "blocktime" : 1403293908,
+        "blockindex" : 2,
+        "type" : "Simple Send",
+        "currency" : 1,
+        "divisible" : true,
+        "amount" : 50.12340000,
+        "valid" : true
+    }
+]
+
+{"jsonrpc":"1.0","id":"1","method":"listtransactions_MP","params":["mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3"]}
+{"result":[{"txid":"fda128e34edc48426ca930df6167e4560cef9cda2192e37be69c965e9c5dd9d1","address":"mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3","direction":"in","confirmations":1453,"blocktime":1403126898,"blockindex":7,"type":"Simple Send","currency":1,"divisible":true,"amount":123456.00000000,"valid":true},{"txid":"33e4ea9a43102f9ad43b086d2bcf9478c67b5a1e64ce7dfc64bfe3f94b7f9222","address":"mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3","direction":"in","confirmations":1450,"blocktime":1403129492,"blockindex":4,"type":"Simple Send","currency":1,"divisible":true,"amount":222.00000000,"valid":true},{"txid":"c93a8622b6784b4cd5e109bea423553ed729b675965b6820837f80513be04852","address":"mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3","direction":"out","confirmations":902,"blocktime":1403293908,"blockindex":2,"type":"Simple Send","currency":1,"divisible":true,"amount":50.12340000,"valid":true}],"error":null,"id":"1"}
+```
+*Please note, listtransactions_MP currently supports transactions available in the wallet only.*
+
+
 

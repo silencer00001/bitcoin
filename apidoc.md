@@ -24,6 +24,9 @@ Simple send allows a Master Protocol currency to be transferred from address to 
 ```
 $src/mastercored send_MP 1MCHESTxYkPSLoJ57WBQot7vz3xkNahkcb 1MCHESTbJhJK27Ygqj4qKkx4Z4ZxhnP826 1 0.005
 7a06ef1bb62230b04f4b7839f3b677397629cd433c03a0534d7ba57500efec1f
+
+{"jsonrpc":"1.0","id":"1","method":"send_MP","params":["1MCHESTxYkPSLoJ57WBQot7vz3xkNahkcb","1MCHESTbJhJK27Ygqj4qKkx4Z4ZxhnP826",1,0.005]}
+{"result":"7a06ef1bb62230b04f4b7839f3b677397629cd433c03a0534d7ba57500efec1f","error":null,"id":"1"}
 ```
 *Please note, the private key for the requested sender address must be available in the wallet.*
 
@@ -63,7 +66,7 @@ or
     "valid" : true
 }
 ```
-*Please note, the transaction requested must currently be available in the wallet.*
+*Please note, the transaction ID requested must currently be available in the wallet.*
 
 ###listtransactions_MP
 

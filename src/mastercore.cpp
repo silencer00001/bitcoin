@@ -89,7 +89,7 @@ static int InvalidCount_per_spec = 0; // consolidate error messages into a nice 
 static int BitcoinCore_errors = 0;    // TODO: watch this count, check returns of all/most Bitcoin core functions !
 
 // disable TMSC handling for now, has more legacy corner cases
-static int ignore_all_but_MSC = 1;
+static int ignore_all_but_MSC = 0;
 static int disableLevelDB = 0;
 static int disable_Persistence = 1;
 
@@ -977,7 +977,16 @@ public:
       rc = DEx_acceptCreate(sender, receiver, currency, nValue, block, tx_fee_paid, &nNewValue);
       break;
 
+    case MSC_TYPE_CREATE_PROPERTY_FIXED:
+
+      break;
+
+    case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
+
+      break;
+
     default:
+
       return (PKT_ERROR -100);
   }
 
@@ -1452,7 +1461,7 @@ uint64_t txFee = 0;
           // TODO: verify that we can handle multiple multisigs per tx
           wtx.vout[i].scriptPubKey.msc_parse(multisig_script_data);
 
-          break;  // get out of processing this first multisig
+//          break;  // get out of processing this first multisig  , Michael Jun 24
         }
               }
             } // end of the outputs' for loop
@@ -1706,7 +1715,7 @@ uint64_t txFee = 0;
               }
 
               // ensure the first byte of the first packet is 01; is it the sequence number???
-              if (03 >= packet[0])
+              if (MAX_NUMBER_OF_DATA_PACKETS_PER_MULTISIG >= packet[0])
               {
                 memcpy(&packets[mdata_count], &packet[0], PACKET_SIZE);
                 strPacket = HexStr(packet.begin(),packet.end(), false);
@@ -1726,7 +1735,7 @@ uint64_t txFee = 0;
             packet_size = mdata_count * (PACKET_SIZE - 1);
 
           if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
-          }
+          } // end of if (fMultisig)
           if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
 
             // now decode mastercoin packets

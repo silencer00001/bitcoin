@@ -18,7 +18,7 @@ Simple send allows a Master Protocol currency to be transferred from address to 
 - *amount (float):* The amount to transfer (note if sending individisble tokens any decimals will be truncated)
    
 **Additional Optional Parameters**
-There are currently no supported optional parameters for this call.
+- There are currently no supported optional parameters for this call.
 
 **Example**
 

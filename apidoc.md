@@ -30,8 +30,8 @@ $src/mastercored send_MP 1MCHESTxYkPSLoJ57WBQot7vz3xkNahkcb 1MCHESTbJhJK27Ygqj4q
 ```
 *Please note, the private key for the requested sender address must be available in the wallet.*
 
-###getbalance_MP
-The getbalance_MP call allows for retrieval of a Master Protocol balance for a given address and currency/property ID.
+###Obtaining a Master Protocol balance
+The **getbalance_MP** call allows for retrieval of a Master Protocol balance for a given address and currency/property ID.
 
 **Required Parameters**
 - **_address (string):_** A valid bitcoin address 
@@ -49,8 +49,8 @@ $src/mastercored getbalance_MP mvKKTXj8Z1GVwjN1Ejw8yx6n7pBujdXG2Q 1
 {"result":300000000.00000000,"error":null,"id":"1"}
 ```
 
-###gettransaction_MP
-The gettransaction_MP call allows for retrieval of a Master Protocol transaction and it's associated details and validity.  
+###Retrieving a Master Protocol Transaction
+The **gettransaction_MP** call allows for retrieval of a Master Protocol transaction and it's associated details and validity.  
 
 **Required Parameters**
 - **_transaction ID (string):_** A valid Master Protocol transaction ID
@@ -82,8 +82,8 @@ $src/mastercored gettransaction_MP d2907fe2c716fc6d510d63b52557907445c784cb2e8ae
 ```
 *Please note, gettransaction_MP currently supports transactions available in the wallet only.*
 
-###listtransactions_MP
-The listtransactions_MP call allows for retrieval of the last n Master Protocol transactions, if desired filtered on address.
+###Listing Historical Transactions
+The **listtransactions_MP** call allows for retrieval of the last n Master Protocol transactions, if desired filtered on address.
 
 **Required Parameters**
 - There are no required parameters for this call.  Calling with no parameters will default to all addresses in the wallet and the last 10 transactions.

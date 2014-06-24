@@ -21,9 +21,10 @@ Simple send allows a Master Protocol currency to be transferred from address to 
 - There are currently no supported optional parameters for this call.
 
 **Example**
->$src/mastercored send_MP 1MCHESTxYkPSLoJ57WBQot7vz3xkNahkcb 1MCHESTbJhJK27Ygqj4qKkx4Z4ZxhnP826 1 0.005
->7a06ef1bb62230b04f4b7839f3b677397629cd433c03a0534d7ba57500efec1f
-
+```
+$src/mastercored send_MP 1MCHESTxYkPSLoJ57WBQot7vz3xkNahkcb 1MCHESTbJhJK27Ygqj4qKkx4Z4ZxhnP826 1 0.005
+7a06ef1bb62230b04f4b7839f3b677397629cd433c03a0534d7ba57500efec1f
+```
 
 
 

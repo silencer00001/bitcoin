@@ -20,16 +20,50 @@ Simple send allows a Master Protocol currency to be transferred from address to 
 **Additional Optional Parameters**
 - There are currently no supported optional parameters for this call.
 
-**Example**
+**Examples**
 ```
 $src/mastercored send_MP 1MCHESTxYkPSLoJ57WBQot7vz3xkNahkcb 1MCHESTbJhJK27Ygqj4qKkx4Z4ZxhnP826 1 0.005
 7a06ef1bb62230b04f4b7839f3b677397629cd433c03a0534d7ba57500efec1f
 ```
-
-
-
 *Please note, the private key for the requested sender address must be available in the wallet.*
 
+###getbalance_MP
 
+**Examples**
 
+```
+$src/bitcoind getbalance_MP mvKKTXj8Z1GVwjN1Ejw8yx6n7pBujdXG2Q 1
+300000000.00000000
+
+{"jsonrpc":"1.0","id":"1","method":"getbalance_MP","params":["mvKKTXj8Z1GVwjN1Ejw8yx6n7pBujdXG2Q",1]}
+{"result":300000000.00000000,"error":null,"id":"1"}
+```
+
+###gettransaction_MP
+
+**Examples**
+```
+$src/mastercored gettransaction_MP d2907fe2c716fc6d510d63b52557907445c784cb2e8ae6ea9ef61e909c978cd7
+or
+{"jsonrpc":"1.0","id":"1","method":"gettransaction_MP","params":["d2907fe2c716fc6d510d63b52557907445c784cb2e8ae6ea9ef61e909c978cd7"]}
+
+{
+    "txid" : "d2907fe2c716fc6d510d63b52557907445c784cb2e8ae6ea9ef61e909c978cd7",
+    "sendingaddress" : "myN6HXmFhmMRo1bzfNXBDxTALYsh3EjXxk",
+    "referenceaddress" : "mhgrKJ3WyX1RMYiUpgA3M3iF48zSeSRkri",
+    "direction" : "out",
+    "confirmations" : 884,
+    "fee" : 0.00010000,
+    "blocktime" : 1403298479,
+    "blockindex" : 49,
+    "type" : "Simple Send",
+    "currency" : 1,
+    "divisible" : true,
+    "amount" : 50.00000000,
+    "valid" : true
+}
+```
+*Please note, the transaction requested must currently be available in the wallet.*
+
+###listtransactions_MP
 

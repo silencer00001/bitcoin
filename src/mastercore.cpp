@@ -847,6 +847,8 @@ public:
 
   if ((obj_o) && (MSC_TYPE_TRADE_OFFER != type)) return -777; // can't fill in the Offer object !
 
+  if ((MSC_TYPE_SIMPLE_SEND != type) && (290630>block)) return -88888;
+
   // further processing for complex types
   // TODO: version may play a role here !
   switch(type)
@@ -1212,7 +1214,7 @@ vector<unsigned char> vec_chars;
   }
 }
 
-static bool getTransactionType(const CScript& scriptPubKey, txnouttype& whichTypeRet)
+static bool getOutputType(const CScript& scriptPubKey, txnouttype& whichTypeRet)
 {
 vector<vector<unsigned char> > vSolutions;
 
@@ -1330,7 +1332,7 @@ uint64_t txFee = 0;
               fprintf(mp_fp, "value_data.size=%lu\n", value_data.size());
             }
 
-            int inputs_errors = 0;
+            int inputs_errors = 0;  // several types of erroroneous MP TX inputs
             map <string, uint64_t> inputs_sum_of_values;
             // now go through inputs & identify the sender, collect input amounts
             // go through inputs, find the largest per Mastercoin protocol, the Sender
@@ -1361,7 +1363,7 @@ uint64_t txFee = 0;
               {
                 // we only allow pay-to-pubkeyhash & probably pay-to-pubkey (?)
                 {
-                  if (!getTransactionType(txPrev.vout[n].scriptPubKey, whichType)) ++inputs_errors;
+                  if (!getOutputType(txPrev.vout[n].scriptPubKey, whichType)) ++inputs_errors;
                   if ((TX_PUBKEYHASH != whichType) /* || (TX_PUBKEY != whichType) */ ) ++inputs_errors;
 
                   if (inputs_errors) break;
@@ -1371,6 +1373,8 @@ uint64_t txFee = 0;
 
                 inputs_sum_of_values[addressSource.ToString()] += nValue;
               }
+              else ++inputs_errors;
+
               if (msc_debug) fprintf(mp_fp, "vin=%d:%s\n", i, wtx.vin[i].ToString().c_str());
             } // end of inputs for loop
 

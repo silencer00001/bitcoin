@@ -89,14 +89,12 @@ The listtransactions_MP call allows for retrieval of the last n Master Protocol 
 - There are no required parameters for this call.  Calling with no parameters will default to all addresses in the wallet and the last 10 transactions.
 
 **Additional Optional Parameters**
-- **_address (string):_** A valid bitcoin address to filter on
+- **_address (string):_** A valid bitcoin address to filter on or * for all addresses in the wallet
 - **_count (integer):_** The number of recent transactions to return
 - **_skip (integer):_** The number of recent transactions to skip 
 
 **Examples**
-Optional parameters can be combined as follows:
-``listtransactions_MP "*" 50 100``
-Would list the 50 most recent transactions, skipping the first 100 
+Optional parameters can be combined as follows ```listtransactions_MP "*" 50 100``` to list the 50 most recent transactions across all addresses in the wallet, skipping the first 100 
 
 ```
 $src/mastercored listtransactions_MP mtGfANEnFsniGzWDt87kQg4zJunoQbT6f3

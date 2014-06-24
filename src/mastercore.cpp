@@ -42,6 +42,7 @@
 
 #include <openssl/sha.h>
 
+#define DISABLE_LOG_FILE 
 static FILE *mp_fp = NULL;
 
 #include "mastercore.h"
@@ -839,6 +840,8 @@ public:
  //
  int interpretPacket(CMPOffer *obj_o = NULL)
  {
+  printf("%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
+
  uint64_t amount_desired, min_fee;
  unsigned char blocktimelimit, subaction = 0;
  int rc = PKT_ERROR;
@@ -1063,18 +1066,24 @@ public:
 
   void set(string s, string r, uint64_t n, const uint256 &t, int b, unsigned int idx, unsigned char p[], unsigned int size, int fMultisig, uint64_t txf)
   {
+    printf("%s();size =%d , sizeof(pkt)=%lu, line %d, file: %s\n", __FUNCTION__, size, sizeof(pkt), __LINE__, __FILE__);
+
     sender = s;
     receiver = r;
     txid = t;
     block = b;
     tx_idx = idx;
-    pkt_size = size;
+    pkt_size = size < sizeof(pkt) ? size : sizeof(pkt);
     nValue = n;
     nNewValue = n;
     multi= fMultisig;
     tx_fee_paid = txf;
 
-    memcpy(pkt, p, size < sizeof(pkt) ? size : sizeof(pkt));
+    printf("%s();size =%d , sizeof(pkt)=%lu, pkt_size=%d, line %d, file: %s\n", __FUNCTION__, size, sizeof(pkt), pkt_size, __LINE__, __FILE__);
+
+    memcpy(&pkt, p, pkt_size);
+
+    printf("%s();size =%d , sizeof(pkt)=%lu, pkt_size=%d, line %d, file: %s\n", __FUNCTION__, size, sizeof(pkt), pkt_size, __LINE__, __FILE__);
   }
 
   bool operator<(const CMPTransaction& other) const
@@ -2328,7 +2337,11 @@ const bool bTestnet = TestNet();
 #ifdef  WIN32
 #error  Need boost path here too
 #else
+#ifndef  DISABLE_LOG_FILE
   mp_fp = fopen ("/tmp/mastercore.log", "a");
+#else
+  mp_fp = stdout;
+#endif
 #endif
   fprintf(mp_fp, "\n%s MASTERCORE INIT, build date: " __DATE__ " " __TIME__ "\n\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()).c_str());
 
@@ -2408,7 +2421,9 @@ int mastercore_shutdown()
   if (mp_fp)
   {
     fprintf(mp_fp, "\n%s MASTERCORE SHUTDOWN, build date: " __DATE__ " " __TIME__ "\n\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()).c_str());
+#ifndef  DISABLE_LOG_FILE
     fclose(mp_fp); mp_fp = NULL;
+#endif
   }
 
   return 0;
@@ -2427,6 +2442,7 @@ int rc;
   {
   // true MP transaction, validity (such as insufficient funds, or offer not found) is determined elsewhere
 
+  printf("%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
     rc = mp_obj.interpretPacket();
     if (rc) fprintf(mp_fp, "!!! interpretPacket() returned %d !!!!!!!!!!!!!!!!!!!!!!\n", rc);
 

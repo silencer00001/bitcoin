@@ -42,7 +42,7 @@
 
 #include <openssl/sha.h>
 
-#define DISABLE_LOG_FILE 
+// #define DISABLE_LOG_FILE 
 static FILE *mp_fp = NULL;
 
 #include "mastercore.h"
@@ -84,13 +84,14 @@ int msc_debug6 = 1;
 
 int msc_debug_dex = 1;
 int msc_debug_send = 1;
+int msc_debug_spec = 1;
 
 // follow this variable through the code to see how/which Master Protocol transactions get invalidated
 static int InvalidCount_per_spec = 0; // consolidate error messages into a nice log, for now just keep a count
 static int BitcoinCore_errors = 0;    // TODO: watch this count, check returns of all/most Bitcoin core functions !
 
 // disable TMSC handling for now, has more legacy corner cases
-static int ignore_all_but_MSC = 0;
+static int ignore_all_but_MSC = 1;
 static int disableLevelDB = 0;
 static int disable_Persistence = 1;
 
@@ -840,8 +841,6 @@ public:
  //
  int interpretPacket(CMPOffer *obj_o = NULL)
  {
-  printf("%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
-
  uint64_t amount_desired, min_fee;
  unsigned char blocktimelimit, subaction = 0;
  int rc = PKT_ERROR;
@@ -1049,6 +1048,7 @@ public:
     pkt_size = 0;
     sender.erase();
     receiver.erase();
+
     memset(&pkt, 0, sizeof(pkt));
   }
 
@@ -1064,10 +1064,8 @@ public:
     tx_idx = idx;
   }
 
-  void set(string s, string r, uint64_t n, const uint256 &t, int b, unsigned int idx, unsigned char p[], unsigned int size, int fMultisig, uint64_t txf)
+  void set(string s, string r, uint64_t n, const uint256 &t, int b, unsigned int idx, unsigned char *p, unsigned int size, int fMultisig, uint64_t txf)
   {
-    printf("%s();size =%d , sizeof(pkt)=%lu, line %d, file: %s\n", __FUNCTION__, size, sizeof(pkt), __LINE__, __FILE__);
-
     sender = s;
     receiver = r;
     txid = t;
@@ -1079,11 +1077,7 @@ public:
     multi= fMultisig;
     tx_fee_paid = txf;
 
-    printf("%s();size =%d , sizeof(pkt)=%lu, pkt_size=%d, line %d, file: %s\n", __FUNCTION__, size, sizeof(pkt), pkt_size, __LINE__, __FILE__);
-
     memcpy(&pkt, p, pkt_size);
-
-    printf("%s();size =%d , sizeof(pkt)=%lu, pkt_size=%d, line %d, file: %s\n", __FUNCTION__, size, sizeof(pkt), pkt_size, __LINE__, __FILE__);
   }
 
   bool operator<(const CMPTransaction& other) const
@@ -1499,7 +1493,7 @@ uint64_t txFee = 0;
             // Class A
 
             // find data
-          for (unsigned k = 0; k<script_data.size();k++)
+          for (unsigned int k = 0; k<script_data.size();k++)
           {
             if (msc_debug3) fprintf(mp_fp, "data[%d]:%s: %s (%lu.%08lu)\n", k, script_data[k].c_str(), address_data[k].c_str(), value_data[k] / COIN, value_data[k] % COIN);
 
@@ -1558,7 +1552,7 @@ uint64_t txFee = 0;
 
 //                if (4 == script_data.size())
                 {
-                  for (unsigned k = 0; k<script_data.size();k++)
+                  for (unsigned int k = 0; k<script_data.size();k++)
                   {
                     fprintf(mp_fp, "%s():%s, line %d, file: %s\n", __FUNCTION__, address_data[k].c_str(), __LINE__, __FILE__);
 
@@ -1693,7 +1687,7 @@ uint64_t txFee = 0;
 
           if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
           // multisig , Class B; get the data packets can be found here...
-          for (unsigned k = 0; k<multisig_script_data.size();k++)
+          for (unsigned int k = 0; k<multisig_script_data.size();k++)
           {
 
           if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
@@ -1723,12 +1717,18 @@ uint64_t txFee = 0;
                 packet[i] ^= hash[i];
               }
 
-              // ensure the first byte of the first packet is 01; is it the sequence number???
+              // ensure the first byte of the first packet is 01-0x10; is it the sequence number???
               if (MAX_NUMBER_OF_DATA_PACKETS_PER_MULTISIG >= packet[0])
               {
                 memcpy(&packets[mdata_count], &packet[0], PACKET_SIZE);
                 strPacket = HexStr(packet.begin(),packet.end(), false);
                 ++mdata_count;
+
+                if (MAX_PACKETS <= mdata_count)
+                {
+                  fprintf(mp_fp, "increase MAX_PACKETS ! mdata_count= %d\n", mdata_count);
+                  return -222;
+                }
               }
             }
 
@@ -1741,7 +1741,12 @@ uint64_t txFee = 0;
           if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
           }
 
-            packet_size = mdata_count * (PACKET_SIZE - 1);
+          packet_size = mdata_count * (PACKET_SIZE - 1);
+
+          if (sizeof(single_pkt)<packet_size)
+          {
+            return -111;
+          }
 
           if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
           } // end of if (fMultisig)
@@ -1752,13 +1757,19 @@ uint64_t txFee = 0;
             {
               if (msc_debug0) fprintf(mp_fp, "m=%d: %s\n", m, HexStr(packets[m], PACKET_SIZE + packets[m], false).c_str());
 
-              // ignoring sequence numbers for Class B packets -- TODO: revisit this
+              // check to ensure the sequence numbers are sequential and begin with 01 !
+              if (1+m != packets[m][0])
+              {
+                if (msc_debug_spec) fprintf(mp_fp, "Error: non-sequential seqnum ! expected=%d, got=%d\n", 1+m, packets[m][0]);
+              }
+
+              // now ignoring sequence numbers for Class B packets
               memcpy(m*(PACKET_SIZE-1)+single_pkt, 1+packets[m], PACKET_SIZE-1);
             }
 
-            if (msc_debug2) fprintf(mp_fp, "single_pkt: %s\n", HexStr(single_pkt, packet_size + single_pkt, false).c_str());
+  if (msc_debug2) fprintf(mp_fp, "single_pkt: %s\n", HexStr(single_pkt, packet_size + single_pkt, false).c_str());
 
-            mp_tx->set(strSender, strReference, 0, wtx.GetHash(), nBlock, idx, single_pkt, packet_size, fMultisig, (inAll-outAll));  
+  mp_tx->set(strSender, strReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, fMultisig, (inAll-outAll));  
 
   return 0;
 }
@@ -2434,15 +2445,15 @@ int mastercore_handler_tx(const CTransaction &tx, int nBlock, unsigned int idx)
 {
 CMPTransaction mp_obj;
 // save the augmented offer or accept amount into the database as well (expecting them to be numerically lower than that in the blockchain)
-int rc;
+int rc, pop_ret;
 
   if (nBlock < nWaterlineBlock) return -1;  // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
 
-  if (0 == msc_tx_populate(tx, nBlock, idx, &mp_obj))
+  pop_ret = msc_tx_populate(tx, nBlock, idx, &mp_obj);
+  if (0 == pop_ret)
   {
   // true MP transaction, validity (such as insufficient funds, or offer not found) is determined elsewhere
 
-  printf("%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
     rc = mp_obj.interpretPacket();
     if (rc) fprintf(mp_fp, "!!! interpretPacket() returned %d !!!!!!!!!!!!!!!!!!!!!!\n", rc);
 

@@ -593,7 +593,7 @@ public:
         return str;
     }
 
-    std::string msc_parse(vector<std::string>&msc_parsed) const
+    std::string msc_parse(std::vector<std::string>&msc_parsed) const
     {
         std::string str;
         opcodetype opcode;

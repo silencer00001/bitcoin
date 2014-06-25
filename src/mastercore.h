@@ -29,8 +29,8 @@
 
 #define PACKET_SIZE_CLASS_A 19
 #define PACKET_SIZE         31
-#define MAX_PACKETS         5
-// #define MAX_PACKETS         256
+// #define MAX_PACKETS         5
+#define MAX_PACKETS         64
 
 #define MSC_TYPE_SIMPLE_SEND              0
 #define MSC_TYPE_TRADE_OFFER              20

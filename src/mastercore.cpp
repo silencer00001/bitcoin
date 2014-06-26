@@ -1249,7 +1249,6 @@ vector<string>address_data;
 // vector<uint64_t>value_data;
 vector<int64_t>value_data;
 int64_t ExodusValues[MAX_BTC_OUTPUTS];
-int64_t ExodusHighestValue = 0;
 string strReference;
 unsigned char single_pkt[MAX_PACKETS * PACKET_SIZE];
 unsigned int packet_size = 0;
@@ -1279,8 +1278,6 @@ uint64_t txFee = 0;
                 {
                   // TODO: add other checks to verify a mastercoin tx !!!
                   ExodusValues[marker_count++] = wtx.vout[i].nValue;
-
-                  if (ExodusHighestValue < wtx.vout[i].nValue) ExodusHighestValue = wtx.vout[i].nValue;
                 }
               }
             }

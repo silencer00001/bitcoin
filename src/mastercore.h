@@ -25,8 +25,6 @@
 // TODO: clean up is needed for pre-production #DEFINEs , consts & alike belong in header files (classes)
 #define MAX_SHA256_OBFUSCATION_TIMES  255
 
-#define MAX_NUMBER_OF_DATA_PACKETS_PER_MULTISIG 0x10
-
 #define PACKET_SIZE_CLASS_A 19
 #define PACKET_SIZE         31
 // #define MAX_PACKETS         5

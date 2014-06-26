@@ -1683,11 +1683,11 @@ uint64_t txFee = 0;
             }
 
           if (msc_debug3) fprintf(mp_fp, "Ending reference identification\n");
-          if (msc_debug3) fprintf(mp_fp, "Final decision on reference identification is: %s \n ", strReference.c_str());
+          if (msc_debug3) fprintf(mp_fp, "Final decision on reference identification is: %s\n", strReference.c_str());
 
           if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
-          // multisig , Class B; get the data packets can be found here...
-          for (unsigned int k = 0; k<multisig_script_data.size();k++)
+          // multisig , Class B; get the data packets that are found here, first one is skipped !
+          for (unsigned int k = 1; k<multisig_script_data.size();k++)
           {
 
           if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
@@ -1698,6 +1698,7 @@ uint64_t txFee = 0;
             string strPacket;
 
           if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
+
             if (exodus == strAddress) c_addr_type = (char *)" (EXODUS)";
             else
             if (strAddress == strSender)
@@ -1707,6 +1708,7 @@ uint64_t txFee = 0;
               // TODO: do we care???
             }
             else
+
             {
               // this is a data packet, must deobfuscate now
               vector<unsigned char>hash = ParseHex(strObfuscatedHashes[mdata_count+1]);      
@@ -1718,8 +1720,9 @@ uint64_t txFee = 0;
               }
 
               // ensure the first byte of the first packet is 01-0x10; is it the sequence number???
-              if (MAX_NUMBER_OF_DATA_PACKETS_PER_MULTISIG >= packet[0])
-              {
+//              if (MAX_NUMBER_OF_DATA_PACKETS_PER_MULTISIG >= packet[0])
+//              if (03 >= packet[0])
+
                 memcpy(&packets[mdata_count], &packet[0], PACKET_SIZE);
                 strPacket = HexStr(packet.begin(),packet.end(), false);
                 ++mdata_count;
@@ -1729,7 +1732,6 @@ uint64_t txFee = 0;
                   fprintf(mp_fp, "increase MAX_PACKETS ! mdata_count= %d\n", mdata_count);
                   return -222;
                 }
-              }
             }
 
           if (msc_debug3) fprintf(mp_fp, "multisig_data[%d]:%s: %s%s\n", k, multisig_script_data[k].c_str(), strAddress.c_str(), c_addr_type);
@@ -2433,8 +2435,9 @@ int mastercore_shutdown()
   {
     fprintf(mp_fp, "\n%s MASTERCORE SHUTDOWN, build date: " __DATE__ " " __TIME__ "\n\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()).c_str());
 #ifndef  DISABLE_LOG_FILE
-    fclose(mp_fp); mp_fp = NULL;
+    fclose(mp_fp);
 #endif
+    mp_fp = NULL;
   }
 
   return 0;

@@ -1476,117 +1476,126 @@ uint64_t txFee = 0;
           int mdata_count = 0;  // multisig data count
           if (!fMultisig)
           {
-          string strScriptData;
-          string strDataAddress;
-          unsigned char seq = 0xFF;
+              // ---------------------------------- Class A parsing ---------------------------
 
-          // non-multisig data packets from this tx may be found here...
-            // TODO: figure out what the data packet(s) are/is for non-multisig Class A transaction
-            // from msc_utils_parsing.py, March 2014
-            // look for data & for reference:
-            // first, check the list of outputs with values equal to Exodus's
-            // second, check the list of all outputs even with random values
-            // third, not yet implemented here -- is it needed?:
-            //    # Level 3
-            //    # all output values are equal in size and if there are three outputs
-            //    # of these type of outputs total
-            // Class A
+              // Init vars
+              string strScriptData;
+              string strDataAddress;
+              string strRefAddress;
+              unsigned char dataAddressSeq = 0xFF;
+              unsigned char seq = 0xFF;
+              int64_t dataAddressValue = 0;
 
-            // find data
-          for (unsigned int k = 0; k<script_data.size();k++)
-          {
-            if (msc_debug3) fprintf(mp_fp, "data[%d]:%s: %s (%lu.%08lu)\n", k, script_data[k].c_str(), address_data[k].c_str(), value_data[k] / COIN, value_data[k] % COIN);
-
-            {
-              string strSub = script_data[k].substr(2,16);
-              seq = (ParseHex(script_data[k].substr(0,2)))[0];
-  
-                if (("0000000000000001" == strSub) || ("0000000000000002" == strSub))
-                {
-                  if (strScriptData.empty())
-                  {
-                    strScriptData = script_data[k].substr(2*1,2*PACKET_SIZE_CLASS_A);
-                    strDataAddress = address_data[k];
-                  }
-  
-                  if (msc_debug3) fprintf(mp_fp, "strScriptData #1:%s, seq = %x, value_data[%d]=%lu, %s marker_count= %d\n",
-                   strScriptData.c_str(), seq, k, value_data[k], strDataAddress.c_str(), marker_count);
-
-                  for (int exodus_idx=0;exodus_idx<marker_count;exodus_idx++)
-                  {
-                    if (msc_debug3) fprintf(mp_fp, "%s(); ExodusValues[%d]=%lu\n", __FUNCTION__, exodus_idx, ExodusValues[exodus_idx]);
-                    if (value_data[k] == ExodusValues[exodus_idx])
-                    {
-                      if (msc_debug3) fprintf(mp_fp, "strScriptData(exodus_idx=%d) #2:%s, seq = %x\n", exodus_idx, strScriptData.c_str(), seq);
-                      strScriptData = script_data[k].substr(2,2*PACKET_SIZE_CLASS_A);
-                      strDataAddress = address_data[k];
-                      break;
-                    }
-                  }
-                  if (!strScriptData.empty()) break;
-                }
-              }
-            }
-
-            if (!strScriptData.empty())
-            {
-              ++seq;
-              // look for reference using the seq #
-              for (unsigned r = 0; r<script_data.size();r++)
+              // Step 1, locate the data packet
+              for (unsigned k = 0; k<script_data.size();k++) // loop through outputs
               {
-                if ((address_data[r] != strDataAddress) && (address_data[r] != exodus))
-                {
-                  if (seq == ParseHex(script_data[r].substr(0,2))[0])
+                  txnouttype whichType;
+                  if (!getOutputType(wtx.vout[k].scriptPubKey, whichType)) break; // unable to determine type, ignore output
+                  if (TX_PUBKEYHASH != whichType) break; // ignore non pay-to-pubkeyhash output
+
+                  string strSub = script_data[k].substr(2,16); // retrieve bytes 1-9 of packet for peek & decode comparison
+                  seq = (ParseHex(script_data[k].substr(0,2)))[0]; // retrieve sequence number
+
+                  if (("0000000000000001" == strSub) || ("0000000000000002" == strSub)) // peek & decode comparison
                   {
-                    strReference = address_data[r];
-                  }
-                }
-              }
-
-              // TODO: # on failure with 3 (non Exodus) outputs case, take non data/exodus to be the recipient
-              if (strReference.empty())
-              {
-              int count = 0;
-
-                fprintf(mp_fp, "%s() REF STILL EMPTY, data.size=%lu, line %d, file: %s\n", __FUNCTION__, script_data.size(), __LINE__, __FILE__);
-
-//                if (4 == script_data.size())
-                {
-                  for (unsigned int k = 0; k<script_data.size();k++)
-                  {
-                    fprintf(mp_fp, "%s():%s, line %d, file: %s\n", __FUNCTION__, address_data[k].c_str(), __LINE__, __FILE__);
-
-                    // BUG HERE, FIXME
-                    // strData is the script, not address !!!!!!!!!!!!!!!!!!!!
-                    if ((address_data[k] != strDataAddress) && (address_data[k] != exodus))
-                    {
-                      if (ExodusHighestValue == value_data[k])
+                      if (strScriptData.empty()) // confirm we have not already located a data address
                       {
-                        strReference = address_data[k];
-                        ++count;
+                          strScriptData = script_data[k].substr(2*1,2*PACKET_SIZE_CLASS_A); // populate data packet
+                          strDataAddress = address_data[k]; // record data address
+                          dataAddressSeq = seq; // record data address seq num for reference matching
+                          dataAddressValue = value_data[k]; // record data address amount for reference matching
+                          if (msc_debug3) fprintf(mp_fp, "Data Address located - data[%d]:%s: %s (%lu.%08lu)\n", k, script_data[k].c_str(), address_data[k].c_str(), value_data[k] / COIN, value_data[k] % COIN);
                       }
-                    }
+                      else
+                      {
+                          // invalidate - Class A cannot be more than one data packet - possible collision, treat as default (BTC payment)
+                          strDataAddress = ""; //empty strScriptData to block further parsing
+                          if (msc_debug3) fprintf(mp_fp, "Multiple Data Addresses found (collision?) Class A invalidated, defaulting to BTC payment\n");
+                          break;
+                      }
                   }
-                }
-                if (1 != count)
-                {
-                  fprintf(mp_fp, "%s() ERROR: MUST INVALIDATE HERE per Zathras 12 step algorithm, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
-                }
               }
-            }
 
-//            if (strDataAddress.empty() || strReference.empty())
-            if (strDataAddress.empty()) // Jun 19 
-            {
-            // this must be the BTC payment - validate (?)
-            // TODO
-            // ...
+              // Step 2, see if we can locate an address with a seqnum +1 of DataAddressSeq
+              if (!strDataAddress.empty()) // verify Step 1, we should now have a valid data packet, if so continue parsing
+              {
+                  unsigned char expectedRefAddressSeq = dataAddressSeq + 1;
+                  for (unsigned k = 0; k<script_data.size();k++) // loop through outputs
+                  {
+                      txnouttype whichType;
+                      if (!getOutputType(wtx.vout[k].scriptPubKey, whichType)) break; // unable to determine type, ignore output
+                      if (TX_PUBKEYHASH != whichType) break; // ignore non pay-to-pubkeyhash output
+
+                      seq = (ParseHex(script_data[k].substr(0,2)))[0]; // retrieve sequence number
+
+                      if ((address_data[k] != strDataAddress) && (address_data[k] != exodus) && (expectedRefAddressSeq == seq)) // found reference address with matching sequence number
+                      {
+                          if (strRefAddress.empty()) // confirm we have not already located a reference address
+                          {
+                              strRefAddress = address_data[k]; // set ref address
+                              if (msc_debug3) fprintf(mp_fp, "Reference Address located via seqnum - data[%d]:%s: %s (%lu.%08lu)\n", k, script_data[k].c_str(), address_data[k].c_str(), value_data[k] / COIN, value_data[k] % COIN);
+                          }
+                          else
+                          {
+                              // can't trust sequence numbers to provide reference address, there is a collision with >1 address with expected seqnum
+                              strRefAddress = ""; // blank ref address
+                              if (msc_debug3) fprintf(mp_fp, "Reference Address sequence number collision, will fall back to evaluating matching output amounts\n");
+                              break;
+                          }
+                      }
+                  }
+                  // Step 3, if we still don't have a reference address, see if we can locate an address with matching output amounts
+                  if (strRefAddress.empty())
+                  {
+                      for (unsigned k = 0; k<script_data.size();k++) // loop through outputs
+                      {
+                          txnouttype whichType;
+                          if (!getOutputType(wtx.vout[k].scriptPubKey, whichType)) break; // unable to determine type, ignore output
+                          if (TX_PUBKEYHASH != whichType) break; // ignore non pay-to-pubkeyhash output
+
+                          if ((address_data[k] != strDataAddress) && (address_data[k] != exodus) && (dataAddressValue == value_data[k])) // this output matches data output, check if matches exodus output
+                          {
+                              for (int exodus_idx=0;exodus_idx<marker_count;exodus_idx++)
+                              {
+                                  if (value_data[k] == ExodusValues[exodus_idx]) //this output matches data address value and exodus address value, choose as ref
+                                  {
+                                       if (strRefAddress.empty())
+                                       {
+                                           strRefAddress = address_data[k];
+                                           if (msc_debug3) fprintf(mp_fp, "Reference Address located via matching amounts - data[%d]:%s: %s (%lu.%08lu)\n", k, script_data[k].c_str(), address_data[k].c_str(), value_data[k] / COIN, value_data[k] % COIN);
+                                       }
+                                       else
+                                       {
+                                           strRefAddress = "";
+                                           if (msc_debug3) fprintf(mp_fp, "Reference Address collision, multiple potential candidates. Class A invalidated, defaulting to BTC payment\n");
+                                           break;
+                                       }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              } // end if (!strDataAddress.empty())
+
+              // Populate expected var strReference with chosen address (if not empty)
+              if (!strRefAddress.empty()) strReference=strRefAddress;
+
+              // Last validation step, if strRefAddress is empty, blank strDataAddress so we default to BTC payment
+              if (strRefAddress.empty()) strDataAddress="";
+
+              // -------------------------------- End Class A parsing -------------------------
+
+              if (strDataAddress.empty()) // an empty Data Address here means it is not Class A valid and should be defaulted to a BTC payment
+              {
+              // this must be the BTC payment - validate (?)
+              // TODO
+              // ...
               if (msc_debug2 || msc_debug4) fprintf(mp_fp, "\n================BLOCK: %d======\ntxid: %s\n", nBlock, wtx.GetHash().GetHex().c_str());
               fprintf(mp_fp, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
               fprintf(mp_fp, "sender: %s , receiver: %s\n", strSender.c_str(), strReference.c_str());
               fprintf(mp_fp, "!!!!!!!!!!!!!!!!! this may be the BTC payment for an offer !!!!!!!!!!!!!!!!!!!!!!!!\n");
 
-            // TODO collect all payments made to non-itself & non-exodus and their amounts -- these may be purchases!!!
+              // TODO collect all payments made to non-itself & non-exodus and their amounts -- these may be purchases!!!
 
               int count = 0;
               // go through the outputs, once again...
@@ -1594,7 +1603,7 @@ uint64_t txFee = 0;
                 for (unsigned int i = 0; i < wtx.vout.size(); i++)
                 {
                 CTxDestination dest;
-    
+
                   if (ExtractDestination(wtx.vout[i].scriptPubKey, dest))
                   {
                   const string strAddress = CBitcoinAddress(dest).ToString();

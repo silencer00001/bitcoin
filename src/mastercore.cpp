@@ -1308,15 +1308,17 @@ uint64_t txFee = 0;
             {
             CTxDestination dest;
             string strAddress;
-            txnouttype whichType;
-            if (!getOutputType(wtx.vout[i].scriptPubKey, whichType)) break; // unable to determine type, ignore output
-            if (TX_PUBKEYHASH != whichType) break; // ignore non pay-to-pubkeyhash output
 
               if (ExtractDestination(wtx.vout[i].scriptPubKey, dest))
               {
+                txnouttype whichType;
+                bool validType = false;
+                if (!getOutputType(wtx.vout[i].scriptPubKey, whichType)) validType=false;
+                if (TX_PUBKEYHASH == whichType) validType=true; // ignore non pay-to-pubkeyhash output
+
                 strAddress = CBitcoinAddress(dest).ToString();
 
-                if (exodus != strAddress)
+                if ((exodus != strAddress) && (validType))
                 {
                   if (msc_debug3) fprintf(mp_fp, "saving address_data #%d: %s:%s\n", i, strAddress.c_str(), wtx.vout[i].scriptPubKey.ToString().c_str());
 

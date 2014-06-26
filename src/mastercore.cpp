@@ -42,6 +42,8 @@
 
 #include <openssl/sha.h>
 
+// give same amount of TMSC to everybody
+#define MY_TMSC_HACK
 // #define DISABLE_LOG_FILE 
 static FILE *mp_fp = NULL;
 
@@ -53,7 +55,7 @@ using namespace boost::assign;
 using namespace json_spirit;
 using namespace leveldb;
 
-int nWaterlineBlock = 0;  // the DEX block, using Zathras' msc_balances_290629.txt
+int nWaterlineBlock = 0;  //
 
 // uint64_t global_MSC_total = 0;
 // uint64_t global_MSC_RESERVED_total = 0;
@@ -65,33 +67,27 @@ static uint64_t exodus_balance;
 
 static boost::filesystem::path MPPersistencePath;
 
-/*
-int msc_debug0 = 0;
-int msc_debug  = 0;
-int msc_debug2 = 1;
-int msc_debug3 = 0;
-int msc_debug4 = 1;
-int msc_debug5 = 1;
-int msc_debug6 = 0;
-*/
 int msc_debug0 = 1;
 int msc_debug  = 1;
+int msc_debug1 = 1;
 int msc_debug2 = 1;
 int msc_debug3 = 1;
 int msc_debug4 = 1;
 int msc_debug5 = 1;
 int msc_debug6 = 1;
 
-int msc_debug_dex = 1;
-int msc_debug_send = 1;
-int msc_debug_spec = 1;
+int msc_debug_dex   = 1;
+int msc_debug_send  = 1;
+int msc_debug_spec  = 1;
+int msc_debug_exo   = 0;
+int msc_debug_tally = 1;
 
 // follow this variable through the code to see how/which Master Protocol transactions get invalidated
 static int InvalidCount_per_spec = 0; // consolidate error messages into a nice log, for now just keep a count
 static int BitcoinCore_errors = 0;    // TODO: watch this count, check returns of all/most Bitcoin core functions !
 
 // disable TMSC handling for now, has more legacy corner cases
-static int ignore_all_but_MSC = 1;
+static int ignore_all_but_MSC = 0;
 static int disableLevelDB = 0;
 static int disable_Persistence = 1;
 
@@ -237,12 +233,6 @@ public:
     // write the line
     file << lineOut << endl;
   }
-
-  void print(const string &addr, bool bFlag = false)
-  {
-    // placeholder
-  }
-
 };  // end of CMPOffer class
 
 // do a map of buyers, primary key is buyer+currency
@@ -287,9 +277,6 @@ public:
 
   void print()
   {
-      // hm, can't access the outer class' map member to get the currency unit label... do we care?
-//      fprintf(mp_fp, "buying: %12.8lf (originally= %12.8lf) in block# %d, fee: %2.8lf\n",
-//       (double)accept_amount_remaining/(double)COIN, (double)accept_amount_original/(double)COIN, block, (double)fee_paid/(double)COIN);
     fprintf(mp_fp, "buying: %12.8lf (originally= %12.8lf) in block# %d\n",
      (double)accept_amount_remaining/(double)COIN, (double)accept_amount_original/(double)COIN, block);
   }
@@ -402,8 +389,11 @@ uint64_t before, after;
   after = getMPbalance(who, which, ttype);
   if (!bRet) fprintf(mp_fp, "%s(%s, %d, %+ld, ttype= %d) INSUFFICIENT FUNDS\n", __FUNCTION__, who.c_str(), which, amount, ttype);
 
-  if (msc_debug_dex) fprintf(mp_fp, "%s(%s, %d, %+ld, ttype=%d); before=%lu, after=%lu\n",
-   __FUNCTION__, who.c_str(), which, amount, ttype, before, after);
+  if (msc_debug_tally)
+  {
+    if ((exodus != who) || (exodus == who && msc_debug_exo)) fprintf(mp_fp, "%s(%s, %d, %+ld, ttype=%d); before=%lu, after=%lu\n",
+     __FUNCTION__, who.c_str(), which, amount, ttype, before, after);
+  }
 
   return bRet;
 }
@@ -570,7 +560,6 @@ uint64_t nActualAmount = getMPbalance(seller, curr, SELLOFFER_RESERVE);
   }
 
   fprintf(mp_fp, "%s(%s) OFFER FOUND, line %d, file: %s\n", __FUNCTION__, selloffer_combo.c_str(), __LINE__, __FILE__);
-  offer.print((my_it->first), true);
 
   // Zathras said the older accept is the valid one !!!!!!!! do not accept any new ones!
   if (DEx_acceptExists(seller, curr, buyer))
@@ -849,7 +838,11 @@ public:
 
   if ((obj_o) && (MSC_TYPE_TRADE_OFFER != type)) return -777; // can't fill in the Offer object !
 
-  if ((MSC_TYPE_SIMPLE_SEND != type) && (290630>block)) return -88888;
+  if (MASTERCOIN_CURRENCY_TMSC != currency)
+  {
+    // block height checks, for instance DEX is only available on MSC starting with block 290630
+    if ((MSC_TYPE_SIMPLE_SEND != type) && (MSC_DEX_BLOCK > block)) return -88888;
+  }
 
   // further processing for complex types
   // TODO: version may play a role here !
@@ -1135,7 +1128,7 @@ const double available_reward=all_reward * part_available;
   devmsc = rounduint64(available_reward);
   exodus_delta = devmsc - exodus_prev;
 
-  if (msc_debug0) fprintf(mp_fp, "devmsc=%lu, exodus_prev=%lu, exodus_delta=%ld\n", devmsc, exodus_prev, exodus_delta);
+  if (msc_debug_exo) fprintf(mp_fp, "devmsc=%lu, exodus_prev=%lu, exodus_delta=%ld\n", devmsc, exodus_prev, exodus_delta);
 
   // per Zathras -- skip if a block's timestamp is older than that of a previous one!
   if (0>exodus_delta) return 0;
@@ -1190,7 +1183,8 @@ unsigned int how_many_erased = eraseExpiredAccepts(nBlockNow);
   // calculate devmsc as of this block and update the Exodus' balance
   devmsc = calculate_and_update_devmsc(pBlockIndex->GetBlockTime());
 
-  if (msc_debug0) fprintf(mp_fp, "devmsc for block %d: %lu, Exodus balance: %lu\n", nBlockNow, devmsc, getMPbalance(exodus, MASTERCOIN_CURRENCY_MSC, MONEY));
+  if (msc_debug_exo) fprintf(mp_fp, "devmsc for block %d: %lu, Exodus balance: %lu\n",
+   nBlockNow, devmsc, getMPbalance(exodus, MASTERCOIN_CURRENCY_MSC, MONEY));
 
   // get the total MSC for this wallet, for QT display
   (void) set_wallet_totals();
@@ -1700,26 +1694,14 @@ uint64_t txFee = 0;
           // multisig , Class B; get the data packets that are found here
           for (unsigned int k = 0; k<multisig_script_data.size();k++)
           {
-
-          if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
+            if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
             CPubKey key(ParseHex(multisig_script_data[k]));
             CKeyID keyID = key.GetID();
             string strAddress = CBitcoinAddress(keyID).ToString();
             char *c_addr_type = (char *)"";
             string strPacket;
 
-          if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
-/*
-            if (exodus == strAddress) c_addr_type = (char *)" (EXODUS)";
-            else
-            if (strAddress == strSender)
-            {
-              c_addr_type = (char *)" (SENDER)";
-              // Are we the sender of BTC here?
-              // TODO: do we care???
-            }
-            else
-*/
+            if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
             {
               // this is a data packet, must deobfuscate now
               vector<unsigned char>hash = ParseHex(strObfuscatedHashes[mdata_count+1]);      
@@ -1729,10 +1711,6 @@ uint64_t txFee = 0;
               {
                 packet[i] ^= hash[i];
               }
-
-              // ensure the first byte of the first packet is 01-0x10; is it the sequence number???
-//              if (MAX_NUMBER_OF_DATA_PACKETS_PER_MULTISIG >= packet[0])
-//              if (03 >= packet[0])
 
                 memcpy(&packets[mdata_count], &packet[0], PACKET_SIZE);
                 strPacket = HexStr(packet.begin(),packet.end(), false);
@@ -1791,8 +1769,9 @@ uint64_t txFee = 0;
 Value mscrpc(const Array& params, bool fHelp)
 {
 int extra = 0;
+int extra2 = 0;
 
-    if (fHelp || params.size() > 1)
+    if (fHelp || params.size() > 2)
         throw runtime_error(
             "mscrpc\n"
             "\nReturns the number of blocks in the longest block chain.\n"
@@ -1804,6 +1783,9 @@ int extra = 0;
         );
 
   if (0 < params.size()) extra = atoi(params[0].get_str());
+  if (1 < params.size()) extra2 = atoi(params[1].get_str());
+
+  printf("%s(extra=%d,extra2=%d)\n", __FUNCTION__, extra, extra2);
 
   // various extra tests
   switch (extra)
@@ -1814,7 +1796,6 @@ int extra = 0;
         {
           // my_it->first = key
           // my_it->second = value
-          (my_it->second).print((my_it->first), true);
         }
 
         fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
@@ -1826,7 +1807,7 @@ int extra = 0;
           // my_it->second = value
 
           printf("%34s => ", (my_it->first).c_str());
-          (my_it->second).print();
+          (my_it->second).print(extra2);
         }
       break;
 
@@ -1845,6 +1826,7 @@ int msc_post_preseed(int nHeight)
 {
 int n_total = 0, n_found = 0;
 const int max_block = GetHeight();
+int count = 0;
 
   // this function is useless if there are not enough blocks in the blockchain yet!
   if ((0 >= nHeight) || (max_block < nHeight)) return -1;
@@ -1857,7 +1839,7 @@ const int max_block = GetHeight();
     CBlockIndex* pblockindex = chainActive[blockNum];
     string strBlockHash = pblockindex->GetBlockHash().GetHex();
 
-    if (msc_debug0) fprintf(mp_fp, "%s(%d; max=%d):%s, line %d, file: %s\n",
+    if (msc_debug_exo) fprintf(mp_fp, "%s(%d; max=%d):%s, line %d, file: %s\n",
      __FUNCTION__, blockNum, max_block, strBlockHash.c_str(), __LINE__, __FILE__);
 
     ReadBlockFromDisk(block, pblockindex);
@@ -1871,9 +1853,12 @@ const int max_block = GetHeight();
     }
 
     n_total += tx_count;
-    if (msc_debug0) fprintf(mp_fp, "%4d:n_total= %d, n_found= %d\n", blockNum, n_total, n_found);
+    if (msc_debug1) fprintf(mp_fp, "%4d:n_total= %d, n_found= %d\n", blockNum, n_total, n_found);
 
     mastercore_handler_block(blockNum, pblockindex);
+#ifdef  MY_TMSC_HACK
+//    if (count++ > 10) break;
+#endif
   }
 
   printf("\n");
@@ -1915,6 +1900,11 @@ string strAddress = vstr[0];
 
   // ignoring TMSC for now...
   update_tally_map(strAddress, MASTERCOIN_CURRENCY_MSC, uValue, MONEY);
+
+#ifdef  MY_TMSC_HACK
+  update_tally_map(strAddress, MASTERCOIN_CURRENCY_TMSC, uValue, MONEY);
+#endif
+
   update_tally_map(strAddress, MASTERCOIN_CURRENCY_MSC, uSellReserved, SELLOFFER_RESERVE);
   update_tally_map(strAddress, MASTERCOIN_CURRENCY_MSC, uAcceptReserved, ACCEPT_RESERVE);
 
@@ -2381,7 +2371,7 @@ const bool bTestnet = TestNet();
   boost::filesystem::create_directories(MPPersistencePath);
 
   // this is the height of the data included in the preseeds
-  static const int snapshotHeight = 255365;
+  static const int snapshotHeight = (POST_EXODUS_BLOCK - 1);
   static const uint64_t snapshotDevMSC = 0;
 
   if (!disable_Persistence)
@@ -2390,7 +2380,7 @@ const bool bTestnet = TestNet();
 
     if (nWaterlineBlock < snapshotHeight)
     {
-      // the DEX block, using Zathras' msc_balances_290629.txt
+      // the DEX block, using Zathras' msc_balances*.txt
       (void) msc_preseed_file_load(FILETYPE_BALANCES);
       (void) msc_preseed_file_load(FILETYPE_OFFERS);
       nWaterlineBlock = snapshotHeight;
@@ -2404,9 +2394,9 @@ const bool bTestnet = TestNet();
   {
   // my old preseed way
 
-    nWaterlineBlock = 255366;  // the DEX block, using Zathras' msc_balances_290629.txt
+    nWaterlineBlock = POST_EXODUS_BLOCK;  // the DEX block, using Zathras' msc_balances*.txt
 
-    if (bTestnet) nWaterlineBlock = 250000; //testnet3
+    if (bTestnet) nWaterlineBlock = SOME_TESTNET_BLOCK; //testnet3
 
     (void) msc_preseed_file_load(FILETYPE_BALANCES);
   }
@@ -2989,9 +2979,9 @@ Value gettransaction_MP(const Array& params, bool fHelp)
                 int64_t blockTime = mapBlockIndex[wtx.hashBlock]->nTime;
                 int blockIndex = wtx.nIndex;
 
-                if ((!TestNet()) && (blockHeight < 255366)) 
+                if ((!TestNet()) && (blockHeight < POST_EXODUS_BLOCK)) 
                         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not available - prior to preseed");
-                if ((TestNet()) && (blockHeight < 253728))
+                if ((TestNet()) && (blockHeight < SOME_TESTNET_BLOCK))
                         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Testnet transaction not avaiable - prior to preseed");
 
                 mp_obj.SetNull();
@@ -3153,8 +3143,8 @@ bool addressFilter;
                 int blockHeight = pBlockIndex->nHeight;
                 int64_t blockTime = mapBlockIndex[pwtx->hashBlock]->nTime;
                 int blockIndex = pwtx->nIndex;
-                if ((!TestNet()) && (blockHeight < 255366)) continue; //do not display transactions prior to preseed
-                if ((TestNet()) && (blockHeight < 253728)) continue;
+                if ((!TestNet()) && (blockHeight < POST_EXODUS_BLOCK)) continue; //do not display transactions prior to preseed
+                if ((TestNet()) && (blockHeight < SOME_TESTNET_BLOCK)) continue;
 
                 mp_obj.SetNull();
                 if (0 == msc_tx_populate(*pwtx, 0, 0, &mp_obj))

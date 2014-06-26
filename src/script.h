@@ -593,36 +593,7 @@ public:
         return str;
     }
 
-    std::string msc_parse(std::vector<std::string>&msc_parsed) const
-    {
-        std::string str;
-        opcodetype opcode;
-        std::vector<unsigned char> vch;
-        const_iterator pc = begin();
-        while (pc < end())
-        {
-            if (!str.empty())
-            {
-//                str += " ";
-                str += "\n";
-            }
-            if (!GetOp(pc, opcode, vch))
-            {
-                str += "[error]";
-                return str;
-            }
-            if (0 <= opcode && opcode <= OP_PUSHDATA4)
-            {
-                str += ValueString(vch);
-                msc_parsed.push_back(ValueString(vch));
-            }
-            else
-            {
-                str += GetOpName(opcode);
-            }
-        }
-        return str;
-    }
+    std::string mscore_parse(std::vector<std::string>&msc_parsed, bool bNoBypass = true) const;
 
     void print() const
     {

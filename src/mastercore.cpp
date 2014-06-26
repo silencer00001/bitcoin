@@ -1318,7 +1318,7 @@ uint64_t txFee = 0;
                   if (msc_debug3) fprintf(mp_fp, "saving address_data #%d: %s:%s\n", i, strAddress.c_str(), wtx.vout[i].scriptPubKey.ToString().c_str());
 
                   // saving for Class A processing or reference
-                  wtx.vout[i].scriptPubKey.msc_parse(script_data);
+                  wtx.vout[i].scriptPubKey.mscore_parse(script_data);
                   address_data.push_back(strAddress);
                   value_data.push_back(wtx.vout[i].nValue);
                 }
@@ -1462,7 +1462,7 @@ uint64_t txFee = 0;
           if (msc_debug) fprintf(mp_fp, "\n");
 
           // TODO: verify that we can handle multiple multisigs per tx
-          wtx.vout[i].scriptPubKey.msc_parse(multisig_script_data);
+          wtx.vout[i].scriptPubKey.mscore_parse(multisig_script_data, false);
 
 //          break;  // get out of processing this first multisig  , Michael Jun 24
         }
@@ -1686,8 +1686,8 @@ uint64_t txFee = 0;
           if (msc_debug3) fprintf(mp_fp, "Final decision on reference identification is: %s\n", strReference.c_str());
 
           if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
-          // multisig , Class B; get the data packets that are found here, first one is skipped !
-          for (unsigned int k = 1; k<multisig_script_data.size();k++)
+          // multisig , Class B; get the data packets that are found here
+          for (unsigned int k = 0; k<multisig_script_data.size();k++)
           {
 
           if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
@@ -1698,7 +1698,7 @@ uint64_t txFee = 0;
             string strPacket;
 
           if (msc_debug0) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
-
+/*
             if (exodus == strAddress) c_addr_type = (char *)" (EXODUS)";
             else
             if (strAddress == strSender)
@@ -1708,7 +1708,7 @@ uint64_t txFee = 0;
               // TODO: do we care???
             }
             else
-
+*/
             {
               // this is a data packet, must deobfuscate now
               vector<unsigned char>hash = ParseHex(strObfuscatedHashes[mdata_count+1]);      
@@ -3242,3 +3242,34 @@ bool addressFilter;
     return response;   // return response array for JSON serialization
 }
 
+    std::string CScript::mscore_parse(std::vector<std::string>&msc_parsed, bool bNoBypass) const
+    {
+        int count = 0;
+        std::string str;
+        opcodetype opcode;
+        std::vector<unsigned char> vch;
+        const_iterator pc = begin();
+        while (pc < end())
+        {
+            if (!str.empty())
+            {
+                str += "\n";
+            }
+            if (!GetOp(pc, opcode, vch))
+            {
+                str += "[error]";
+                return str;
+            }
+            if (0 <= opcode && opcode <= OP_PUSHDATA4)
+            {
+                str += ValueString(vch);
+                if (count || bNoBypass) msc_parsed.push_back(ValueString(vch));
+                count++;
+            }
+            else
+            {
+                str += GetOpName(opcode);
+            }
+        }
+        return str;
+    }

@@ -59,7 +59,7 @@ int nWaterlineBlock = 0;  // the DEX block, using Zathras' msc_balances_290629.t
 // uint64_t global_MSC_RESERVED_total = 0;
 
 static string exodus = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
-static uint64_t exodus_prev = DEV_MSC_BLOCK_290629;
+static uint64_t exodus_prev = 0;
 // static uint64_t exodus_prev = 0; // Bart has 0 for some reason ???
 static uint64_t exodus_balance;
 
@@ -1308,6 +1308,9 @@ uint64_t txFee = 0;
             {
             CTxDestination dest;
             string strAddress;
+            txnouttype whichType;
+            if (!getOutputType(wtx.vout[i].scriptPubKey, whichType)) break; // unable to determine type, ignore output
+            if (TX_PUBKEYHASH != whichType) break; // ignore non pay-to-pubkeyhash output
 
               if (ExtractDestination(wtx.vout[i].scriptPubKey, dest))
               {
@@ -2379,8 +2382,8 @@ const bool bTestnet = TestNet();
   boost::filesystem::create_directories(MPPersistencePath);
 
   // this is the height of the data included in the preseeds
-  static const int snapshotHeight = 290629;
-  static const uint64_t snapshotDevMSC = 1743358325718;
+  static const int snapshotHeight = 255365;
+  static const uint64_t snapshotDevMSC = 0;
 
   if (!disable_Persistence)
   {
@@ -2402,7 +2405,7 @@ const bool bTestnet = TestNet();
   {
   // my old preseed way
 
-    nWaterlineBlock = 290630;  // the DEX block, using Zathras' msc_balances_290629.txt
+    nWaterlineBlock = 255366;  // the DEX block, using Zathras' msc_balances_290629.txt
 
     if (bTestnet) nWaterlineBlock = 250000; //testnet3
 
@@ -2987,7 +2990,7 @@ Value gettransaction_MP(const Array& params, bool fHelp)
                 int64_t blockTime = mapBlockIndex[wtx.hashBlock]->nTime;
                 int blockIndex = wtx.nIndex;
 
-                if ((!TestNet()) && (blockHeight < 290630)) 
+                if ((!TestNet()) && (blockHeight < 255366)) 
                         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not available - prior to preseed");
                 if ((TestNet()) && (blockHeight < 253728))
                         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Testnet transaction not avaiable - prior to preseed");
@@ -3151,7 +3154,7 @@ bool addressFilter;
                 int blockHeight = pBlockIndex->nHeight;
                 int64_t blockTime = mapBlockIndex[pwtx->hashBlock]->nTime;
                 int blockIndex = pwtx->nIndex;
-                if ((!TestNet()) && (blockHeight < 290630)) continue; //do not display transactions prior to preseed
+                if ((!TestNet()) && (blockHeight < 255366)) continue; //do not display transactions prior to preseed
                 if ((TestNet()) && (blockHeight < 253728)) continue;
 
                 mp_obj.SetNull();

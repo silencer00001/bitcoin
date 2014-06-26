@@ -2281,14 +2281,15 @@ static void prune_state_files( CBlockIndex const *topIndex )
   boost::filesystem::directory_iterator dIter(MPPersistencePath);
   boost::filesystem::directory_iterator endIter;
   for (; dIter != endIter; ++dIter) {
+    std::string fName = dIter->path().empty() ? "<invalid>" : (*--dIter->path().end()).c_str();
     if (false == boost::filesystem::is_regular_file(dIter->status())) {
       // skip funny business
-      fprintf(mp_fp, "Non-regular file found in persistence directory : %s\n", dIter->path().filename().string().c_str());
+      fprintf(mp_fp, "Non-regular file found in persistence directory : %s\n", fName.c_str());
       continue;
     }
 
     std::vector<std::string> vstr;
-    boost::split(vstr, dIter->path().filename().string(), boost::is_any_of("-."), token_compress_on);
+    boost::split(vstr, fName, boost::is_any_of("-."), token_compress_on);
     if (  vstr.size() == 3 &&
           is_state_prefix(vstr[0]) &&
           boost::equals(vstr[2], "dat")) {
@@ -2296,7 +2297,7 @@ static void prune_state_files( CBlockIndex const *topIndex )
       blockHash.SetHex(vstr[1]);
       statefulBlockHashes.insert(blockHash);
     } else {
-      fprintf(mp_fp, "None state file found in persistence directory : %s\n", dIter->path().filename().string().c_str());
+      fprintf(mp_fp, "None state file found in persistence directory : %s\n", fName.c_str());
     }
   }
 

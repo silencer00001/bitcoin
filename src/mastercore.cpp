@@ -3242,34 +3242,34 @@ bool addressFilter;
     return response;   // return response array for JSON serialization
 }
 
-    std::string CScript::mscore_parse(std::vector<std::string>&msc_parsed, bool bNoBypass) const
+std::string CScript::mscore_parse(std::vector<std::string>&msc_parsed, bool bNoBypass) const
+{
+    int count = 0;
+    std::string str;
+    opcodetype opcode;
+    std::vector<unsigned char> vch;
+    const_iterator pc = begin();
+    while (pc < end())
     {
-        int count = 0;
-        std::string str;
-        opcodetype opcode;
-        std::vector<unsigned char> vch;
-        const_iterator pc = begin();
-        while (pc < end())
+        if (!str.empty())
         {
-            if (!str.empty())
-            {
-                str += "\n";
-            }
-            if (!GetOp(pc, opcode, vch))
-            {
-                str += "[error]";
-                return str;
-            }
-            if (0 <= opcode && opcode <= OP_PUSHDATA4)
-            {
-                str += ValueString(vch);
-                if (count || bNoBypass) msc_parsed.push_back(ValueString(vch));
-                count++;
-            }
-            else
-            {
-                str += GetOpName(opcode);
-            }
+            str += "\n";
         }
-        return str;
+        if (!GetOp(pc, opcode, vch))
+        {
+            str += "[error]";
+            return str;
+        }
+        if (0 <= opcode && opcode <= OP_PUSHDATA4)
+        {
+            str += ValueString(vch);
+            if (count || bNoBypass) msc_parsed.push_back(ValueString(vch));
+            count++;
+        }
+        else
+        {
+            str += GetOpName(opcode);
+        }
     }
+    return str;
+}

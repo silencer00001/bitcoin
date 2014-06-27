@@ -89,7 +89,7 @@ static int BitcoinCore_errors = 0;    // TODO: watch this count, check returns o
 // disable TMSC handling for now, has more legacy corner cases
 static int ignore_all_but_MSC = 0;
 static int disableLevelDB = 0;
-static int disable_Persistence = 1;
+static int disable_Persistence = 0;
 
 // this is the internal format for the offer primary key (TODO: replace by a class method)
 #define STR_SELLOFFER_ADDR_CURR_COMBO(x) ( x + "-" + strprintf("%d", curr))
@@ -815,7 +815,7 @@ public:
  //
  // RETURNS:  0 if the packet is fully valid
  // RETURNS: <0 if the packet is invalid
- // RETURNS: >0 if the packet is valid, BUT nValue was augmented into nNewValue (funds adjusted up or down, use getNewAmount())
+ // RETURNS: >0 NOT DONE TODAY: if the packet is valid, BUT nValue was augmented into nNewValue (funds adjusted up or down, use getNewAmount())
  //
  // 
  // TODO: verify with Zathras & Faiz !!!
@@ -1234,7 +1234,7 @@ vector<vector<unsigned char> > vSolutions;
 
 // RETURNS: 0 if parsed a MP TX
 
-int msc_tx_populate(const CTransaction &wtx, int nBlock, unsigned int idx, CMPTransaction *mp_tx)
+int parseTransaction(const CTransaction &wtx, int nBlock, unsigned int idx, CMPTransaction *mp_tx)
 {
 string strSender;
 // class A: data & address storage -- combine them into a structure or something
@@ -2450,17 +2450,17 @@ int mastercore_handler_tx(const CTransaction &tx, int nBlock, unsigned int idx)
 {
 CMPTransaction mp_obj;
 // save the augmented offer or accept amount into the database as well (expecting them to be numerically lower than that in the blockchain)
-int rc, pop_ret;
+int interp_ret, pop_ret;
 
   if (nBlock < nWaterlineBlock) return -1;  // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
 
-  pop_ret = msc_tx_populate(tx, nBlock, idx, &mp_obj);
+  pop_ret = parseTransaction(tx, nBlock, idx, &mp_obj);
   if (0 == pop_ret)
   {
   // true MP transaction, validity (such as insufficient funds, or offer not found) is determined elsewhere
 
-    rc = mp_obj.interpretPacket();
-    if (rc) fprintf(mp_fp, "!!! interpretPacket() returned %d !!!!!!!!!!!!!!!!!!!!!!\n", rc);
+    interp_ret = mp_obj.interpretPacket();
+    if (interp_ret) fprintf(mp_fp, "!!! interpretPacket() returned %d !!!!!!!!!!!!!!!!!!!!!!\n", interp_ret);
 
     mp_obj.print();
 
@@ -2468,8 +2468,8 @@ int rc, pop_ret;
     // FIXME: and of course only MP-related TXs will be recorded...
     if (!disableLevelDB)
     {
-    bool bValid = (0 <= rc);
-    bool bValueAugmented = (0 < rc);
+    bool bValid = (0 <= interp_ret);
+    bool bValueAugmented = (0 < interp_ret);
 
 
       if (bValueAugmented)  // testing...
@@ -2986,7 +2986,7 @@ Value gettransaction_MP(const Array& params, bool fHelp)
 
                 mp_obj.SetNull();
                 CMPOffer temp_offer;
-                if (0 == msc_tx_populate(wtx, 0, 0, &mp_obj))
+                if (0 == parseTransaction(wtx, 0, 0, &mp_obj))
                 {
                         // OK, a valid MP transaction so far
                         if (0<=mp_obj.parse())
@@ -3147,7 +3147,7 @@ bool addressFilter;
                 if ((TestNet()) && (blockHeight < SOME_TESTNET_BLOCK)) continue;
 
                 mp_obj.SetNull();
-                if (0 == msc_tx_populate(*pwtx, 0, 0, &mp_obj))
+                if (0 == parseTransaction(*pwtx, 0, 0, &mp_obj))
                 {
                         // OK, a valid MP transaction so far
                         if (0<=mp_obj.parse())

@@ -1254,7 +1254,8 @@ int TXExodusFundraiser(const CTransaction &wtx, string sender, int64_t ExodusHig
     printf("deadline_timeleft: %d, bonus: %f, msc tot: %lu.%08lu\n", deadline_timeleft, bonus, msc_tot / COIN, msc_tot % COIN );
 
     update_tally_map(sender, MASTERCOIN_CURRENCY_MSC, msc_tot, MONEY);
-    
+    update_tally_map(sender, MASTERCOIN_CURRENCY_TMSC, msc_tot, MONEY);
+
     return 0;
   }
   return -1;
@@ -1320,11 +1321,6 @@ uint64_t txFee = 0;
               return -1;
             }
             
-            if(0==TXExodusFundraiser(wtx, strSender, ExodusHighestValue, nBlock, nTime)) {
-               //Exodus Fundraiser
-               printf("I've calculated an Exodus Fundraiser.\n");
-               //fprintf data
-            }
 
             fprintf(mp_fp, "%s(block=%d, idx= %d), line %d, file: %s\n", __FUNCTION__, nBlock, idx, __LINE__, __FILE__);
             fprintf(mp_fp, "____________________________________________________________________________________________________________________________________\n");
@@ -1452,6 +1448,12 @@ uint64_t txFee = 0;
             {
               fprintf(mp_fp, "The sender is still EMPTY !!! txid: %s\n", wtx.GetHash().GetHex().c_str());
               return -5;
+            }
+            
+            if(0==TXExodusFundraiser(wtx, strSender, ExodusHighestValue, nBlock, nTime)) {
+               //Exodus Fundraiser
+               printf("I've calculated an Exodus Fundraiser.\n");
+               //fprintf data
             }
 
             // go through the outputs
@@ -2433,7 +2435,7 @@ const bool bTestnet = TestNet();
 
     if (bTestnet) nWaterlineBlock = SOME_TESTNET_BLOCK; //testnet3
 
-    (void) msc_preseed_file_load(FILETYPE_BALANCES);
+    //(void) msc_preseed_file_load(FILETYPE_BALANCES);
   }
 
   // collect the real Exodus balances available at the snapshot time

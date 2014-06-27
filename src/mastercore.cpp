@@ -91,6 +91,8 @@ static int ignore_all_but_MSC = 0;
 static int disableLevelDB = 0;
 static int disable_Persistence = 0;
 
+static bool mastercoreInitialized = false;
+
 // this is the internal format for the offer primary key (TODO: replace by a class method)
 #define STR_SELLOFFER_ADDR_CURR_COMBO(x) ( x + "-" + strprintf("%d", curr))
 #define STR_ACCEPT_ADDR_CURR_ADDR_COMBO( _seller , _buyer ) ( _seller + "-" + strprintf("%d", curr) + "+" + _buyer)
@@ -1171,6 +1173,9 @@ const unsigned int currency = MASTERCOIN_CURRENCY_MSC;  // FIXME: hard-coded for
 // it performs cleanup and other functions
 int mastercore_handler_block(int nBlockNow, CBlockIndex const * pBlockIndex)
 {
+  if (!mastercoreInitialized) {
+    return 0;
+  }
 // for every new received block must do:
 // 1) remove expired entries from the accept list (per spec accept entries are valid until their blocklimit expiration; because the customer can keep paying BTC for the offer in several installments)
 // 2) update the amount in the Exodus address
@@ -2421,6 +2426,7 @@ const bool bTestnet = TestNet();
   exodus_balance = getMPbalance(exodus, MASTERCOIN_CURRENCY_MSC, MONEY);
   printf("Exodus balance: %lu\n", exodus_balance);
 
+  mastercoreInitialized = true;
   return 0;
 }
 
@@ -2448,6 +2454,10 @@ int mastercore_shutdown()
 // this is called for every new transaction that comes in (actually in block parsing loop)
 int mastercore_handler_tx(const CTransaction &tx, int nBlock, unsigned int idx)
 {
+  if (!mastercoreInitialized) {
+    return 0;
+  }
+
 CMPTransaction mp_obj;
 // save the augmented offer or accept amount into the database as well (expecting them to be numerically lower than that in the blockchain)
 int interp_ret, pop_ret;

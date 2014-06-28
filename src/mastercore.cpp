@@ -91,7 +91,7 @@ static int ignore_all_but_MSC = 0;
 static int disableLevelDB = 0;
 static int disable_Persistence = 0;
 
-static bool mastercoreInitialized = false;
+static int mastercoreInitialized = 0;
 
 // this is the internal format for the offer primary key (TODO: replace by a class method)
 #define STR_SELLOFFER_ADDR_CURR_COMBO(x) ( x + "-" + strprintf("%d", curr))
@@ -1169,7 +1169,7 @@ const unsigned int currency = MASTERCOIN_CURRENCY_MSC;  // FIXME: hard-coded for
   return (my_addresses_count);
 }
 
-int mastercore_init();
+int mastercore_init(void);
 
 // called once per block
 // it performs cleanup and other functions
@@ -1833,7 +1833,6 @@ int msc_post_preseed(int nHeight)
 {
 int n_total = 0, n_found = 0;
 const int max_block = GetHeight();
-int count = 0;
 
   // this function is useless if there are not enough blocks in the blockchain yet!
   if ((0 >= nHeight) || (max_block < nHeight)) return -1;
@@ -1863,9 +1862,6 @@ int count = 0;
     if (msc_debug1) fprintf(mp_fp, "%4d:n_total= %d, n_found= %d\n", blockNum, n_total, n_found);
 
     mastercore_handler_block(blockNum, pblockindex);
-#ifdef  MY_TMSC_HACK
-//    if (count++ > 10) break;
-#endif
   }
 
   printf("\n");
@@ -2381,6 +2377,8 @@ const bool bTestnet = TestNet();
   static const int snapshotHeight = (POST_EXODUS_BLOCK - 1);
   static const uint64_t snapshotDevMSC = 0;
 
+  ++mastercoreInitialized;
+
   if (!disable_Persistence)
   {
     nWaterlineBlock = load_most_relevant_state();
@@ -2428,7 +2426,6 @@ const bool bTestnet = TestNet();
   exodus_balance = getMPbalance(exodus, MASTERCOIN_CURRENCY_MSC, MONEY);
   printf("Exodus balance: %lu\n", exodus_balance);
 
-  mastercoreInitialized = true;
   return 0;
 }
 

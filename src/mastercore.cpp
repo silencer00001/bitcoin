@@ -3253,6 +3253,50 @@ bool addressFilter;
     return response;   // return response array for JSON serialization
 }
 
+Value getallbalancesforid_MP(const Array& params, bool fHelp)
+{
+   int curID = 0;
+   if (params.size() > 0)
+        curID = boost::lexical_cast<boost::int32_t>(params[0].get_str());
+
+   if (fHelp || params.size() != 1 || !curID)
+        throw runtime_error(
+            "getallbalancesforid_MP currencyID\n"
+            "\nGet a list of address balances for a given currency/property ID\n"
+            "\nArguments:\n"
+            "1. currencyID    (int, required) The currency/property ID\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"address\" : 1Address,        (string) The address\n"
+            "  \"balance\" : x.xxx,     (numeric) The available balance of the address\n"
+            "  \"reservedbyselloffer\" : x.xxx,   (numeric) The amount reserved by sell offers\n"
+            "  \"reservedbyacceptoffer\" : x.xxx,   (numeric) The amount reserved by accepts\n"
+            "}\n"
+
+            "\nbExamples\n"
+            + HelpExampleCli("getallbalancesforid_MP", "1")
+            + HelpExampleRpc("getallbalancesforid_MP", "1")
+        );
+    if (!(MSC_MAX_KNOWN_CURRENCIES > curID))
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Currency/Property ID does not exist");
+
+    Array response;
+
+    for(map<string, CMPTally>::iterator my_it = mp_tally_map.begin(); my_it != mp_tally_map.end(); ++my_it)
+    {
+        Object addressbal;
+        //note this is assuming divisibility, correct with SP
+        addressbal.push_back(Pair("address", (my_it->first).c_str()));
+        addressbal.push_back(Pair("balance", ValueFromAmount((my_it->second).getMoney(curID,MONEY))));
+        addressbal.push_back(Pair("reservedbyoffer", ValueFromAmount((my_it->second).getMoney(curID,SELLOFFER_RESERVE))));
+        addressbal.push_back(Pair("reservedbyaccept", ValueFromAmount((my_it->second).getMoney(curID,ACCEPT_RESERVE))));
+
+        response.push_back(addressbal);
+    }
+return response;
+}
+
+
 std::string CScript::mscore_parse(std::vector<std::string>&msc_parsed, bool bNoBypass) const
 {
     int count = 0;

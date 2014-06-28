@@ -1169,12 +1169,14 @@ const unsigned int currency = MASTERCOIN_CURRENCY_MSC;  // FIXME: hard-coded for
   return (my_addresses_count);
 }
 
+int mastercore_init();
+
 // called once per block
 // it performs cleanup and other functions
 int mastercore_handler_block(int nBlockNow, CBlockIndex const * pBlockIndex)
 {
   if (!mastercoreInitialized) {
-    return 0;
+    mastercore_init();
   }
 // for every new received block must do:
 // 1) remove expired entries from the accept list (per spec accept entries are valid until their blocklimit expiration; because the customer can keep paying BTC for the offer in several installments)
@@ -2455,7 +2457,7 @@ int mastercore_shutdown()
 int mastercore_handler_tx(const CTransaction &tx, int nBlock, unsigned int idx)
 {
   if (!mastercoreInitialized) {
-    return 0;
+    mastercore_init();
   }
 
 CMPTransaction mp_obj;

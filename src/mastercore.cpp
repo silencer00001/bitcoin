@@ -1447,10 +1447,8 @@ uint64_t txFee = 0;
               return -5;
             }
             
-            if(0==TXExodusFundraiser(wtx, strSender, ExodusValues[0], nBlock, nTime)) {
-               //Exodus Fundraiser
-               //fprintf data
-            }
+            //This calculates exodus fundraiser for each tx within a given block
+            TXExodusFundraiser(wtx, strSender, ExodusValues[0], nBlock, nTime);
 
             // go through the outputs
             for (unsigned int i = 0; i < wtx.vout.size(); i++)

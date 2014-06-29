@@ -79,7 +79,7 @@ int msc_debug6 = 1;
 int msc_debug_dex   = 1;
 int msc_debug_send  = 1;
 int msc_debug_spec  = 1;
-int msc_debug_exo   = 0;
+int msc_debug_exo   = 1;
 int msc_debug_tally = 1;
 
 // follow this variable through the code to see how/which Master Protocol transactions get invalidated
@@ -1116,6 +1116,9 @@ public:
 
 uint64_t calculate_and_update_devmsc(unsigned int nTime)
 {
+//do nothing if before end of fundraiser 
+if (nTime < 1377993874) return -9919;
+
 // taken mainly from msc_validate.py: def get_available_reward(height, c)
 uint64_t devmsc = 0;
 int64_t exodus_delta;
@@ -1239,6 +1242,9 @@ vector<vector<unsigned char> > vSolutions;
 int TXExodusFundraiser(const CTransaction &wtx, string sender, int64_t ExodusHighestValue, int nBlock, unsigned int nTime) {
   #include <algorithm>
   #include <cmath>
+    int64_t tmpbal = getMPbalance(exodus, MASTERCOIN_CURRENCY_MSC, MONEY);
+
+  printf("exodus bal is: %ld\n", tmpbal);
 
   printf("txHash is: %s\nnBlock is: %d, nTime is: %u, exovalue is: %ld\n", 
       wtx.GetHash().ToString().c_str(), 

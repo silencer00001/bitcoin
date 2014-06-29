@@ -79,7 +79,7 @@ int msc_debug6 = 1;
 int msc_debug_dex   = 1;
 int msc_debug_send  = 1;
 int msc_debug_spec  = 1;
-int msc_debug_exo   = 0;
+int msc_debug_exo   = 1;
 int msc_debug_tally = 1;
 
 // follow this variable through the code to see how/which Master Protocol transactions get invalidated
@@ -89,7 +89,7 @@ static int BitcoinCore_errors = 0;    // TODO: watch this count, check returns o
 // disable TMSC handling for now, has more legacy corner cases
 static int ignore_all_but_MSC = 0;
 static int disableLevelDB = 0;
-static int disable_Persistence = 0;
+static int disable_Persistence = 1;
 
 static int mastercoreInitialized = 0;
 
@@ -1116,6 +1116,9 @@ public:
 
 uint64_t calculate_and_update_devmsc(unsigned int nTime)
 {
+//do nothing if before end of fundraiser 
+if (nTime < 1377993874) return -9919;
+
 // taken mainly from msc_validate.py: def get_available_reward(height, c)
 uint64_t devmsc = 0;
 int64_t exodus_delta;
@@ -1236,12 +1239,31 @@ vector<vector<unsigned char> > vSolutions;
   return true;
 }
 
+int TXExodusFundraiser(const CTransaction &wtx, string sender, int64_t ExodusHighestValue, int nBlock, unsigned int nTime) {
+  #include <algorithm>
+  #include <cmath>
+
+  if (nBlock >= GENESIS_BLOCK && nBlock <= LAST_EXODUS_BLOCK) { //Exodus Fundraiser start/end blocks
+    //printf("transaction: %s\n", wtx.ToString().c_str() );
+    int deadline_timeleft=1377993600-nTime;
+    double bonus= 1 + std::max( 0.10 * deadline_timeleft / 604800 , 0.0 );
+    uint64_t msc_tot= round( 100 * ExodusHighestValue * bonus ); 
+    if (msc_debug3) fprintf(mp_fp, "Exodus Fundraiser tx detected, tx %s generated %lu.%08lu\n",wtx.GetHash().ToString().c_str(), msc_tot / COIN, msc_tot % COIN);
+ 
+    update_tally_map(sender, MASTERCOIN_CURRENCY_MSC, msc_tot, MONEY);
+    update_tally_map(sender, MASTERCOIN_CURRENCY_TMSC, msc_tot, MONEY);
+
+    return 0;
+  }
+  return -1;
+}
+
 // idx is position within the block, 0-based
 // int msc_tx_push(const CTransaction &wtx, int nBlock, unsigned int idx)
 
 // RETURNS: 0 if parsed a MP TX
 
-int parseTransaction(const CTransaction &wtx, int nBlock, unsigned int idx, CMPTransaction *mp_tx)
+int parseTransaction(const CTransaction &wtx, int nBlock, unsigned int idx, CMPTransaction *mp_tx, unsigned int nTime=0)
 {
 string strSender;
 // class A: data & address storage -- combine them into a structure or something
@@ -1295,6 +1317,7 @@ uint64_t txFee = 0;
   // So, send from 1Exodus to self may have multiple outputs in a Class A TX !!!
               return -1;
             }
+            
 
             fprintf(mp_fp, "%s(block=%d, idx= %d), line %d, file: %s\n", __FUNCTION__, nBlock, idx, __LINE__, __FILE__);
             fprintf(mp_fp, "____________________________________________________________________________________________________________________________________\n");
@@ -1423,6 +1446,9 @@ uint64_t txFee = 0;
               fprintf(mp_fp, "The sender is still EMPTY !!! txid: %s\n", wtx.GetHash().GetHex().c_str());
               return -5;
             }
+            
+            //This calculates exodus fundraiser for each tx within a given block
+            TXExodusFundraiser(wtx, strSender, ExodusValues[0], nBlock, nTime);
 
             // go through the outputs
             for (unsigned int i = 0; i < wtx.vout.size(); i++)
@@ -1853,7 +1879,7 @@ const int max_block = GetHeight();
     int tx_count = 0;
     BOOST_FOREACH(const CTransaction&tx, block.vtx)
     {
-      mastercore_handler_tx(tx, blockNum, tx_count);
+      mastercore_handler_tx(tx, blockNum, tx_count, pblockindex);
 
       ++tx_count;
     }
@@ -2399,11 +2425,11 @@ const bool bTestnet = TestNet();
   {
   // my old preseed way
 
-    nWaterlineBlock = POST_EXODUS_BLOCK;  // the DEX block, using Zathras' msc_balances*.txt
+    nWaterlineBlock = PRE_GENESIS_BLOCK;  // the DEX block, using Zathras' msc_balances_290629.txt
 
     if (bTestnet) nWaterlineBlock = SOME_TESTNET_BLOCK; //testnet3
 
-    (void) msc_preseed_file_load(FILETYPE_BALANCES);
+    //(void) msc_preseed_file_load(FILETYPE_BALANCES);
   }
 
   // collect the real Exodus balances available at the snapshot time
@@ -2451,7 +2477,7 @@ int mastercore_shutdown()
 }
 
 // this is called for every new transaction that comes in (actually in block parsing loop)
-int mastercore_handler_tx(const CTransaction &tx, int nBlock, unsigned int idx)
+int mastercore_handler_tx(const CTransaction &tx, int nBlock, unsigned int idx, CBlockIndex const * pBlockIndex)
 {
   if (!mastercoreInitialized) {
     mastercore_init();
@@ -2463,7 +2489,7 @@ int interp_ret, pop_ret;
 
   if (nBlock < nWaterlineBlock) return -1;  // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
 
-  pop_ret = parseTransaction(tx, nBlock, idx, &mp_obj);
+  pop_ret = parseTransaction(tx, nBlock, idx, &mp_obj, pBlockIndex->GetBlockTime() );
   if (0 == pop_ret)
   {
   // true MP transaction, validity (such as insufficient funds, or offer not found) is determined elsewhere

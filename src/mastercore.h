@@ -40,6 +40,9 @@ enum BLOCKHEIGHTRESTRICTIONS {
   SOME_TESTNET_BLOCK= 253728,
   POST_EXODUS_BLOCK = 255366,
   MSC_DEX_BLOCK     = 290630,
+  PRE_GENESIS_BLOCK = 249497,
+  GENESIS_BLOCK     = 249498,
+  LAST_EXODUS_BLOCK = 255365
 };
 
 enum FILETYPES {
@@ -283,7 +286,7 @@ bool IsMyAddress(const std::string &address);
 
 string getLabel(const string &address);
 
-int mastercore_handler_tx(const CTransaction &tx, int nBlock, unsigned int idx);
+int mastercore_handler_tx(const CTransaction &tx, int nBlock, unsigned int idx, CBlockIndex const *pBlockIndex );
 int mastercore_save_state( CBlockIndex const *pBlockIndex );
 
 #endif

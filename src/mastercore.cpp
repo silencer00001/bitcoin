@@ -1243,19 +1243,13 @@ int TXExodusFundraiser(const CTransaction &wtx, string sender, int64_t ExodusHig
   #include <algorithm>
   #include <cmath>
 
-  printf("txHash is: %s\nnBlock is: %d, nTime is: %u, exovalue is: %ld\n", 
-      wtx.GetHash().ToString().c_str(), 
-      nBlock, 
-      nTime, 
-      ExodusHighestValue );
   if (nBlock >= GENESIS_BLOCK && nBlock <= LAST_EXODUS_BLOCK) { //Exodus Fundraiser start/end blocks
     //printf("transaction: %s\n", wtx.ToString().c_str() );
     int deadline_timeleft=1377993600-nTime;
     double bonus= 1 + std::max( 0.10 * deadline_timeleft / 604800 , 0.0 );
     uint64_t msc_tot= round( 100 * ExodusHighestValue * bonus ); 
-    
-    printf("deadline_timeleft: %d, bonus: %f, msc tot: %lu.%08lu\n", deadline_timeleft, bonus, msc_tot / COIN, msc_tot % COIN );
-
+    if (msc_debug3) fprintf(mp_fp, "Exodus Fundraiser tx detected, tx %s generated %lu.%08lu\n",wtx.GetHash().ToString().c_str(), msc_tot / COIN, msc_tot % COIN);
+ 
     update_tally_map(sender, MASTERCOIN_CURRENCY_MSC, msc_tot, MONEY);
     update_tally_map(sender, MASTERCOIN_CURRENCY_TMSC, msc_tot, MONEY);
 
@@ -1455,7 +1449,6 @@ uint64_t txFee = 0;
             
             if(0==TXExodusFundraiser(wtx, strSender, ExodusValues[0], nBlock, nTime)) {
                //Exodus Fundraiser
-               printf("I've calculated an Exodus Fundraiser.\n");
                //fprintf data
             }
 

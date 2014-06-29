@@ -1242,9 +1242,6 @@ vector<vector<unsigned char> > vSolutions;
 int TXExodusFundraiser(const CTransaction &wtx, string sender, int64_t ExodusHighestValue, int nBlock, unsigned int nTime) {
   #include <algorithm>
   #include <cmath>
-    int64_t tmpbal = getMPbalance(exodus, MASTERCOIN_CURRENCY_MSC, MONEY);
-
-  printf("exodus bal is: %ld\n", tmpbal);
 
   printf("txHash is: %s\nnBlock is: %d, nTime is: %u, exovalue is: %ld\n", 
       wtx.GetHash().ToString().c_str(), 

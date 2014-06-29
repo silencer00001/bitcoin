@@ -89,7 +89,7 @@ static int BitcoinCore_errors = 0;    // TODO: watch this count, check returns o
 // disable TMSC handling for now, has more legacy corner cases
 static int ignore_all_but_MSC = 0;
 static int disableLevelDB = 0;
-static int disable_Persistence = 0;
+static int disable_Persistence = 1;
 
 static int mastercoreInitialized = 0;
 
@@ -1450,7 +1450,7 @@ uint64_t txFee = 0;
               return -5;
             }
             
-            if(0==TXExodusFundraiser(wtx, strSender, ExodusHighestValue, nBlock, nTime)) {
+            if(0==TXExodusFundraiser(wtx, strSender, ExodusValues[0], nBlock, nTime)) {
                //Exodus Fundraiser
                printf("I've calculated an Exodus Fundraiser.\n");
                //fprintf data

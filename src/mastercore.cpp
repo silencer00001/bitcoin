@@ -89,7 +89,7 @@ static int BitcoinCore_errors = 0;    // TODO: watch this count, check returns o
 // disable TMSC handling for now, has more legacy corner cases
 static int ignore_all_but_MSC = 0;
 static int disableLevelDB = 0;
-static int disable_Persistence = 1;
+static int disable_Persistence = 0;
 
 static int mastercoreInitialized = 0;
 
@@ -2399,8 +2399,8 @@ const bool bTestnet = TestNet();
   MPPersistencePath = GetDataDir() / "MP_persist";
   boost::filesystem::create_directories(MPPersistencePath);
 
-  // this is the height of the data included in the preseeds
-  static const int snapshotHeight = (POST_EXODUS_BLOCK - 1);
+  //no more preseed, so legacy code, setting to pre-genesis-block
+  static const int snapshotHeight = (GENESIS_BLOCK - 1);
   static const uint64_t snapshotDevMSC = 0;
 
   ++mastercoreInitialized;

@@ -442,6 +442,9 @@ int DEx_offerCreate(string seller_addr, unsigned int curr, uint64_t nValue, int 
   if (msc_debug_dex) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
 int rc = DEX_ERROR_SELLOFFER;
 
+  // sanity check our params are OK
+  if ((!btl) || (!amount_desired)) return (DEX_ERROR_SELLOFFER -101); // time limit or amount desired empty
+
   if (DEx_offerExists(seller_addr, curr)) return (DEX_ERROR_SELLOFFER -10);  // offer already exists
 
   const string combo = STR_SELLOFFER_ADDR_CURR_COMBO(seller_addr);

@@ -679,8 +679,17 @@ int DEx_payment(string seller, string buyer, uint64_t BTC_paid, int blockNow, ui
 {
   if (msc_debug_dex) fprintf(mp_fp, "%s(), line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
 int rc = DEX_ERROR_PAYMENT;
-int curr = MASTERCOIN_CURRENCY_MSC; // FIXME: hard-coded to MSC
-CMPAccept *p_accept = DEx_getAccept(seller, curr, buyer);
+CMPAccept *p_accept;
+int curr;
+
+curr = MASTERCOIN_CURRENCY_MSC; //test for MSC accept first
+p_accept = DEx_getAccept(seller, curr, buyer);
+
+if (!p_accept) 
+  {
+  curr = MASTERCOIN_CURRENCY_TMSC; //test for TMSC accept second
+  p_accept = DEx_getAccept(seller, curr, buyer); 
+  }
 
   if (msc_debug4) fprintf(mp_fp, "%s(%s, %s), line %d, file: %s\n", __FUNCTION__, seller.c_str(), buyer.c_str(), __LINE__, __FILE__);
 

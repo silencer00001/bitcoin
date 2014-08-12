@@ -164,9 +164,6 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     if (strMethod == "getrawtransaction"      && n > 1) ConvertTo<int64_t>(params[1]);
     if (strMethod == "createrawtransaction"   && n > 0) ConvertTo<Array>(params[0]);
     if (strMethod == "createrawtransaction"   && n > 1) ConvertTo<Object>(params[1]);
-    if (strMethod == "searchrawtransactions"  && n > 1) ConvertTo<int64_t>(params[1]);
-    if (strMethod == "searchrawtransactions"  && n > 2) ConvertTo<int64_t>(params[2]);
-    if (strMethod == "searchrawtransactions"  && n > 3) ConvertTo<int64_t>(params[3]);
     if (strMethod == "signrawtransaction"     && n > 1) ConvertTo<Array>(params[1], true);
     if (strMethod == "signrawtransaction"     && n > 2) ConvertTo<Array>(params[2], true);
     if (strMethod == "sendrawtransaction"     && n > 1) ConvertTo<bool>(params[1], true);

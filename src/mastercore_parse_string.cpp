@@ -10,7 +10,7 @@
 
 namespace mastercore
 {
-std::string FormatDivisibleMP(int64_t n, bool fSign)
+std::string FormatDivisibleAmount(int64_t n, bool fSign)
 {
     // Note: not using straight sprintf here because we do NOT want
     // localized number formatting.
@@ -28,7 +28,7 @@ std::string FormatDivisibleMP(int64_t n, bool fSign)
     return str;
 }
 
-std::string FormatIndivisibleMP(int64_t n)
+std::string FormatIndivisibleAmount(int64_t n)
 {
     std::string str = strprintf("%ld", n);
     return str;

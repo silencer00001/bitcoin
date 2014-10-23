@@ -241,10 +241,10 @@ public:
     if (bDivisible)
     {
       printf("%22s [SO_RESERVE= %22s , ACCEPT_RESERVE= %22s ] %22s\n",
-        mastercore::FormatDivisibleMP(money, true).c_str(),
-        mastercore::FormatDivisibleMP(so_r, true).c_str(),
-        mastercore::FormatDivisibleMP(a_r, true).c_str(),
-        mastercore::FormatDivisibleMP(pending, true).c_str());
+        mastercore::FormatDivisibleAmount(money, true).c_str(),
+        mastercore::FormatDivisibleAmount(so_r, true).c_str(),
+        mastercore::FormatDivisibleAmount(a_r, true).c_str(),
+        mastercore::FormatDivisibleAmount(pending, true).c_str());
     }
     else
     {

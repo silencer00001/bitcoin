@@ -301,8 +301,8 @@ bool isNonMainNet()
 // TODO: move into mastercore_parse_string.h/.cpp
 std::string FormatMP(unsigned int property, int64_t n, bool fSign)
 {
-  if (isPropertyDivisible(property)) return FormatDivisibleMP(n, fSign);
-  else return FormatIndivisibleMP(n);
+  if (isPropertyDivisible(property)) return FormatDivisibleAmount(n, fSign);
+  else return FormatIndivisibleAmount(n);
 }
 
 string const CMPSPInfo::watermarkKey("watermark");

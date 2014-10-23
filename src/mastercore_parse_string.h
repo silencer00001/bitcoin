@@ -6,6 +6,10 @@
 
 namespace mastercore
 {
+// TODO: add FormatMP() -- currently depends on isPropertyDivisible()
+std::string FormatDivisibleMP(int64_t n, bool fSign = false);
+std::string FormatIndivisibleMP(int64_t n);
+
 // Converts strings to 64 bit wide interger.
 // Divisible and indivisible amounts are accepted.
 // 1 indivisible unit equals 0.00000001 divisible units.
@@ -17,4 +21,4 @@ namespace mastercore
 int64_t StrToInt64(const std::string& str, bool divisible);
 }
 
-#endif // _MASTERCOIN_PARSE_STRRING
+#endif // _MASTERCOIN_PARSE_STRING

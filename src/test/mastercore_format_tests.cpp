@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(mastercore_format_indivisible)
     BOOST_CHECK("-1000000000000000000" == FormatIndivisibleAmount(-1000000000000000000));
 }
 
-BOOST_AUTO_TEST_CASE(mastercore_format_divisible_signed)
+BOOST_AUTO_TEST_CASE(mastercore_format_divisible_with_sign)
 {
     // positive numbers
     BOOST_CHECK("+0.00000000" == FormatDivisibleAmount(0, true));
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(mastercore_format_divisible_signed)
     BOOST_CHECK("-10000000000.00000000" == FormatDivisibleAmount(-1000000000000000000, true));
 }
 
-BOOST_AUTO_TEST_CASE(mastercore_format_divisible_unsigned)
+BOOST_AUTO_TEST_CASE(mastercore_format_divisible_without_sign)
 {
     // positive numbers
     BOOST_CHECK("0.00000000" == FormatDivisibleAmount(0, false));
@@ -152,25 +152,25 @@ BOOST_AUTO_TEST_CASE(mastercore_format_indivisible_limits)
     BOOST_CHECK("-9223372036854775807" == FormatIndivisibleAmount(-9223372036854775807));
 }
 
-BOOST_AUTO_TEST_CASE(mastercore_format_divisible_unsigned_limits)
-{
-    BOOST_CHECK("92233720368.54775807" == FormatDivisibleAmount(9223372036854775807));
-    BOOST_CHECK("-92233720368.54775807" == FormatDivisibleAmount(-9223372036854775807));
-}
-
-BOOST_AUTO_TEST_CASE(mastercore_format_divisible_signed_limits)
+BOOST_AUTO_TEST_CASE(mastercore_format_divisible_limits_with_sign)
 {
     BOOST_CHECK("+92233720368.54775807" == FormatDivisibleAmount(9223372036854775807, true));
     BOOST_CHECK("-92233720368.54775807" == FormatDivisibleAmount(-9223372036854775807, true));
 }
 
-BOOST_AUTO_TEST_CASE(mastercore_format_token_amount_divisible)
+BOOST_AUTO_TEST_CASE(mastercore_format_divisible_limits_without_sign)
+{
+    BOOST_CHECK("92233720368.54775807" == FormatDivisibleAmount(9223372036854775807, false));
+    BOOST_CHECK("92233720368.54775807" == FormatDivisibleAmount(-9223372036854775807, false));
+}
+
+BOOST_AUTO_TEST_CASE(mastercore_format_token_amount_limits_divisible)
 {
     BOOST_CHECK("9223372036854775807" == FormatTokenAmount(9223372036854775807, false));
     BOOST_CHECK("-9223372036854775807" == FormatTokenAmount(-9223372036854775807, false));
 }
 
-BOOST_AUTO_TEST_CASE(mastercore_format_token_amount_indivisible)
+BOOST_AUTO_TEST_CASE(mastercore_format_token_amount_limits_indivisible)
 {
     BOOST_CHECK("92233720368.54775807" == FormatTokenAmount(9223372036854775807, true));
     BOOST_CHECK("-92233720368.54775807" == FormatTokenAmount(-9223372036854775807, true));
@@ -181,8 +181,53 @@ BOOST_AUTO_TEST_CASE(mastercore_format_amounts_auto_sign)
     BOOST_CHECK("1" == FormatTokenAmount(1));
     BOOST_CHECK("-1" == FormatTokenAmount(-1));
 
+    BOOST_CHECK("1" == FormatIndivisibleAmount(1));
+    BOOST_CHECK("-1" == FormatIndivisibleAmount(-1));
+
     BOOST_CHECK("0.00000001" == FormatDivisibleAmount(1));
     BOOST_CHECK("-0.00000001" == FormatDivisibleAmount(-1));
+}
+
+BOOST_AUTO_TEST_CASE(mastercore_format_indivisible_conversion)
+{
+    // positive numbers
+    BOOST_CHECK_EQUAL("42", FormatIndivisibleAmount(static_cast<uint8_t>(42)));
+    BOOST_CHECK_EQUAL("42", FormatIndivisibleAmount(static_cast<uint16_t>(42)));
+    BOOST_CHECK_EQUAL("42", FormatIndivisibleAmount(static_cast<uint32_t>(42)));
+    BOOST_CHECK_EQUAL("42", FormatIndivisibleAmount(static_cast<uint64_t>(42)));
+    BOOST_CHECK_EQUAL("42", FormatIndivisibleAmount(static_cast<float>(42)));
+    BOOST_CHECK_EQUAL("42", FormatIndivisibleAmount(static_cast<double>(42)));
+    BOOST_CHECK_EQUAL("42", FormatIndivisibleAmount(static_cast<long double>(42)));
+
+    // negative numbers
+    BOOST_CHECK_EQUAL("-42", FormatIndivisibleAmount(static_cast<int8_t>(-42)));
+    BOOST_CHECK_EQUAL("-42", FormatIndivisibleAmount(static_cast<int16_t>(-42)));
+    BOOST_CHECK_EQUAL("-42", FormatIndivisibleAmount(static_cast<int32_t>(-42)));
+    BOOST_CHECK_EQUAL("-42", FormatIndivisibleAmount(static_cast<int64_t>(-42)));
+    BOOST_CHECK_EQUAL("-42", FormatIndivisibleAmount(static_cast<float>(-42)));
+    BOOST_CHECK_EQUAL("-42", FormatIndivisibleAmount(static_cast<double>(-42)));
+    BOOST_CHECK_EQUAL("-42", FormatIndivisibleAmount(static_cast<long double>(-42)));
+}
+
+BOOST_AUTO_TEST_CASE(mastercore_format_divisible_conversion)
+{
+    // positive numbers
+    BOOST_CHECK_EQUAL("0.00000042", FormatDivisibleAmount(static_cast<uint8_t>(42)));
+    BOOST_CHECK_EQUAL("0.00000042", FormatDivisibleAmount(static_cast<uint16_t>(42)));
+    BOOST_CHECK_EQUAL("0.00000042", FormatDivisibleAmount(static_cast<uint32_t>(42)));
+    BOOST_CHECK_EQUAL("0.00000042", FormatDivisibleAmount(static_cast<uint64_t>(42)));
+    BOOST_CHECK_EQUAL("0.00000042", FormatDivisibleAmount(static_cast<float>(42)));
+    BOOST_CHECK_EQUAL("0.00000042", FormatDivisibleAmount(static_cast<double>(42)));
+    BOOST_CHECK_EQUAL("0.00000042", FormatDivisibleAmount(static_cast<long double>(42)));
+
+    // negative numbers
+    BOOST_CHECK_EQUAL("-0.00000042", FormatDivisibleAmount(static_cast<int8_t>(-42)));
+    BOOST_CHECK_EQUAL("-0.00000042", FormatDivisibleAmount(static_cast<int16_t>(-42)));
+    BOOST_CHECK_EQUAL("-0.00000042", FormatDivisibleAmount(static_cast<int32_t>(-42)));
+    BOOST_CHECK_EQUAL("-0.00000042", FormatDivisibleAmount(static_cast<int64_t>(-42)));
+    BOOST_CHECK_EQUAL("-0.00000042", FormatDivisibleAmount(static_cast<float>(-42)));
+    BOOST_CHECK_EQUAL("-0.00000042", FormatDivisibleAmount(static_cast<double>(-42)));
+    BOOST_CHECK_EQUAL("-0.00000042", FormatDivisibleAmount(static_cast<long double>(-42)));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

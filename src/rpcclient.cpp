@@ -97,6 +97,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "listallunspent", 4 },
     { "getallbalance", 1 },
     { "getallbalance", 2 },
+    
+    // categorize and gather meta data
+    { "getmetatransactions", 0 },
+    { "getmetatransactions", 1 },
 };
 
 class CRPCConvertTable

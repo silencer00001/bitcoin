@@ -213,4 +213,7 @@ extern json_spirit::Value gettxout(const json_spirit::Array& params, bool fHelp)
 extern json_spirit::Value verifychain(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value getchaintips(const json_spirit::Array& params, bool fHelp);
 
+// categorize and gather meta data
+extern json_spirit::Value getmetatransactions(const json_spirit::Array& params, bool fHelp); // in rpcmetatxs.cpp
+
 #endif

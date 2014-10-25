@@ -337,6 +337,9 @@ static const CRPCCommand vRPCCommands[] =
     { "wallet",             "walletpassphrasechange", &walletpassphrasechange, true,      false,      true },
     { "wallet",             "walletpassphrase",       &walletpassphrase,       true,      false,      true },
 #endif // ENABLE_WALLET
+    
+    // categorize and gather meta data
+    { "meta transactions",  "getmetatransactions",         &getmetatransactions,         false, false, false },
 };
 
 CRPCTable::CRPCTable()

@@ -1164,6 +1164,34 @@ void add_mdex_fields(Object *metadex_obj, CMPMetaDEx obj, bool c_own_div, bool c
   metadex_obj->push_back(Pair("blockTime", obj.getBlockTime()));
 }
 
+void MetaDexObjectsToJSON(std::vector<CMPMetaDEx> vMetaDexObjs, Array& response)
+{
+    CMPSPInfo::Entry sp;
+    MetaDEx_compare compareByHeight;
+    
+    // sorts metadex objects based on block height and position in block
+    std::sort (vMetaDexObjs.begin(), vMetaDexObjs.end(), compareByHeight);
+
+    for (std::vector<CMPMetaDEx>::const_iterator it = vMetaDexObjs.begin(); it != vMetaDexObjs.end(); ++it) {
+        const CMPMetaDEx& obj = *it;
+
+        _my_sps->getSP(obj.getProperty(), sp);
+        bool c_own_div = sp.isDivisible();
+
+        _my_sps->getSP(obj.getDesProperty(), sp);
+        bool c_want_div = sp.isDivisible();
+
+        std::string eco = isTestEcosystemProperty(obj.getProperty()) ? "Test" : "Main";
+        
+        // add data to obj
+        Object metadex_obj;
+        add_mdex_fields(&metadex_obj, obj, c_own_div, c_want_div, eco);
+
+        // add it to response
+        response.push_back(metadex_obj);
+    }
+}
+
 Value trade_MP(const Array& params, bool fHelp) {
 
    if (fHelp || params.size() < 6)
@@ -1316,8 +1344,6 @@ Value gettradessince_MP(const Array& params, bool fHelp) {
             "3. property_id2            (int, optional) filter orders by property_id1 and property_id2\n"
         );
 
-  Array response;
-  Object metadex_obj;
   unsigned int propertyIdSaleFilter = 0, propertyIdWantFilter = 0;
 
   uint64_t timestamp = (params.size() > 0) ? params[0].get_int64() : GetLatestBlockTime() - 1209600; //2 weeks 
@@ -1333,6 +1359,8 @@ Value gettradessince_MP(const Array& params, bool fHelp) {
     propertyIdWantFilter = check_prop_valid( params[2].get_int64() , "Invalid property identifier (Want)", "Property identifier does not exist (Want)"); 
   }
 
+  std::vector<CMPMetaDEx> vMetaDexObjects;
+  
   for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it)
   {
     md_PricesMap & prices = my_it->second;
@@ -1342,7 +1370,6 @@ Value gettradessince_MP(const Array& params, bool fHelp) {
       for (md_Set::iterator it = indexes.begin(); it != indexes.end(); ++it)
       {
           CMPMetaDEx obj = *it;
-          CMPSPInfo::Entry sp;
 
           bool filter = 1;
 
@@ -1352,27 +1379,14 @@ Value gettradessince_MP(const Array& params, bool fHelp) {
           }
 
           if ( filter &&  (obj.getBlockTime() >= timestamp)) {
-            //clear obj before reuse
-            metadex_obj.clear();
-            
-            _my_sps->getSP(obj.getProperty(), sp);
-            bool c_own_div = sp.isDivisible();
-
-            _my_sps->getSP(obj.getDesProperty(), sp);
-            bool c_want_div = sp.isDivisible();
-
-            string eco = (isTestEcosystemProperty(propertyIdSaleFilter) == true) ? "Test" : "Main";
-
-            // add data to obj
-            add_mdex_fields( &metadex_obj , obj , c_own_div, c_want_div, eco);
-            
-            //add it to response
-            response.push_back(metadex_obj);
+            vMetaDexObjects.push_back(obj);
           }
       }
     }
   }
-  if( response.size() > 1 ) sort_mdex_obj( &response );
+  Array response;
+  MetaDexObjectsToJSON(vMetaDexObjects, response);
+  
   return response;
 }
 Value getopenorders_MP(const Array& params, bool fHelp) {

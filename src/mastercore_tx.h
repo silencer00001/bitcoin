@@ -109,12 +109,12 @@ public:
   uint64_t getNewAmount() const { return nNewValue; }
 
   // payload addition
-  const string getDecodedPayload() const {
+  std::string getDecodedPayload() const {
      vector<unsigned char> sec;
      sec.resize(pkt_size);
      memcpy(&sec[0], &pkt[0], pkt_size);
-     return strprintf("%s",HexStr(sec).c_str());
-     }
+     return HexStr(sec);
+  }
 
   string getSPName() const { return string(name); }
 

@@ -189,7 +189,6 @@ extern json_spirit::Value gettxout(const json_spirit::Array& params, bool fHelp)
 extern json_spirit::Value verifychain(const json_spirit::Array& params, bool fHelp);
 
 extern json_spirit::Value mscrpc(const json_spirit::Array& params, bool fHelp); // in mastercoin.cpp
-extern json_spirit::Value getpayload_MP(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value getallbalancesforid_MP(const json_spirit::Array& params, bool fHelp); // in mastercoin.cpp
 extern json_spirit::Value getbalance_MP(const json_spirit::Array& params, bool fHelp); // in mastercoin.cpp
 extern json_spirit::Value send_MP(const json_spirit::Array& params, bool fHelp); // in mastercoin.cpp
@@ -213,4 +212,21 @@ extern json_spirit::Value listtransactions_MP(const json_spirit::Array& params, 
 extern json_spirit::Value listblocktransactions_MP(const json_spirit::Array& params, bool fHelp); // in mastercore.cpp
 extern json_spirit::Value getinfo_MP(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value getsto_MP(const json_spirit::Array& params, bool fHelp);
-#endif
+
+// Omni Core extensions
+extern json_spirit::Value getpayload_MP(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value decodepacket_MP(const json_spirit::Array& params, bool fHelp);
+
+extern json_spirit::Value encode_simple_send(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value encode_send_to_owners(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value encode_offer_tokens(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value encode_trade_tokens(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value encode_accept_offer(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value encode_create_property(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value encode_create_crowdsale(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value encode_close_crowdsale(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value encode_create_managed_property(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value encode_grant_token(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value encode_revoke_token(const json_spirit::Array& params, bool fHelp);
+
+#endif // _BITCOINRPC_SERVER_H_

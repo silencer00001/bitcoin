@@ -47,6 +47,23 @@ BITCOIN_CORE_H = \
   mastercore_sp.h \
   mastercore_errors.h \
   mastercore_version.h \
+  mastercore_txs/serialize.h \
+  mastercore_txs/accept_offer.h \
+  mastercore_txs/change_issuer.h \
+  mastercore_txs/close_crowdsale.h \
+  mastercore_txs/create_crowdsale.h \
+  mastercore_txs/create_managed_property.h \
+  mastercore_txs/create_property.h \
+  mastercore_txs/factory.h \
+  mastercore_txs/grant_token.h \  
+  mastercore_txs/offer_tokens_v0.h \
+  mastercore_txs/offer_tokens_v1.h \
+  mastercore_txs/revoke_token.h \
+  mastercore_txs/send_to_owners.h \
+  mastercore_txs/simple_send.h \
+  mastercore_txs/trade_tokens.h \
+  mastercore_txs/transactions.h \
+  mastercore_txs/type_prefix.h \
   crypter.h \
   db.h \
   hash.h \
@@ -139,8 +156,10 @@ libbitcoin_common_a_SOURCES = \
   mastercore_dex.cpp \
   mastercore_parse_string.cpp \
   mastercore_rpc.cpp \
+  mastercore_rpc_extensions.cpp \
   mastercore_sp.cpp \
   mastercore_tx.cpp \
+  mastercore_txs/factory.cpp \
   hash.cpp \
   key.cpp \
   netbase.cpp \

@@ -44,6 +44,19 @@ BITCOIN_CORE_H = \
   mastercore_dex.h \
   mastercore_sp.h \
   mastercore_errors.h \
+  mastercore_txs/serialize.h \
+  mastercore_txs/accept_offer.h \
+  mastercore_txs/close_crowdsale.h \
+  mastercore_txs/create_crowdsale.h \
+  mastercore_txs/create_managed_crowdsale.h \
+  mastercore_txs/create_property.h \
+  mastercore_txs/grant_token.h \
+  mastercore_txs/offer_tokens_v0.h \
+  mastercore_txs/offer_tokens_v1.h \
+  mastercore_txs/revoke_token.h \
+  mastercore_txs/send_to_owners.h \
+  mastercore_txs/simple_send.h \
+  mastercore_txs/trade_tokens.h \
   crypter.h \
   db.h \
   hash.h \

@@ -138,6 +138,11 @@ void ClientModel::updateAlert(const QString &hash, int status)
     emit alertsChanged(getStatusBarWarnings());
 }
 
+void ClientModel::updateStatusBar(const QString &statusBarMessage)
+{
+    emit alertsChanged(statusBarMessage);
+}
+
 QString ClientModel::getNetworkName() const
 {
     QString netname(QString::fromStdString(Params().DataDir()));
@@ -220,12 +225,19 @@ static void NotifyAlertChanged(ClientModel *clientmodel, const uint256 &hash, Ch
                               Q_ARG(int, status));
 }
 
+static void NotifyStatusBarChanged(ClientModel *clientmodel, const std::string& message)
+{
+    QMetaObject::invokeMethod(clientmodel, "updateStatusBar", Qt::QueuedConnection,
+                              Q_ARG(QString, QString::fromStdString(message)));
+}
+
 void ClientModel::subscribeToCoreSignals()
 {
     // Connect signals to client
     uiInterface.NotifyBlocksChanged.connect(boost::bind(NotifyBlocksChanged, this));
     uiInterface.NotifyNumConnectionsChanged.connect(boost::bind(NotifyNumConnectionsChanged, this, _1));
     uiInterface.NotifyAlertChanged.connect(boost::bind(NotifyAlertChanged, this, _1, _2));
+    uiInterface.NotifyStatusBarChanged.connect(boost::bind(NotifyStatusBarChanged, this, _1));
 }
 
 void ClientModel::unsubscribeFromCoreSignals()
@@ -234,4 +246,5 @@ void ClientModel::unsubscribeFromCoreSignals()
     uiInterface.NotifyBlocksChanged.disconnect(boost::bind(NotifyBlocksChanged, this));
     uiInterface.NotifyNumConnectionsChanged.disconnect(boost::bind(NotifyNumConnectionsChanged, this, _1));
     uiInterface.NotifyAlertChanged.disconnect(boost::bind(NotifyAlertChanged, this, _1, _2));
+    uiInterface.NotifyStatusBarChanged.disconnect(boost::bind(NotifyStatusBarChanged, this, _1));
 }

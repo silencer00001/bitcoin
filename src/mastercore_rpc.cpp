@@ -138,6 +138,23 @@ int extra2 = 0, extra3 = 0;
       t_tradelistdb->printStats();
       break;
 
+    case 8:
+      {
+        std::string message("This is a status bar update test!");
+        if (params.size() > 1) message = params[1].get_str();
+        uiInterface.NotifyStatusBarChanged(message);
+        break;
+      }
+
+    case 9:
+      {
+        std::string message("This is a notification test!");
+        std::string caption("Notification");
+        if (params.size() > 1) message = params[1].get_str();
+        if (params.size() > 2) caption = params[2].get_str();
+        uiInterface.ThreadSafeMessageBox(message, caption, CClientUIInterface::ICON_WARNING);
+        break;
+      }
   }
 
   return GetHeight();

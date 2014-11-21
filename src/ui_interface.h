@@ -92,6 +92,9 @@ public:
      */
     boost::signals2::signal<void (const uint256 &hash, ChangeType status)> NotifyAlertChanged;
 
+    /** Status bar message changed. */
+    boost::signals2::signal<void (const std::string& message)> NotifyStatusBarChanged;
+
     /** A wallet has been loaded. */
     boost::signals2::signal<void (CWallet* wallet)> LoadWallet;
 };

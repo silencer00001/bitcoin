@@ -96,6 +96,7 @@ public slots:
     void updateTimer();
     void updateNumConnections(int numConnections);
     void updateAlert(const QString &hash, int status);
+    void updateStatusBar(const QString &message);
 };
 
 #endif // CLIENTMODEL_H

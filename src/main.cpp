@@ -3214,6 +3214,12 @@ string GetWarnings(string strFor)
         nPriority = 1000;
         strStatusBar = strMiscWarning;
     }
+    
+    if (strSafeModeNotice != "")
+    {
+        nPriority = 1500;
+        strStatusBar = strRPC = strMiscWarning = strSafeModeNotice;
+    }
 
     if (fLargeWorkForkFound)
     {

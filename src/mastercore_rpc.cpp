@@ -155,6 +155,17 @@ int extra2 = 0, extra3 = 0;
         uiInterface.ThreadSafeMessageBox(message, caption, CClientUIInterface::ICON_WARNING);
         break;
       }
+
+    case 10:
+      {        
+        bool fSafeModeEnabled = false;
+        std::string strAlertMessage;        
+        if (params.size() > 1) strAlertMessage = params[1].get_str();
+        if (params.size() > 2) fSafeModeEnabled = atoi(params[2].get_str()) != 0;        
+        setAlertNotification(strAlertMessage);
+        setSafeMode(fSafeModeEnabled);        
+        break;
+      }
   }
 
   return GetHeight();

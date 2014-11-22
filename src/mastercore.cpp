@@ -77,6 +77,7 @@ using namespace mastercore;
 #include "mastercore_tx.h"
 #include "mastercore_sp.h"
 #include "mastercore_errors.h"
+#include "alert.h"
 
 // part of 'breakout' feature
 static const int nBlockTop = 0;
@@ -572,112 +573,181 @@ std::string mastercore::getMasterCoreAlertString()
     return global_alert_message;
 }
 
+// TODO: move me
+static std::string strAlertNotification;
+
+void setAlertNotification(const std::string &strMessage)
+{
+    if (strAlertNotification.compare(strMessage) == 0) {        
+        strAlertNotification = strMessage;        
+
+        // Fire notification, if -alertnotify is enabled
+        CAlert::Notify(strMessage, true);       
+
+        // Update UI
+        uiInterface.NotifyStatusBarChanged(strMessage);
+    }
+}
+
+void setSafeMode(bool safeModeEnabled)
+{
+    // Set default status message, if none is set and test mode enabled
+    if (safeModeEnabled && strAlertNotification.empty())
+        setAlertNotification("Warning: safe mode enabled");
+
+    // Enable or disable test mode, see GetWarnings() in main.cpp
+    if (safeModeEnabled)
+        strSafeModeNotice = strAlertNotification;
+    else
+        strSafeModeNotice = "";
+}
+
 bool mastercore::checkExpiredAlerts(unsigned int curBlock, uint64_t curTime)
 {
-    //expire any alerts that need expiring
+    // split the global message string, if it's not empty
+    if (global_alert_message.empty()) return false;
+
+    // split and decode transaction message
+    std::vector<std::string> vstr;
+    boost::split(vstr, global_alert_message, boost::is_any_of(":"), token_compress_on);
+
+    // make sure there are 5 tokens and they convert ok
+    if (5 != vstr.size()) {
+        file_log("DEBUG ALERT ERROR - Something went wrong decoding the global alert string, there are not 5 tokens\n");
+        return false;
+    }
+
     int32_t alertType;
     uint64_t expiryValue;
     uint32_t typeCheck;
     uint32_t verCheck;
-    std::vector<std::string> vstr;
+    try {
+        alertType = boost::lexical_cast<int32_t>(vstr[0]);
+        expiryValue = boost::lexical_cast<uint64_t>(vstr[1]);
+        typeCheck = boost::lexical_cast<uint32_t>(vstr[2]);
+        verCheck = boost::lexical_cast<uint32_t>(vstr[3]);
+    } catch (const boost::bad_lexical_cast &e) {
+        file_log("DEBUG ALERT - error in converting values from global alert string\n");
+        return false; //(something went wrong)
+    }
 
-    //split the global message string if it's not empty
-    if(!global_alert_message.empty())
-    {
-        boost::split(vstr, global_alert_message, boost::is_any_of(":"), token_compress_on);
-        // make sure there are 5 tokens and they convert ok
-        if (5 == vstr.size())
-        {
-            try
-            {
-                alertType = boost::lexical_cast<int32_t>(vstr[0]);
-                expiryValue = boost::lexical_cast<uint64_t>(vstr[1]);
-                typeCheck = boost::lexical_cast<uint32_t>(vstr[2]);
-                verCheck = boost::lexical_cast<uint32_t>(vstr[3]);
-            } catch (const boost::bad_lexical_cast &e)
-              {
-                  file_log("DEBUG ALERT - error in converting values from global alert string\n");
-                  return false; //(something went wrong)
-              }
-        }
-        else
-        {
-             file_log("DEBUG ALERT ERROR - Something went wrong decoding the global alert string, there are not 5 tokens\n");
-             return false;
-        }
-        if ((alertType < 1) || (alertType > 4) || (expiryValue == 0))
-        {
-             file_log("DEBUG ALERT ERROR - Something went wrong decoding the global alert string, values are not as expected.\n");
-             return false;
-        }
-        switch (alertType)
-        {
-             case 1: //Text based alert only expiring by block number, show alert in UI and getalert_MP call, ignores type check value (eg use 0)
-                 if (curBlock > expiryValue)
-                 {
-                     //the alert has expired, clear the global alert string
-                     file_log("DEBUG ALERT - Expiring alert string %s\n",global_alert_message.c_str());
-                     global_alert_message = "";
-                     return true;
-                 }
-             break;
-             case 2: //Text based alert only expiring by block time, show alert in UI and getalert_MP call, ignores type check value (eg use 0)
-                 if (curTime > expiryValue)
-                 {
-                     //the alert has expired, clear the global alert string
-                     file_log("DEBUG ALERT - Expiring alert string %s\n",global_alert_message.c_str());
-                     global_alert_message = "";
-                     return true;
-                 }
-             break;
-             case 3: //Text based alert only expiring by client version, show alert in UI and getalert_MP call, ignores type check value (eg use 0)
-                 if (MASTERCORE_VERSION_BASE > expiryValue)
-                 {
-                     //the alert has expired, clear the global alert string
-                     file_log("DEBUG ALERT - Expiring alert string %s\n",global_alert_message.c_str());
-                     global_alert_message = "";
-                     return true;
-                 }
-             break;
-             case 4: //Update alert, show upgrade alert in UI and getalert_MP call + use isTransactionTypeAllowed to verify client support and shutdown if not present
-                 //check of the new tx type is supported at live block
-                 bool txSupported = isTransactionTypeAllowed(expiryValue+1, OMNI_PROPERTY_MSC, typeCheck, verCheck);
+    std::string alertMessage(vstr[4]);
 
-                 //check if we are at/past the live blockheight
-                 bool txLive = (chainActive.Height()>(int64_t)expiryValue);
-
-                 //testnet allows all types of transactions, so override this here for testing
-                 txSupported = false; //testing
-                 //txLive = true; //testing
-
-                 if ((!txSupported) && (txLive))
-                 {
-                     // we know we have transactions live we don't understand
-                     // can't be trusted to provide valid data, shutdown
-                     file_log("DEBUG ALERT - Shutting down due to unsupported live TX - alert string %s\n",global_alert_message.c_str());
-                     printf("DEBUG ALERT - Shutting down due to unsupported live TX - alert string %s\n",global_alert_message.c_str()); //echo to screen
-                     if (!GetBoolArg("-overrideforcedshutdown", false)) StartShutdown();
-                     return false;
-                 }
-
-                 if ((!txSupported) && (!txLive))
-                 {
-                     // warn the user this version does not support the new coming TX and they will need to update
-                     // we don't actually need to take any action here, we leave the alert string in place and simply don't expire it
-                 }
-
-                 if (txSupported)
-                 {
-                     // we can simply expire this update as this version supports the new coming TX
-                     file_log("DEBUG ALERT - Expiring alert string %s\n",global_alert_message.c_str());
-                     global_alert_message = "";
-                     return true;
-                 }
-             break;
-        }
+    if ((alertType < 1) || (alertType > 4) || (expiryValue == 0)) {
+        file_log("DEBUG ALERT ERROR - Something went wrong decoding the global alert string, values are not as expected.\n");
         return false;
     }
-    else { return false; }
+
+    switch (alertType)
+    {
+        case 1:
+            // Text based alert only expiring by block number, show alert in UI 
+            // and getalert_MP call, ignores type check value (eg use 0)
+            if (curBlock > expiryValue)
+            {
+                // the alert has expired, clear the global alert string
+                file_log("DEBUG ALERT - Expiring alert string %s\n", global_alert_message.c_str());
+
+                global_alert_message.clear();
+                setAlertNotification("");
+                setSafeMode(false);
+                
+                return true;
+            }
+
+            break;
+
+        case 2:
+            // Text based alert only expiring by block time, show alert in UI
+            // and getalert_MP call, ignores type check value (eg use 0)
+            if (curTime > expiryValue)
+            {
+                // the alert has expired, clear the global alert string
+                file_log("DEBUG ALERT - Expiring alert string %s\n", global_alert_message.c_str());
+
+                global_alert_message.clear();
+                setAlertNotification("");
+                setSafeMode(false);
+                
+                return true;
+            }
+
+            break;
+
+        case 3:
+            // Text based alert only expiring by client version, show alert in UI
+            // and getalert_MP call, ignores type check value (eg use 0)
+            if (MASTERCORE_VERSION_BASE > expiryValue)
+            {
+                // the alert has expired, clear the global alert string
+                file_log("DEBUG ALERT - Expiring alert string %s\n", global_alert_message.c_str());
+
+                global_alert_message.clear();
+                setAlertNotification("");
+                setSafeMode(false);
+
+                return true;
+            }
+            
+            break;
+       
+        case 4:
+            // Update alert, show upgrade alert in UI and getalert_MP call + use 
+            // isTransactionTypeAllowed to verify client support and shutdown, 
+            // if not present check of the new tx type is supported at live block
+            bool txSupported = isTransactionTypeAllowed(
+                    expiryValue + 1, OMNI_PROPERTY_MSC, typeCheck, verCheck);
+
+            // check if we are at/past the live blockheight
+            bool txLive = ((uint64_t)chainActive.Height() > expiryValue);
+
+            // testnet allows all types of transactions, so override this for testing
+            txSupported = false; // testing
+            //txLive = true; // testing
+
+            if (!txSupported && txLive)
+            {
+                // we know we have transactions live we don't understand
+                // can't be trusted to provide valid data, shutdown
+                file_log("DEBUG ALERT - Shutting down due to unsupported live TX - alert string %s\n",
+                        global_alert_message.c_str());
+
+                if (!GetBoolArg("-overrideforcedshutdown", true)) AbortNode(alertMessage);
+
+                global_alert_message.clear();
+                setAlertNotification(alertMessage);
+                setSafeMode(true);
+
+                return false;
+                
+            }
+
+            if (!txSupported && !txLive)
+            {
+                // warn the user this version does not support the new coming 
+                // transaction and they will need to update we don't actually 
+                // need to take any action here, we leave the alert string in 
+                // place and simply don't expire it
+                setAlertNotification(alertMessage);
+                setSafeMode(false);
+            }
+
+            if (txSupported)
+            {
+                // we can simply expire this update as this version supports the 
+                // new coming transaction
+                file_log("DEBUG ALERT - Expiring alert string %s\n", global_alert_message.c_str());
+
+                global_alert_message.clear();
+                setAlertNotification("");
+                setSafeMode(false);
+
+                return true;
+            }
+
+            break;
+    }
+
     return false;
 }
 
@@ -3033,77 +3103,68 @@ int CMPTxList::setLastAlert(int blockHeight)
     Slice skey, svalue;
     readoptions.fill_cache = false;
     Iterator* it = pdb->NewIterator(readoptions);
-    string lastAlertTxid;
-    string lastAlertData;
-    string itData;
+
+    std::string lastAlertTxid;
     int64_t lastAlertBlock = 0;
-    for(it->SeekToFirst(); it->Valid(); it->Next())
-    {
-       skey = it->key();
-       svalue = it->value();
-       string itData = svalue.ToString().c_str();
-       std::vector<std::string> vstr;
-       boost::split(vstr, itData, boost::is_any_of(":"), token_compress_on);
-       // we expect 5 tokens
-       if (4 == vstr.size())
-       {
-           if (atoi(vstr[2]) == MASTERCORE_MESSAGE_TYPE_ALERT) // is it an alert?
-           {
-               if (atoi(vstr[0]) == 1) // is it valid?
-               {
-                   if ( (atoi(vstr[1]) > lastAlertBlock) && (atoi(vstr[1]) < blockHeight) ) // is it the most recent and within our parsed range?
-                   {
-                      lastAlertTxid = skey.ToString().c_str();
-                      lastAlertData = svalue.ToString().c_str();
-                      lastAlertBlock = atoi(vstr[1]);
-                   }
-               }
-           }
-       }
+  
+    for (it->SeekToFirst(); it->Valid(); it->Next()) {
+        skey = it->key();
+        svalue = it->value();
+
+        // it should have the following structure
+        // [validity]:[transaction type]:[block height]:[payload]
+        
+        std::vector<std::string> vstr;
+        std::string itData = svalue.ToString();
+        boost::split(vstr, itData, boost::is_any_of(":"), token_compress_on);
+
+        // is it valid?
+        if (atoi(vstr[0]) != 1) continue;
+        // is it the most recent?
+        if (atoi(vstr[1]) < lastAlertBlock) continue;
+        // is it an alert?
+        if (atoi(vstr[2]) != MASTERCORE_MESSAGE_TYPE_ALERT) continue;
+
+        lastAlertTxid = skey.ToString();
+        lastAlertBlock = atoi(vstr[1]);
     }
+
     delete it;
 
     // if lastAlertTxid is not empty, load the alert and see if it's still valid - if so, copy to global_alert_message
-    if(lastAlertTxid.empty())
-    {
+    if (lastAlertTxid.empty()) {
         file_log("DEBUG ALERT No alerts found to load\n");
+        return 0;
     }
-    else
-    {
-        file_log("DEBUG ALERT Loading lastAlertTxid %s\n", lastAlertTxid);
+  
+    file_log("DEBUG ALERT Loading lastAlertTxid %s\n", lastAlertTxid);
 
-        // reparse lastAlertTxid
-        uint256 hash;
-        hash.SetHex(lastAlertTxid);
-        CTransaction wtx;
-        uint256 blockHash = 0;
-        if (!GetTransaction(hash, wtx, blockHash, true)) //can't find transaction
-        {
-            file_log("DEBUG ALERT Unable to load lastAlertTxid, transaction not found\n");
-        }
-        else
-        {
-            CMPTransaction mp_obj;
-            int parseRC = parseTransaction(true, wtx, blockHeight, 0, &mp_obj);
-            string new_global_alert_message;
-            if (0 <= parseRC)
-            {
-                if (0<=mp_obj.step1())
-                {
-                    if(65535 == mp_obj.getType())
-                    {
-                        if (0 == mp_obj.step2_Alert(&new_global_alert_message))
-                        {
-                            global_alert_message = new_global_alert_message;
-                            // check if expired
-                            CBlockIndex* mpBlockIndex = chainActive[blockHeight];
-                            (void) checkExpiredAlerts(blockHeight, mpBlockIndex->GetBlockTime());
-                        }
-                    }
-                }
-            }
-        }
+    // reparse lastAlertTxid
+    CTransaction wtx;
+    uint256 hash(lastAlertTxid);  
+    uint256 blockHash = 0;
+
+    // can't find transaction?
+    if (!GetTransaction(hash, wtx, blockHash, true)) {
+        file_log("DEBUG ALERT Unable to load lastAlertTxid, transaction not found\n");
+        return -3331;
     }
+
+    CMPTransaction mp_obj;
+    std::string new_global_alert_message;
+    
+    // reparse the transaction and fail on error
+    if (parseTransaction(true, wtx, blockHeight, 0, &mp_obj) < 0) return -3335;
+    if (mp_obj.step1() != MASTERCORE_MESSAGE_TYPE_ALERT) return -3335;    
+    if (mp_obj.step2_Alert(&new_global_alert_message) != 0) return -3335;
+    
+    // found a valid alert! replace the current one
+    global_alert_message = new_global_alert_message;
+    
+    // check if expired
+    CBlockIndex* mpBlockIndex = chainActive[blockHeight];
+    (void) checkExpiredAlerts(blockHeight, mpBlockIndex->GetBlockTime());
+
     return 0;
 }
 
@@ -3883,9 +3944,9 @@ static const string addr = "1MpNote1jsHkbQLwEmgoMr29EoUC1nyxxV";
  //
 int CMPTransaction::interpretPacket(CMPOffer *obj_o, CMPMetaDEx *mdex_o)
 {
-int rc = PKT_ERROR;
-int step_rc;
-std::string new_global_alert_message;
+  int rc = PKT_ERROR;
+  int step_rc;
+  std::string new_global_alert_message;
 
   if (0>step1()) return -98765;
 
@@ -4150,7 +4211,7 @@ std::string new_global_alert_message;
 
     case MASTERCORE_MESSAGE_TYPE_ALERT:
       // check the packet version is also FF
-      if ((int)version != 65535)
+      if (version == MASTERCORE_MESSAGE_TYPE_ALERT)
       {
           rc = step2_Alert(&new_global_alert_message);
           if (rc == 0) global_alert_message = new_global_alert_message;
@@ -4159,7 +4220,6 @@ std::string new_global_alert_message;
       break;
 
     default:
-
       return (PKT_ERROR -100);
   }
 

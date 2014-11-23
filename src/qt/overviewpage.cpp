@@ -433,6 +433,8 @@ void OverviewPage::updateDisplayUnit()
 
 void OverviewPage::updateAlerts(const QString &warnings)
 {
+    // TODO: revert
+    // TODO: stack and combine multiple notifications somewhere else
     string alertMessage = getMasterCoreAlertString();
     // any BitcoinCore or MasterCore alerts to display?
     bool showAlert = false;

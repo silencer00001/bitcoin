@@ -617,6 +617,8 @@ bool mastercore::checkExpiredAlerts(unsigned int curBlock, uint64_t curTime)
         return false;
     }
 
+    // TODO: do not parse alerts every time
+
     int32_t alertType;
     uint64_t expiryValue;
     uint32_t typeCheck;
@@ -3152,7 +3154,9 @@ int CMPTxList::setLastAlert(int blockHeight)
 
     CMPTransaction mp_obj;
     std::string new_global_alert_message;
-    
+
+    // TODO: do not parse alerts every time
+
     // reparse the transaction and fail on error
     if (parseTransaction(true, wtx, blockHeight, 0, &mp_obj) < 0) return -3335;
     if (mp_obj.step1() != MASTERCORE_MESSAGE_TYPE_ALERT) return -3335;    

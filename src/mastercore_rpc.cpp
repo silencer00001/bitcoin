@@ -2103,6 +2103,8 @@ Value getinfo_MP(const Array& params, bool fHelp)
     // provide the number of transactions parsed
     infoResponse.push_back(Pair("totaltransactions", totalMPTransactions));
 
+    // TODO: do not parse alerts every time
+
     // handle alerts
     Object alertResponse;
     string global_alert_message = getMasterCoreAlertString();

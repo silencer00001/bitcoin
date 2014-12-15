@@ -614,7 +614,7 @@ bool mastercore::checkExpiredAlerts(unsigned int curBlock, uint64_t curTime)
                      // can't be trusted to provide valid data, shutdown
                      std::string strMessage = strprintf("IMPORTANT NOTIFICATION: %s\n", global_alert_message);
                      file_log(strMessage);
-                     CAlert::Notify(strMessage, true); // fire warning, if -alertnotify is used
+                     CAlert::Notify(strMessage, false); // fire warning, if -alertnotify is used
                      if (!GetBoolArg("-overrideforcedshutdown", false)) AbortNode(strMessage);
                      return false;
                  }

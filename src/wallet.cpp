@@ -899,7 +899,7 @@ void CWallet::ReacceptWalletTransactions()
         {
             // Try to add to memory pool
             LOCK(mempool.cs);
-            wtx.AcceptToMemoryPool(false);
+            wtx.ReacceptToMemoryPool(false);
         }
     }
 }

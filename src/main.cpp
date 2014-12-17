@@ -1045,6 +1045,120 @@ bool CMerkleTx::AcceptToMemoryPool(bool fLimitFree)
 }
 
 
+//////////////////////////////////////////////////////////////////////////////
+//
+// Experimental:
+// Reaccept and sort orphaned wallet transactions
+//
+// Stripped copy of mapOrphanTransactions and friends.
+//
+
+static std::map<uint256, CMerkleTx> mapOrphanWalletTransactions;
+static std::map<uint256, std::set<uint256> > mapOrphanWalletTransactionsByPrev;
+
+static bool AddOrphanWalletTx(const CMerkleTx& wtx)
+{
+    uint256 hash = wtx.GetHash();
+    if (mapOrphanWalletTransactions.count(hash))
+        return false;
+
+    mapOrphanWalletTransactions[hash] = wtx;
+    BOOST_FOREACH(const CTxIn& txin, wtx.vin)
+        mapOrphanWalletTransactionsByPrev[txin.prevout.hash].insert(hash);
+
+    LogPrint("mempool", "stored orphan wtx %s (mapsz %lu prevsz %lu)\n", hash.ToString(),
+             mapOrphanWalletTransactions.size(), mapOrphanWalletTransactionsByPrev.size());
+
+    return true;
+}
+
+static void EraseOrphanWalletTx(uint256 hash)
+{
+    std::map<uint256, CMerkleTx>::iterator it = mapOrphanWalletTransactions.find(hash);
+    if (it == mapOrphanWalletTransactions.end())
+        return;
+
+    BOOST_FOREACH(const CTxIn& txin, it->second.vin)
+    {
+        std::map<uint256, std::set<uint256> >::iterator itPrev =
+                    mapOrphanWalletTransactionsByPrev.find(txin.prevout.hash);
+        if (itPrev == mapOrphanWalletTransactionsByPrev.end())
+            continue;
+
+        itPrev->second.erase(hash);
+        if (itPrev->second.empty())
+            mapOrphanWalletTransactionsByPrev.erase(itPrev);
+    }
+
+    LogPrint("mempool", "erased orphan wtx %s (mapsz %lu prevsz %lu)\n", hash.ToString(),
+             mapOrphanWalletTransactions.size(), mapOrphanWalletTransactionsByPrev.size());
+
+    mapOrphanWalletTransactions.erase(it);
+}
+
+bool CMerkleTx::ReacceptToMemoryPool(bool fLimitFree)
+{
+    const CMerkleTx& tx = *this;
+    std::vector<uint256> vWorkQueue;
+    std::vector<uint256> vEraseQueue;
+
+    bool fMissingInputs = false;
+    CValidationState state;
+    if (::AcceptToMemoryPool(mempool, state, tx, fLimitFree, &fMissingInputs))
+    {
+        mempool.check(pcoinsTip);
+        RelayTransaction(tx, tx.GetHash());
+        vWorkQueue.push_back(tx.GetHash());
+        vEraseQueue.push_back(tx.GetHash());
+
+        LogPrint("mempool", "AcceptToMemoryPool: accepted wtx %s (poolsz %lu)\n",
+                 tx.GetHash().ToString(), mempool.mapTx.size());
+
+        // Recursively process any orphan transactions that depended on this one
+        for (unsigned int i = 0; i < vWorkQueue.size(); ++i)
+        {
+            std::map<uint256, std::set<uint256> >::iterator itByPrev =
+                    mapOrphanWalletTransactionsByPrev.find(vWorkQueue[i]);
+            if (itByPrev == mapOrphanWalletTransactionsByPrev.end())
+                continue;
+
+            for (std::set<uint256>::iterator mi = itByPrev->second.begin();
+                 mi != itByPrev->second.end();
+                 ++mi)
+            {
+                const uint256& orphanHash = *mi;
+                const CMerkleTx& orphanTx = mapOrphanWalletTransactions[orphanHash];
+
+                CValidationState stateDummy;
+                vEraseQueue.push_back(orphanHash);
+
+                if (::AcceptToMemoryPool(mempool, stateDummy, orphanTx, fLimitFree, NULL))
+                {
+                    LogPrint("mempool", "   accepted orphan wtx %s\n", orphanHash.ToString());
+                    RelayTransaction(orphanTx, orphanHash);
+                    vWorkQueue.push_back(orphanHash);
+                }
+                mempool.check(pcoinsTip);
+            }
+        }
+
+        BOOST_FOREACH(uint256 hash, vEraseQueue)
+            EraseOrphanWalletTx(hash);
+    }
+    else if (fMissingInputs)
+    {
+        AddOrphanWalletTx(tx);
+    }
+    if (state.IsInvalid())
+    {
+        LogPrint("mempool", "wallet transactoin %s was not accepted into the memory pool: %s\n",
+                 tx.GetHash().ToString(), state.GetRejectReason());
+    }
+
+    return state.IsValid();
+}
+
+
 // Return transaction in tx, and if it was found inside a block, its hash is placed in hashBlock
 bool GetTransaction(const uint256 &hash, CTransaction &txOut, uint256 &hashBlock, bool fAllowSlow)
 {

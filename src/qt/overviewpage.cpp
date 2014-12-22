@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2013 The Bitcoin developers
+// Copyright (c) 2011-2015 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -34,12 +34,11 @@ using namespace mastercore;
 #define DECORATION_SIZE 64
 #define NUM_ITEMS 5
 
-//extern uint64_t global_MSC_total;
-//extern uint64_t global_MSC_RESERVED_total;
-extern uint64_t global_balance_money_maineco[100000];
-extern uint64_t global_balance_reserved_maineco[100000];
-extern uint64_t global_balance_money_testeco[100000];
-extern uint64_t global_balance_reserved_testeco[100000];
+extern std::map<uint32_t, int64_t> global_metadex_market;
+extern std::map<uint32_t, int64_t> global_balance_money_maineco;
+extern std::map<uint32_t, int64_t> global_balance_reserved_maineco;
+extern std::map<uint32_t, int64_t> global_balance_money_testeco;
+extern std::map<uint32_t, int64_t> global_balance_reserved_testeco;
 
 class TxViewDelegate : public QAbstractItemDelegate
 {

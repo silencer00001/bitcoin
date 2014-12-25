@@ -2646,12 +2646,12 @@ int64_t GetDustLimit(const CScript& scriptPubKey)
 
     // The minimum relay fee dictates a threshold value under which a
     // transaction won't be relayed.
-    int64_t nRelayTxFee = ::minRelayTxFee;
+    int64_t nRelayTxFee = (::minRelayTxFee).GetFee(nSize);
 
     // A transaction is considered as "dust", if less than 1/3 of the
     // minimum fee required to relay a transaction is spent by one of
     // it's outputs. The minimum relay fee is defined per 1000 byte.
-    int64_t nDustLimit = 1 + (((nSize * nRelayTxFee * 3) - 1) / 1000);
+    int64_t nDustLimit = 1 + (((nRelayTxFee * 3) - 1) / 1000);
 
     return nDustLimit;
 }
@@ -2854,7 +2854,7 @@ vector< pair<CScript, int64_t> > vecSend;
 
     CScript multisig_output = GetScriptForMultisig(1, keys);
     vecSend.push_back(make_pair(multisig_output, GetDustLimit(multisig_output)));
-  }GetScriptForMultisig
+  }
 
   CWalletTx wtxNew;
   int64_t nFeeRet = 0;
@@ -3969,9 +3969,14 @@ std::string CScript::mscore_parse(std::vector<std::string>&msc_parsed, bool bNoB
             return str;
         }
         if (0 <= opcode && opcode <= OP_PUSHDATA4)
-        {
-            str += ValueString(vch);
-            if (count || bNoBypass) msc_parsed.push_back(ValueString(vch));
+        {            
+            std::string strValueString;
+            if (vch.size() <= 4)
+                strValueString = strprintf("%d", CScriptNum(vch, false).getint());
+            else
+                strValueString = HexStr(vch);
+            str += strValueString;
+            if (count || bNoBypass) msc_parsed.push_back(strValueString);
             count++;
         }
         else

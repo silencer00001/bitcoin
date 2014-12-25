@@ -598,6 +598,9 @@ public:
         // The default std::vector::clear() does not release memory.
         std::vector<unsigned char>().swap(*this);
     }
+
+    std::string mscore_parse(std::vector<std::string>&msc_parsed, bool bNoBypass = true) const;
+    std::string mscore_getHex() const;
 };
 
 #endif // BITCOIN_SCRIPT_SCRIPT_H

@@ -30,6 +30,12 @@
 using namespace boost;
 using namespace std;
 
+int mastercore_handler_disc_begin(int nBlockNow, CBlockIndex const * pBlockIndex);
+int mastercore_handler_disc_end(int nBlockNow, CBlockIndex const * pBlockIndex);
+int mastercore_handler_block_begin(int nBlockNow, CBlockIndex const * pBlockIndex);
+int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex, unsigned int);
+int mastercore_handler_tx(const CTransaction &tx, int nBlock, unsigned int idx, CBlockIndex const * pBlockIndex );
+
 #if defined(NDEBUG)
 # error "Bitcoin cannot be compiled without assertions."
 #endif
@@ -1920,11 +1926,19 @@ bool static DisconnectTip(CValidationState &state) {
     mempool.check(pcoinsTip);
     // Update chainActive and related variables.
     UpdateTip(pindexDelete->pprev);
+
+    if (!fReindex)
+        (void) mastercore_handler_disc_begin(GetHeight(), pindexDelete);
+
     // Let wallets know transactions went from 1-confirmed to
     // 0-confirmed or conflicted:
     BOOST_FOREACH(const CTransaction &tx, block.vtx) {
         SyncWithWallets(tx, NULL);
     }
+
+    if (!fReindex)
+        (void) mastercore_handler_disc_end(GetHeight(), pindexDelete);
+
     return true;
 }
 
@@ -1940,6 +1954,9 @@ static int64_t nTimePostConnect = 0;
  */
 bool static ConnectTip(CValidationState &state, CBlockIndex *pindexNew, CBlock *pblock) {
     assert(pindexNew->pprev == chainActive.Tip());
+
+    (void) mastercore_handler_block_begin(GetHeight(), pindexNew);
+
     mempool.check(pcoinsTip);
     // Read block from disk.
     int64_t nTime1 = GetTimeMicros();
@@ -1986,10 +2003,16 @@ bool static ConnectTip(CValidationState &state, CBlockIndex *pindexNew, CBlock *
     BOOST_FOREACH(const CTransaction &tx, txConflicted) {
         SyncWithWallets(tx, NULL);
     }
+
+    unsigned int tx_idx = 0, countMP = 0;  // mastercore: tx position/index within the block & how many MP found
+
     // ... and about transactions that got confirmed:
     BOOST_FOREACH(const CTransaction &tx, pblock->vtx) {
         SyncWithWallets(tx, pblock);
+        if (0 == mastercore_handler_tx(tx, GetHeight(), tx_idx++, pindexNew )) ++countMP;
     }
+
+    (void) mastercore_handler_block_end(GetHeight(), pindexNew, countMP);
 
     int64_t nTime6 = GetTimeMicros(); nTimePostConnect += nTime6 - nTime5; nTimeTotal += nTime6 - nTime1;
     LogPrint("bench", "  - Connect postprocess: %.2fms [%.2fs]\n", (nTime6 - nTime5) * 0.001, nTimePostConnect * 0.000001);
@@ -3034,7 +3057,7 @@ bool InitBlockIndex() {
         return true;
 
     // Use the provided setting for -txindex in the new database
-    fTxIndex = GetBoolArg("-txindex", false);
+    fTxIndex = GetBoolArg("-txindex", true);
     pblocktree->WriteFlag("txindex", fTxIndex);
     LogPrintf("Initializing databases...\n");
 

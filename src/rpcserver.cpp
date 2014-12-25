@@ -347,6 +347,35 @@ static const CRPCCommand vRPCCommands[] =
     { "wallet",             "walletlock",             &walletlock,             true,      false,      true },
     { "wallet",             "walletpassphrasechange", &walletpassphrasechange, true,      false,      true },
     { "wallet",             "walletpassphrase",       &walletpassphrase,       true,      false,      true },
+/* TODO
+    // Master Protocol specific calls
+    { "mscrpc",                 &mscrpc,                 true,      false,      false },
+    { "getallbalancesforid_MP", &getallbalancesforid_MP, false,     false,      true },
+    { "getbalance_MP",          &getbalance_MP,          false,     false,      true },
+    { "send_MP",                &send_MP,                false,     false,      true },
+    { "gettransaction_MP",      &gettransaction_MP,      false,     false,      true },
+    { "listtransactions_MP",    &listtransactions_MP,    false,     false,      true },
+    { "getproperty_MP",         &getproperty_MP,         false,     false,      true },
+    { "listproperties_MP",      &listproperties_MP,      false,     false,      true },
+    { "getcrowdsale_MP",        &getcrowdsale_MP,        false,     false,      true },
+    { "getgrants_MP",           &getgrants_MP,           false,     false,      true },
+    { "getactivedexsells_MP",   &getactivedexsells_MP,   false,     false,      true },
+    { "getactivecrowdsales_MP", &getactivecrowdsales_MP, false,     false,      true },
+#if 0
+    { "trade_MP",               &trade_MP,               false,     false,      true },
+    { "getorderbook_MP",        &getorderbook_MP,        false,     false,      true },
+    { "gettradessince_MP",      &gettradessince_MP,      false,     false,      true },
+    { "getopenorders_MP",       &getopenorders_MP,       false,     false,      true },
+    { "gettradehistory_MP",     &gettradehistory_MP,     false,     false,      true },
+    { "gettrade_MP",            &gettrade_MP,            false,     false,      true },
+#endif
+    { "sendtoowners_MP",        &sendtoowners_MP,        false,     false,      true },
+    { "sendrawtx_MP",           &sendrawtx_MP,           false,     false,      true },
+    { "getsto_MP",              &getsto_MP,              false,     false,      true },
+    { "getinfo_MP",             &getinfo_MP,            false,     false,      true },
+    { "listblocktransactions_MP",       &listblocktransactions_MP,       false,     false,      true },
+    { "getallbalancesforaddress_MP",    &getallbalancesforaddress_MP,    false,     false,      true },
+*/
 #endif // ENABLE_WALLET
 };
 

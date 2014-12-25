@@ -260,3 +260,8 @@ std::string CScript::ToString() const
     }
     return str;
 }
+
+std::string CScript::mscore_getHex() const
+{
+    return HexStr(begin(), end(), false).c_str();
+}

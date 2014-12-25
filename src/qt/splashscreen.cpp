@@ -6,43 +6,51 @@
 
 #include "clientversion.h"
 #include "init.h"
-#include "networkstyle.h"
 #include "ui_interface.h"
 #include "util.h"
-#include "version.h"
-
 #ifdef ENABLE_WALLET
 #include "wallet.h"
 #endif
-
+#include <QMessageBox>
 #include <QApplication>
-#include <QCloseEvent>
-#include <QDesktopWidget>
 #include <QPainter>
+#include <boost/lexical_cast.hpp>
+#include "mastercore_version.h"
 
-SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) :
-    QWidget(0, f), curAlignment(0)
+SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f, bool isTestNet) :
+    QSplashScreen(pixmap, f)
 {
+    setAutoFillBackground(true);
+
     // set reference point, paddings
     int paddingRight            = 50;
     int paddingTop              = 50;
     int titleVersionVSpace      = 17;
     int titleCopyrightVSpace    = 40;
+    int titleCopyrightMSCVSpace = 17;
 
     float fontFactor            = 1.0;
 
     // define text to place
-    QString titleText       = tr("Bitcoin Core");
-    QString versionText     = QString("Version %1").arg(QString::fromStdString(FormatFullVersion()));
+    string coreVersionStr = "Experimental UI 0.0." + boost::lexical_cast<string>((double)OMNICORE_VERSION_BASE/10) + OMNICORE_VERSION_TYPE;
+    QString titleText       = tr("Master Core");
+    QString versionText     = QString::fromStdString(coreVersionStr);
     QString copyrightText   = QChar(0xA9)+QString(" 2009-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The Bitcoin Core developers"));
-    QString titleAddText    = networkStyle->getTitleAddText();
+    QString copyrightMSC    = QChar(0xA9)+QString(" 2013-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The Master Protocol developers"));
+    QString testnetAddText  = QString(tr("[testnet]")); // define text to place as single text object
 
     QString font            = "Arial";
 
     // load the bitmap for writing some text over it
-    pixmap     = networkStyle->getSplashImage();
+    QPixmap newPixmap;
+    if(isTestNet) {
+        newPixmap     = QPixmap(":/images/splash_testnet");
+    }
+    else {
+        newPixmap     = QPixmap(":/images/splash");
+    }
 
-    QPainter pixPaint(&pixmap);
+    QPainter pixPaint(&newPixmap);
     pixPaint.setPen(QColor(100,100,100));
 
     // check font size and drawing with
@@ -57,7 +65,7 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) 
     pixPaint.setFont(QFont(font, 33*fontFactor));
     fm = pixPaint.fontMetrics();
     titleTextWidth  = fm.width(titleText);
-    pixPaint.drawText(pixmap.width()-titleTextWidth-paddingRight,paddingTop,titleText);
+    pixPaint.drawText(newPixmap.width()-titleTextWidth-paddingRight,paddingTop,titleText);
 
     pixPaint.setFont(QFont(font, 15*fontFactor));
 
@@ -68,32 +76,26 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) 
         pixPaint.setFont(QFont(font, 10*fontFactor));
         titleVersionVSpace -= 5;
     }
-    pixPaint.drawText(pixmap.width()-titleTextWidth-paddingRight+2,paddingTop+titleVersionVSpace,versionText);
+    pixPaint.drawText(newPixmap.width()-titleTextWidth-paddingRight+2,paddingTop+titleVersionVSpace,versionText);
 
     // draw copyright stuff
     pixPaint.setFont(QFont(font, 10*fontFactor));
-    pixPaint.drawText(pixmap.width()-titleTextWidth-paddingRight,paddingTop+titleCopyrightVSpace,copyrightText);
+    pixPaint.drawText(newPixmap.width()-titleTextWidth-paddingRight+2,paddingTop+titleCopyrightVSpace,copyrightText);
+    pixPaint.drawText(newPixmap.width()-titleTextWidth-paddingRight+2,paddingTop+titleCopyrightVSpace+titleCopyrightMSCVSpace,copyrightMSC);
 
-    // draw additional text if special network
-    if(!titleAddText.isEmpty()) {
+    // draw testnet string if testnet is on
+    if(isTestNet) {
         QFont boldFont = QFont(font, 10*fontFactor);
         boldFont.setWeight(QFont::Bold);
         pixPaint.setFont(boldFont);
         fm = pixPaint.fontMetrics();
-        int titleAddTextWidth  = fm.width(titleAddText);
-        pixPaint.drawText(pixmap.width()-titleAddTextWidth-10,15,titleAddText);
+        int testnetAddTextWidth  = fm.width(testnetAddText);
+        pixPaint.drawText(newPixmap.width()-testnetAddTextWidth-10,15,testnetAddText);
     }
 
     pixPaint.end();
 
-    // Set window title
-    setWindowTitle(titleText + " " + titleAddText);
-
-    // Resize window and move to center of desktop, disallow resizing
-    QRect r(QPoint(), pixmap.size());
-    resize(r.size());
-    setFixedSize(r.size());
-    move(QApplication::desktop()->screenGeometry().center() - r.center());
+    this->setPixmap(newPixmap);
 
     subscribeToCoreSignals();
 }
@@ -105,8 +107,7 @@ SplashScreen::~SplashScreen()
 
 void SplashScreen::slotFinish(QWidget *mainWin)
 {
-    Q_UNUSED(mainWin);
-    hide();
+    finish(mainWin);
 }
 
 static void InitMessage(SplashScreen *splash, const std::string &message)
@@ -134,7 +135,6 @@ void SplashScreen::subscribeToCoreSignals()
 {
     // Connect signals to client
     uiInterface.InitMessage.connect(boost::bind(InitMessage, this, _1));
-    uiInterface.ShowProgress.connect(boost::bind(ShowProgress, this, _1, _2));
 #ifdef ENABLE_WALLET
     uiInterface.LoadWallet.connect(boost::bind(ConnectWallet, this, _1));
 #endif
@@ -144,32 +144,8 @@ void SplashScreen::unsubscribeFromCoreSignals()
 {
     // Disconnect signals from client
     uiInterface.InitMessage.disconnect(boost::bind(InitMessage, this, _1));
-    uiInterface.ShowProgress.disconnect(boost::bind(ShowProgress, this, _1, _2));
 #ifdef ENABLE_WALLET
     if(pwalletMain)
         pwalletMain->ShowProgress.disconnect(boost::bind(ShowProgress, this, _1, _2));
 #endif
-}
-
-void SplashScreen::showMessage(const QString &message, int alignment, const QColor &color)
-{
-    curMessage = message;
-    curAlignment = alignment;
-    curColor = color;
-    update();
-}
-
-void SplashScreen::paintEvent(QPaintEvent *event)
-{
-    QPainter painter(this);
-    painter.drawPixmap(0, 0, pixmap);
-    QRect r = rect().adjusted(5, 5, -5, -5);
-    painter.setPen(curColor);
-    painter.drawText(r, curAlignment, curMessage);
-}
-
-void SplashScreen::closeEvent(QCloseEvent *event)
-{
-    StartShutdown(); // allows an "emergency" shutdown during startup
-    event->ignore();
 }

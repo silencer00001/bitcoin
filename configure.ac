@@ -501,7 +501,7 @@ if test x$use_upnp != xno; then
 fi
 
 dnl Check for boost libs
-AX_BOOST_BASE
+AX_BOOST_BASE([1.53])
 AX_BOOST_SYSTEM
 AX_BOOST_FILESYSTEM
 AX_BOOST_PROGRAM_OPTIONS
@@ -727,6 +727,11 @@ if test x$enable_wallet != xno; then
 
 else
   AC_MSG_RESULT(no)
+fi
+
+dnl require enabled wallet for now
+if test x$enable_wallet != xyes; then
+  AC_MSG_ERROR(Master Core must be used with enabled wallet. Please do not use --without-wallet or --disable-wallet.)
 fi
 
 dnl enable upnp support

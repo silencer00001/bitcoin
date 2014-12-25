@@ -14,8 +14,10 @@ class ClientModel;
 class OverviewPage;
 class ReceiveCoinsDialog;
 class SendCoinsDialog;
+class SendMPDialog;
 class SendCoinsRecipient;
 class TransactionView;
+class BalancesView;
 class WalletModel;
 
 QT_BEGIN_NAMESPACE
@@ -58,16 +60,24 @@ private:
 
     OverviewPage *overviewPage;
     QWidget *transactionsPage;
+    QWidget *balancesPage;
+
     ReceiveCoinsDialog *receiveCoinsPage;
-    SendCoinsDialog *sendCoinsPage;
+//    SendCoinsDialog *sendCoinsPage;
+    QWidget *sendCoinsPage;
+    SendCoinsDialog *sendCoinsTab;
+    SendMPDialog *sendMPTab;
 
     TransactionView *transactionView;
+    BalancesView *balancesView;
 
     QProgressDialog *progressDialog;
 
 public slots:
     /** Switch to overview (home) page */
     void gotoOverviewPage();
+    /** Switch to balances page */
+    void gotoBalancesPage();
     /** Switch to history (transactions) page */
     void gotoHistoryPage();
     /** Switch to receive coins page */

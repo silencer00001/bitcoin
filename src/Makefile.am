@@ -101,6 +101,15 @@ BITCOIN_CORE_H = \
   leveldbwrapper.h \
   limitedmap.h \
   main.h \
+  mastercore.h \
+  mastercore_convert.h \
+  mastercore_dex.h \
+  mastercore_errors.h \
+  mastercore_parse_string.h \
+  mastercore_rpc.h \
+  mastercore_sp.h \
+  mastercore_tx.h \
+  mastercore_version.h \
   merkleblock.h \
   miner.h \
   mruset.h \
@@ -246,6 +255,12 @@ libbitcoin_common_a_SOURCES = \
   hash.cpp \
   key.cpp \
   keystore.cpp \
+  mastercore.cpp \
+  mastercore_convert.cpp \
+  mastercore_dex.cpp \
+  mastercore_parse_string.cpp \
+  mastercore_tx.cpp \
+  mastercore_rpc.cpp \
   netbase.cpp \
   protocol.cpp \
   pubkey.cpp \

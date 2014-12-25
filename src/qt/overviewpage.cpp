@@ -13,12 +13,58 @@
 #include "transactionfilterproxy.h"
 #include "transactiontablemodel.h"
 #include "walletmodel.h"
+#include "wallet.h"
+
+// potentially overzealous includes here
+#include "base58.h"
+#include "rpcserver.h"
+#include "init.h"
+#include "util.h"
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <utility>
+#include <string>
+#include <boost/assign/list_of.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/find.hpp>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
+#include <boost/filesystem.hpp>
+#include "json/json_spirit_utils.h"
+#include "json/json_spirit_value.h"
+#include "leveldb/db.h"
+#include "leveldb/write_batch.h"
+// end potentially overzealous includes
+using namespace json_spirit; // since now using Array in mastercore.h this needs to come first
+
+#include "mastercore.h"
+using namespace mastercore;
+
+// potentially overzealous using here
+using namespace std;
+using namespace boost;
+using namespace boost::assign;
+using namespace leveldb;
+// end potentially overzealous using
+
+#include "mastercore_dex.h"
+#include "mastercore_tx.h"
+#include "mastercore_sp.h"
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
 
 #define DECORATION_SIZE 64
-#define NUM_ITEMS 3
+#define NUM_ITEMS 5
+
+//extern uint64_t global_MSC_total;
+//extern uint64_t global_MSC_RESERVED_total;
+extern uint64_t global_balance_money_maineco[100000];
+extern uint64_t global_balance_reserved_maineco[100000];
+extern uint64_t global_balance_money_testeco[100000];
+extern uint64_t global_balance_reserved_testeco[100000];
 
 class TxViewDelegate : public QAbstractItemDelegate
 {
@@ -130,6 +176,8 @@ OverviewPage::OverviewPage(QWidget *parent) :
     // init "out of sync" warning labels
     ui->labelWalletStatus->setText("(" + tr("out of sync") + ")");
     ui->labelTransactionsStatus->setText("(" + tr("out of sync") + ")");
+    ui->proclabel->setText("(" + tr("processing") + ")"); //msc processing label
+    ui->proclabel_2->setText("(" + tr("processing") + ")"); //smart property processing label
 
     // start with displaying the "out of sync" warnings
     showOutOfSyncWarning(true);
@@ -173,6 +221,177 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
     ui->labelImmature->setVisible(showImmature || showWatchOnlyImmature);
     ui->labelImmatureText->setVisible(showImmature || showWatchOnlyImmature);
     ui->labelWatchImmature->setVisible(showWatchOnlyImmature); // show watch-only immature balance
+    
+    // mastercoin balances - force refresh first
+    set_wallet_totals();
+    ui->MSClabelavailable->setText(BitcoinUnits::format(0, global_balance_money_maineco[1]).append(" MSC"));
+    ui->MSClabelpending->setText("0.00 MSC"); // no unconfirmed support currently
+    ui->MSClabelreserved->setText(BitcoinUnits::format(0, global_balance_reserved_maineco[1]).append(" MSC"));
+    uint64_t totalbal = global_balance_money_maineco[1] + global_balance_reserved_maineco[1];
+    ui->MSClabeltotal->setText(BitcoinUnits::format(0, totalbal).append(" MSC"));
+
+    //scrappy way to do this, find a more efficient way of interacting with labels
+    //show first 5 SPs with balances - needs to be converted to listwidget or something
+    unsigned int propertyId;
+    unsigned int lastFoundPropertyId = 1;
+    string spName[7];
+    uint64_t spBal[7];
+    bool spDivisible[7];
+    bool spFound[7];
+    unsigned int spItem;
+    bool foundProperty = false;
+
+    for (spItem = 1; spItem < 7; spItem++)
+    {
+        spFound[spItem] = false;
+        for (propertyId = lastFoundPropertyId+1; propertyId<100000; propertyId++)
+        {
+            foundProperty=false;
+            if ((global_balance_money_maineco[propertyId] > 0) || (global_balance_reserved_maineco[propertyId] > 0))
+            {
+                lastFoundPropertyId = propertyId;
+                foundProperty=true;
+                spName[spItem] = getPropertyName(propertyId).c_str();
+                if(spName[spItem].size()>22) spName[spItem]=spName[spItem].substr(0,22)+"...";
+                spName[spItem] += " (#" + static_cast<ostringstream*>( &(ostringstream() << propertyId) )->str() + ")";
+                spBal[spItem] = global_balance_money_maineco[propertyId];
+                spDivisible[spItem] = isPropertyDivisible(propertyId);
+                spFound[spItem] = true;
+                break;
+            }
+        }
+        // have we found a property in main eco?  If not let's try test eco
+        if (!foundProperty)
+        {
+            for (propertyId = lastFoundPropertyId+1; propertyId<100000; propertyId++)
+            {
+                if ((global_balance_money_testeco[propertyId] > 0) || (global_balance_reserved_testeco[propertyId] > 0))
+                {
+                    lastFoundPropertyId = propertyId;
+                    foundProperty=true;
+                    spName[spItem] = getPropertyName(propertyId+2147483647).c_str();
+                    if(spName[spItem].size()>22) spName[spItem]=spName[spItem].substr(0,22)+"...";
+                    spName[spItem] += " (#" + static_cast<ostringstream*>( &(ostringstream() << propertyId+2147483647) )->str() + ")";
+                    spBal[spItem] = global_balance_money_testeco[propertyId];
+                    spDivisible[spItem] = isPropertyDivisible(propertyId+2147483647);
+                    spFound[spItem] = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    //set smart property info
+    if (spFound[1])
+    {
+        // only need custom tokenLabel for SP1 since TMSC will always be first
+        string tokenLabel;
+        if (spName[1]=="Test MasterCoin (#2)") { tokenLabel = " TMSC"; } else { tokenLabel = " SPT"; }
+
+        ui->SPname1->setText(spName[1].c_str());
+        if (spDivisible[1])
+        {
+            ui->SPbal1->setText(BitcoinUnits::format(0, spBal[1]).append(QString::fromStdString(tokenLabel)));
+        }
+        else
+        {
+            string balText = static_cast<ostringstream*>( &(ostringstream() << spBal[1]) )->str();
+            balText += tokenLabel;
+            ui->SPbal1->setText(balText.c_str());
+        }
+    }
+    else
+    {
+        ui->SPname1->setText("N/A");
+        ui->SPbal1->setText("N/A");
+        ui->SPname1->setVisible(false);
+        ui->SPbal1->setVisible(false);
+    }
+    if (spFound[2])
+    {
+        ui->SPname2->setText(spName[2].c_str());
+        if (spDivisible[2])
+        {
+            ui->SPbal2->setText(BitcoinUnits::format(0, spBal[2]).append(" SPT"));
+        }
+        else
+        {
+            string balText = static_cast<ostringstream*>( &(ostringstream() << spBal[2]) )->str();
+            balText += " SPT";
+            ui->SPbal2->setText(balText.c_str());
+        }
+    }
+    else
+    {
+        ui->SPname2->setText("N/A");
+        ui->SPbal2->setText("N/A");
+        ui->SPname2->setVisible(false);
+        ui->SPbal2->setVisible(false);
+    }
+    if (spFound[3])
+    {
+        ui->SPname3->setText(spName[3].c_str());
+        if (spDivisible[3])
+        {
+            ui->SPbal3->setText(BitcoinUnits::format(0, spBal[3]).append(" SPT"));
+        }
+        else
+        {
+            string balText = static_cast<ostringstream*>( &(ostringstream() << spBal[3]) )->str();
+            balText += " SPT";
+            ui->SPbal3->setText(balText.c_str());
+        }
+    }
+    else
+    {
+        ui->SPname3->setText("N/A");
+        ui->SPbal3->setText("N/A");
+        ui->SPname3->setVisible(false);
+        ui->SPbal3->setVisible(false);
+    }
+    if (spFound[4])
+    {
+        ui->SPname4->setText(spName[4].c_str());
+        if (spDivisible[4])
+        {
+            ui->SPbal4->setText(BitcoinUnits::format(0, spBal[4]).append(" SPT"));
+        }
+        else
+        {
+            string balText = static_cast<ostringstream*>( &(ostringstream() << spBal[4]) )->str();
+            balText += " SPT";
+            ui->SPbal4->setText(balText.c_str());
+        }
+    }
+    else
+    {
+        ui->SPname4->setText("N/A");
+        ui->SPbal4->setText("N/A");
+        ui->SPname4->setVisible(false);
+        ui->SPbal4->setVisible(false);
+    }
+    if (spFound[5])
+    {
+        ui->SPname5->setText(spName[5].c_str());
+        if (spDivisible[5])
+        {
+            ui->SPbal5->setText(BitcoinUnits::format(0, spBal[5]).append(" SPT"));
+        }
+        else
+        {
+            string balText = static_cast<ostringstream*>( &(ostringstream() << spBal[5]) )->str();
+            balText += " SPT";
+            ui->SPbal5->setText(balText.c_str());
+        }
+    }
+    else
+    {
+        ui->SPname5->setText("N/A");
+        ui->SPbal5->setText("N/A");
+        ui->SPname5->setVisible(false);
+        ui->SPbal5->setVisible(false);
+    }
+    if (spFound[6]) { ui->notifyMoreSPLabel->setVisible(true); } else { ui->notifyMoreSPLabel->setVisible(false); }
 }
 
 // show/hide watch-only labels
@@ -187,6 +406,12 @@ void OverviewPage::updateWatchOnlyLabels(bool showWatchOnly)
 
     if (!showWatchOnly)
         ui->labelWatchImmature->hide();
+}
+
+void OverviewPage::switchToBalancesPage()
+{
+printf("switch to balances clicked\n");
+//    WalletView::gotoBalancesPage();
 }
 
 void OverviewPage::setClientModel(ClientModel *model)
@@ -249,12 +474,43 @@ void OverviewPage::updateDisplayUnit()
 
 void OverviewPage::updateAlerts(const QString &warnings)
 {
-    this->ui->labelAlerts->setVisible(!warnings.isEmpty());
-    this->ui->labelAlerts->setText(warnings);
+    string alertMessage = getMasterCoreAlertString();
+    // any BitcoinCore or MasterCore alerts to display?
+    bool showAlert = false;
+    if((!alertMessage.empty()) || (!warnings.isEmpty())) showAlert = true;
+    this->ui->labelAlerts->setVisible(showAlert);
+    QString totalMessage;
+    std::vector<std::string> vstr;
+
+    // check if we have a Bitcoin alert to display
+    if(!warnings.isEmpty())
+    {
+        totalMessage=warnings + "\n";
+    }
+
+    // check if we have a MasterProtocol alert to display
+    if(!alertMessage.empty())
+    {
+        boost::split(vstr, alertMessage, boost::is_any_of(":"), token_compress_on);
+        // make sure there are 5 tokens
+        if (5 == vstr.size())
+        {
+             totalMessage+=QString::fromStdString(vstr[4]);
+        }
+        else
+        {
+             file_log("DEBUG ALERT ERROR - Something went wrong decoding the global alert string.\n");
+        }
+    }
+
+    // display the alert if needed
+    if(showAlert) { this->ui->labelAlerts->setText(totalMessage); }
 }
 
 void OverviewPage::showOutOfSyncWarning(bool fShow)
 {
     ui->labelWalletStatus->setVisible(fShow);
     ui->labelTransactionsStatus->setVisible(fShow);
+    ui->proclabel->setVisible(fShow);
+    ui->proclabel_2->setVisible(fShow);
 }

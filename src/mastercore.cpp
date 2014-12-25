@@ -17,6 +17,7 @@
 #include "rpcserver.h"
 #include "init.h"
 #include "util.h"
+#include "script/script.h"
 #include "wallet.h"
 // #include "walletdb.h"
 #include "coincontrol.h"
@@ -2650,7 +2651,7 @@ int64_t GetDustLimit(const CScript& scriptPubKey)
 
     // The minimum relay fee dictates a threshold value under which a
     // transaction won't be relayed.
-    int64_t nRelayTxFee = CTransaction::nMinRelayTxFee;
+    int64_t nRelayTxFee = ::minRelayTxFee;
 
     // A transaction is considered as "dust", if less than 1/3 of the
     // minimum fee required to relay a transaction is spent by one of
@@ -2856,10 +2857,9 @@ vector< pair<CScript, int64_t> > vecSend;
       seqNum++;
     }
 
-    CScript multisig_output;
-    multisig_output.SetMultisig(1, keys);
+    CScript multisig_output = GetScriptForMultisig(1, keys);
     vecSend.push_back(make_pair(multisig_output, GetDustLimit(multisig_output)));
-  }
+  }GetScriptForMultisig
 
   CWalletTx wtxNew;
   int64_t nFeeRet = 0;
@@ -2871,19 +2871,20 @@ vector< pair<CScript, int64_t> > vecSend;
 
   if (!wallet) return MP_ERR_WALLET_ACCESS;
 
-  CScript scriptPubKey;
 
   // add the the reference/recepient/receiver ouput if needed
   if (!receiverAddress.empty())
   {
     // Send To Owners is the first use case where the receiver is empty
-    scriptPubKey.SetDestination(CBitcoinAddress(receiverAddress).Get());
+    CScript scriptPubKey = GetScriptForDestination(CBitcoinAddress(receiverAddress).Get());
     vecSend.push_back(make_pair(scriptPubKey, 0 < referenceamount ? referenceamount : GetDustLimit(scriptPubKey)));
   }
 
-  // add the marker output
-  scriptPubKey.SetDestination(CBitcoinAddress(exodus_address).Get());
-  vecSend.push_back(make_pair(scriptPubKey, GetDustLimit(scriptPubKey)));
+  {
+    // add the marker output   
+    CScript scriptPubKey = GetScriptForDestination(CBitcoinAddress(exodus_address).Get());
+    vecSend.push_back(make_pair(scriptPubKey, GetDustLimit(scriptPubKey)));
+  }
 
   // selected in the parent function, i.e.: ensure we are only using the address passed in as the Sender
   if (!coinControl.HasSelected()) return MP_ERR_INPUTSELECT_FAIL;

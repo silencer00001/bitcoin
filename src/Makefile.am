@@ -178,6 +178,13 @@ libbitcoin_server_a_SOURCES = \
   init.cpp \
   leveldbwrapper.cpp \
   main.cpp \
+  mastercore.cpp \
+  mastercore_convert.cpp \
+  mastercore_dex.cpp \
+  mastercore_parse_string.cpp \
+  mastercore_tx.cpp \
+  mastercore_rpc.cpp \
+  mastercore_version.cpp \
   merkleblock.cpp \
   miner.cpp \
   net.cpp \
@@ -255,13 +262,6 @@ libbitcoin_common_a_SOURCES = \
   hash.cpp \
   key.cpp \
   keystore.cpp \
-  mastercore.cpp \
-  mastercore_convert.cpp \
-  mastercore_dex.cpp \
-  mastercore_parse_string.cpp \
-  mastercore_tx.cpp \
-  mastercore_rpc.cpp \
-  mastercore_version.cpp \
   netbase.cpp \
   protocol.cpp \
   pubkey.cpp \

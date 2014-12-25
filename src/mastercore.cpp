@@ -14,45 +14,40 @@
 //
 
 #include "base58.h"
-#include "rpcserver.h"
-#include "init.h"
-#include "util.h"
-#include "script/script.h"
-#include "wallet.h"
-// #include "walletdb.h"
 #include "coincontrol.h"
+#include "init.h"
+#include "rpcserver.h"
+#include "script/script.h"
+#include "util.h"
+#include "utilstrencodings.h"
+#include "wallet.h"
 
 #include <stdint.h>
 #include <string.h>
-#include <set>
-#include <map>
-
-#include <fstream>
 #include <algorithm>
-
-#include <vector>
-
-#include <utility>
+#include <fstream>
+#include <map>
+#include <set>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include <boost/assign/list_of.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/find.hpp>
 #include <boost/algorithm/string/join.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/format.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
+
+#include <openssl/sha.h>
+
 #include "json/json_spirit_utils.h"
 #include "json/json_spirit_value.h"
 
 #include "leveldb/db.h"
 #include "leveldb/write_batch.h"
-
-#include <openssl/sha.h>
-
-// #include "tinyformat.h"
-
-#include <boost/multiprecision/cpp_int.hpp>
 
 // comment out MY_HACK & others here - used for Unit Testing only !
 // #define MY_HACK
@@ -2351,7 +2346,7 @@ static void prune_state_files( CBlockIndex const *topIndex )
   for (iter = statefulBlockHashes.begin(); iter != statefulBlockHashes.end(); ++iter) {
     // look up the CBlockIndex for height info
     CBlockIndex const *curIndex = NULL;
-    map<uint256,CBlockIndex *>::const_iterator indexIter = mapBlockIndex.find((*iter));
+    std::map<uint256,CBlockIndex *>::const_iterator indexIter = mapBlockIndex.find((*iter));
     if (indexIter != mapBlockIndex.end()) {
       curIndex = (*indexIter).second;
     }
@@ -3203,7 +3198,7 @@ bool CMPTxList::getPurchaseDetails(const uint256 txid, int purchaseNumber, strin
     if (!pdb) return 0;
     std::vector<std::string> vstr;
     string strValue;
-    Status status = pdb->Get(readoptions, txid.ToString()+"-"+to_string(purchaseNumber), &strValue);
+    Status status = pdb->Get(readoptions, txid.ToString()+"-"+itostr(purchaseNumber), &strValue);
     if (status.ok())
     {
         // parse the string returned

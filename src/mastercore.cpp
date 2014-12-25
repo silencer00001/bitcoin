@@ -318,7 +318,7 @@ string str = "*unknown*";
 
 bool isNonMainNet()
 {
-  return (TestNet() || RegTest());
+  return ("main" != Params().NetworkIDString());
 }
 
 // mostly taken from Bitcoin's FormatMoney()
@@ -1256,7 +1256,7 @@ uint64_t txFee = 0;
               if (MONEYMAN_TESTNET_BLOCK <= nBlock) BTC_amount = TestNetMoneyValues[0];
             }
 
-            if (RegTest()) 
+            if ("regtest" == Params().NetworkIDString()) 
             { 
               if (MONEYMAN_REGTEST_BLOCK <= nBlock) BTC_amount = TestNetMoneyValues[0];
             }
@@ -2462,7 +2462,7 @@ int mastercore_init()
 
   if (isNonMainNet()) snapshotHeight = START_TESTNET_BLOCK - 1;
 
-  if (RegTest()) snapshotHeight = START_REGTEST_BLOCK - 1;
+  if ("regtest" == Params().NetworkIDString()) snapshotHeight = START_REGTEST_BLOCK - 1;
 
   ++mastercoreInitialized;
 
@@ -2488,9 +2488,9 @@ int mastercore_init()
   // my old way
     nWaterlineBlock = GENESIS_BLOCK - 1;  // the DEX block
 
-    if (TestNet()) nWaterlineBlock = START_TESTNET_BLOCK; //testnet3
+    if ("test" == Params().NetworkIDString()) nWaterlineBlock = START_TESTNET_BLOCK; //testnet3
 
-    if (RegTest()) nWaterlineBlock = START_REGTEST_BLOCK; //testnet3
+    if ("regtest" == Params().NetworkIDString()) nWaterlineBlock = START_REGTEST_BLOCK; //testnet3
 
 #ifdef  MY_HACK
 //    nWaterlineBlock = MSC_DEX_BLOCK-3;
@@ -4000,7 +4000,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
     nWaterlineBlock = GENESIS_BLOCK - 1;
     if (isNonMainNet()) nWaterlineBlock = START_TESTNET_BLOCK - 1;
-    if (RegTest()) nWaterlineBlock = START_REGTEST_BLOCK - 1;
+    if ("regtest" == Params().NetworkIDString()) nWaterlineBlock = START_REGTEST_BLOCK - 1;
 
 
     if(readPersistence()) {

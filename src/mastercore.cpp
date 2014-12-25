@@ -2346,7 +2346,7 @@ static void prune_state_files( CBlockIndex const *topIndex )
   for (iter = statefulBlockHashes.begin(); iter != statefulBlockHashes.end(); ++iter) {
     // look up the CBlockIndex for height info
     CBlockIndex const *curIndex = NULL;
-    std::map<uint256,CBlockIndex *>::const_iterator indexIter = mapBlockIndex.find((*iter));
+    BlockMap::const_iterator indexIter = mapBlockIndex.find((*iter));
     if (indexIter != mapBlockIndex.end()) {
       curIndex = (*indexIter).second;
     }

@@ -88,34 +88,33 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "estimatepriority", 0 },
     { "prioritisetransaction", 1 },
     { "prioritisetransaction", 2 },
-/* TODO
-    // master core conversions
-    if (strMethod == "getcrowdsale_MP"        && n > 0) ConvertTo<int64_t>(params[0]);
-    if (strMethod == "getcrowdsale_MP"        && n > 1) ConvertTo<bool>(params[1]);
-    if (strMethod == "getgrants_MP"           && n > 0) ConvertTo<int64_t>(params[0]);
-    if (strMethod == "send_MP"                && n > 2) ConvertTo<int64_t>(params[2]);
-    if (strMethod == "getbalance_MP"          && n > 1) ConvertTo<int64_t>(params[1]);
-    if (strMethod == "sendtoowners_MP"        && n > 1) ConvertTo<int64_t>(params[1]);
-    if (strMethod == "getproperty_MP"         && n > 0) ConvertTo<int64_t>(params[0]);
-    if (strMethod == "listtransactions_MP"    && n > 1) ConvertTo<int64_t>(params[1]);
-    if (strMethod == "listtransactions_MP"    && n > 2) ConvertTo<int64_t>(params[2]);
-    if (strMethod == "listtransactions_MP"    && n > 3) ConvertTo<int64_t>(params[3]);
-    if (strMethod == "listtransactions_MP"    && n > 4) ConvertTo<int64_t>(params[4]);
-    if (strMethod == "getallbalancesforid_MP"    && n > 0) ConvertTo<int64_t>(params[0]);
-    if (strMethod == "listblocktransactions_MP"    && n > 0) ConvertTo<int64_t>(params[0]);
-#if 0
-    if (strMethod == "trade_MP"                && n > 2) ConvertTo<int64_t>(params[2]);
-    if (strMethod == "trade_MP"                && n > 4) ConvertTo<int64_t>(params[4]);
-    if (strMethod == "trade_MP"                && n > 5) ConvertTo<int64_t>(params[5]);
-    if (strMethod == "getorderbook_MP"         && n > 0) ConvertTo<int64_t>(params[0]);
-    if (strMethod == "getorderbook_MP"         && n > 1) ConvertTo<int64_t>(params[1]);
-    if (strMethod == "gettradessince_MP"         && n > 0) ConvertTo<int64_t>(params[0]);
-    if (strMethod == "gettradessince_MP"         && n > 1) ConvertTo<int64_t>(params[1]);
-    if (strMethod == "gettradessince_MP"         && n > 2) ConvertTo<int64_t>(params[2]);
-    if (strMethod == "gettradehistory_MP"         && n > 1) ConvertTo<int64_t>(params[1]);
-    if (strMethod == "gettradehistory_MP"         && n > 2) ConvertTo<int64_t>(params[2]);
+
+    // Master Core specific conversions
+    { "getcrowdsale_MP", 0 },
+    { "getcrowdsale_MP", 1 },
+    { "getgrants_MP", 0 },
+    { "send_MP", 2 },
+    { "getbalance_MP", 1 },
+    { "sendtoowners_MP", 1 },
+    { "getproperty_MP", 0 },
+    { "listtransactions_MP", 1 },
+    { "listtransactions_MP", 2 },
+    { "listtransactions_MP", 3 },
+    { "listtransactions_MP", 4 },
+    { "getallbalancesforid_MP", 0 },
+    { "listblocktransactions_MP", 0 },
+#if 0 // disabled for pre meta DEx release
+    { "trade_MP", 2 },
+    { "trade_MP", 4 },
+    { "trade_MP", 5 },
+    { "getorderbook_MP", 0 },
+    { "getorderbook_MP", 1 },
+    { "gettradessince_MP", 0 },;
+    { "gettradessince_MP", 1 },
+    { "gettradessince_MP", 2 },
+    { "gettradehistory_MP", 1 },
+    { "gettradehistory_MP", 2 },
 #endif
-*/
 };
 
 class CRPCConvertTable

@@ -347,35 +347,34 @@ static const CRPCCommand vRPCCommands[] =
     { "wallet",             "walletlock",             &walletlock,             true,      false,      true },
     { "wallet",             "walletpassphrasechange", &walletpassphrasechange, true,      false,      true },
     { "wallet",             "walletpassphrase",       &walletpassphrase,       true,      false,      true },
-/* TODO
-    // Master Protocol specific calls
-    { "mscrpc",                 &mscrpc,                 true,      false,      false },
-    { "getallbalancesforid_MP", &getallbalancesforid_MP, false,     false,      true },
-    { "getbalance_MP",          &getbalance_MP,          false,     false,      true },
-    { "send_MP",                &send_MP,                false,     false,      true },
-    { "gettransaction_MP",      &gettransaction_MP,      false,     false,      true },
-    { "listtransactions_MP",    &listtransactions_MP,    false,     false,      true },
-    { "getproperty_MP",         &getproperty_MP,         false,     false,      true },
-    { "listproperties_MP",      &listproperties_MP,      false,     false,      true },
-    { "getcrowdsale_MP",        &getcrowdsale_MP,        false,     false,      true },
-    { "getgrants_MP",           &getgrants_MP,           false,     false,      true },
-    { "getactivedexsells_MP",   &getactivedexsells_MP,   false,     false,      true },
-    { "getactivecrowdsales_MP", &getactivecrowdsales_MP, false,     false,      true },
-#if 0
-    { "trade_MP",               &trade_MP,               false,     false,      true },
-    { "getorderbook_MP",        &getorderbook_MP,        false,     false,      true },
-    { "gettradessince_MP",      &gettradessince_MP,      false,     false,      true },
-    { "getopenorders_MP",       &getopenorders_MP,       false,     false,      true },
-    { "gettradehistory_MP",     &gettradehistory_MP,     false,     false,      true },
-    { "gettrade_MP",            &gettrade_MP,            false,     false,      true },
+
+    // Master Core specific  specific calls
+    { "hidden",             "mscrpc",                 &mscrpc,                 true,      false,      false },
+    { "master protocol",    "getallbalancesforid_MP", &getallbalancesforid_MP, false,     false,      true },
+    { "master protocol",    "getbalance_MP",          &getbalance_MP,          false,     false,      true },
+    { "master protocol",    "send_MP",                &send_MP,                false,     false,      true },
+    { "master protocol",    "gettransaction_MP",      &gettransaction_MP,      false,     false,      true },
+    { "master protocol",    "listtransactions_MP",    &listtransactions_MP,    false,     false,      true },
+    { "master protocol",    "getproperty_MP",         &getproperty_MP,         false,     false,      true },
+    { "master protocol",    "listproperties_MP",      &listproperties_MP,      false,     false,      true },
+    { "master protocol",    "getcrowdsale_MP",        &getcrowdsale_MP,        false,     false,      true },
+    { "master protocol",    "getgrants_MP",           &getgrants_MP,           false,     false,      true },
+    { "master protocol",    "getactivedexsells_MP",   &getactivedexsells_MP,   false,     false,      true },
+    { "master protocol",    "getactivecrowdsales_MP", &getactivecrowdsales_MP, false,     false,      true },
+#if 0 // disabled for pre meta DEx release
+    { "master protocol",    "trade_MP",               &trade_MP,               false,     false,      true },
+    { "master protocol",    "getorderbook_MP",        &getorderbook_MP,        false,     false,      true },
+    { "master protocol",    "gettradessince_MP",      &gettradessince_MP,      false,     false,      true },
+    { "master protocol",    "getopenorders_MP",       &getopenorders_MP,       false,     false,      true },
+    { "master protocol",    "gettradehistory_MP",     &gettradehistory_MP,     false,     false,      true },
+    { "master protocol",    "gettrade_MP",            &gettrade_MP,            false,     false,      true },
 #endif
-    { "sendtoowners_MP",        &sendtoowners_MP,        false,     false,      true },
-    { "sendrawtx_MP",           &sendrawtx_MP,           false,     false,      true },
-    { "getsto_MP",              &getsto_MP,              false,     false,      true },
-    { "getinfo_MP",             &getinfo_MP,            false,     false,      true },
-    { "listblocktransactions_MP",       &listblocktransactions_MP,       false,     false,      true },
-    { "getallbalancesforaddress_MP",    &getallbalancesforaddress_MP,    false,     false,      true },
-*/
+    { "master protocol",    "sendtoowners_MP",        &sendtoowners_MP,        false,     false,      true },
+    { "master protocol",    "sendrawtx_MP",           &sendrawtx_MP,           false,     false,      true },
+    { "master protocol",    "getsto_MP",              &getsto_MP,              false,     false,      true },
+    { "master protocol",    "getinfo_MP",             &getinfo_MP,             false,     false,      true },
+    { "master protocol",    "listblocktransactions_MP",    &listblocktransactions_MP,     false,  false,  true },
+    { "master protocol",    "getallbalancesforaddress_MP", &getallbalancesforaddress_MP,  false,  false,  true },
 #endif // ENABLE_WALLET
 };
 

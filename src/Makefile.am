@@ -261,6 +261,7 @@ libbitcoin_common_a_SOURCES = \
   mastercore_parse_string.cpp \
   mastercore_tx.cpp \
   mastercore_rpc.cpp \
+  mastercore_version.cpp \
   netbase.cpp \
   protocol.cpp \
   pubkey.cpp \

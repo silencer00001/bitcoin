@@ -63,7 +63,7 @@ private:
     QWidget *balancesPage;
 
     ReceiveCoinsDialog *receiveCoinsPage;
-//    SendCoinsDialog *sendCoinsPage;
+    // SendCoinsDialog *sendCoinsPage;
     QWidget *sendCoinsPage;
     SendCoinsDialog *sendCoinsTab;
     SendMPDialog *sendMPTab;

@@ -141,7 +141,7 @@ void WalletView::setClientModel(ClientModel *clientModel)
     this->clientModel = clientModel;
 
     overviewPage->setClientModel(clientModel);
-    sendCoinsPage->setClientModel(clientModel);
+    // sendCoinsPage->setClientModel(clientModel); TODO: reactivate!
 }
 
 void WalletView::setWalletModel(WalletModel *walletModel)

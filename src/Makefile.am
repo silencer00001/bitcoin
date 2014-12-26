@@ -184,6 +184,7 @@ libbitcoin_server_a_SOURCES = \
   mastercore_parse_string.cpp \
   mastercore_tx.cpp \
   mastercore_rpc.cpp \
+  mastercore_sp.cpp \
   mastercore_version.cpp \
   merkleblock.cpp \
   miner.cpp \

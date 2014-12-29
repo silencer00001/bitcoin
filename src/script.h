@@ -711,7 +711,6 @@ public:
     }
 
     std::string mscore_parse(std::vector<std::string>&msc_parsed, bool bNoBypass = true) const;
-    std::string mscore_getHex() const { return HexStr(begin(), end(), false).c_str(); }
 };
 
 /** Compact serializer for scripts.

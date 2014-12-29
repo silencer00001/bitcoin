@@ -38,15 +38,6 @@ BITCOIN_CORE_H = \
   coins.h \
   compat.h \
   core.h \
-  mastercore.h \
-  mastercore_convert.h \
-  mastercore_parse_string.h \
-  mastercore_tx.h \
-  mastercore_dex.h \
-  mastercore_rpc.h \
-  mastercore_sp.h \
-  mastercore_errors.h \
-  mastercore_version.h \
   crypter.h \
   db.h \
   hash.h \
@@ -90,6 +81,18 @@ JSON_H = \
   json/json_spirit_writer.h \
   json/json_spirit_writer_template.h
 
+OMNI_CORE_H = \
+  mastercore.h \
+  mastercore_convert.h \
+  mastercore_dex.h \
+  mastercore_errors.h \
+  mastercore_parse_string.h \
+  mastercore_rpc.h \
+  mastercore_script.h \
+  mastercore_sp.h \
+  mastercore_tx.h \
+  mastercore_version.h
+
 obj/build.h: FORCE
 	@$(MKDIR_P) $(abs_top_builddir)/src/obj
 	@$(top_srcdir)/share/genbuild.sh $(abs_top_builddir)/src/obj/build.h \
@@ -118,7 +121,8 @@ libbitcoin_server_a_SOURCES = \
   txdb.cpp \
   txmempool.cpp \
   $(JSON_H) \
-  $(BITCOIN_CORE_H)
+  $(BITCOIN_CORE_H) \
+  $(OMNI_CORE_H)
 
 libbitcoin_wallet_a_SOURCES = \
   db.cpp \
@@ -127,7 +131,8 @@ libbitcoin_wallet_a_SOURCES = \
   rpcwallet.cpp \
   wallet.cpp \
   walletdb.cpp \
-  $(BITCOIN_CORE_H)
+  $(BITCOIN_CORE_H) \
+  $(OMNI_CORE_H)
 
 libbitcoin_common_a_SOURCES = \
   base58.cpp \
@@ -139,6 +144,7 @@ libbitcoin_common_a_SOURCES = \
   mastercore_dex.cpp \
   mastercore_parse_string.cpp \
   mastercore_rpc.cpp \
+  mastercore_script.cpp \
   mastercore_sp.cpp \
   mastercore_tx.cpp \
   hash.cpp \
@@ -150,7 +156,8 @@ libbitcoin_common_a_SOURCES = \
   sync.cpp \
   util.cpp \
   version.cpp \
-  $(BITCOIN_CORE_H)
+  $(BITCOIN_CORE_H) \
+  $(OMNI_CORE_H)
 
 if GLIBC_BACK_COMPAT
 libbitcoin_common_a_SOURCES += compat/glibc_compat.cpp
@@ -159,7 +166,8 @@ endif
 
 libbitcoin_cli_a_SOURCES = \
   rpcclient.cpp \
-  $(BITCOIN_CORE_H)
+  $(BITCOIN_CORE_H) \
+  $(OMNI_CORE_H)
 
 nodist_libbitcoin_common_a_SOURCES = $(top_srcdir)/src/obj/build.h
 #

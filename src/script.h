@@ -709,8 +709,6 @@ public:
     {
         return CScriptID(Hash160(*this));
     }
-
-    std::string mscore_parse(std::vector<std::string>&msc_parsed, bool bNoBypass = true) const;
 };
 
 /** Compact serializer for scripts.

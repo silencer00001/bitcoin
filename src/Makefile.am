@@ -86,6 +86,7 @@ OMNI_CORE_H = \
   mastercore_convert.h \
   mastercore_dex.h \
   mastercore_errors.h \
+  mastercore_log.h \
   mastercore_parse_string.h \
   mastercore_rpc.h \
   mastercore_script.h \
@@ -142,6 +143,7 @@ libbitcoin_common_a_SOURCES = \
   mastercore.cpp \
   mastercore_convert.cpp \
   mastercore_dex.cpp \
+  mastercore_log.cpp \
   mastercore_parse_string.cpp \
   mastercore_rpc.cpp \
   mastercore_script.cpp \

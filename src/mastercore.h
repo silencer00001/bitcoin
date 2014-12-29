@@ -9,6 +9,8 @@
 class CBlockIndex;
 class CTransaction;
 
+#include "mastercore_log.h"
+
 #include "sync.h"
 #include "uint256.h"
 #include "util.h"
@@ -31,12 +33,7 @@ using json_spirit::Array;
 using std::string;
 using std::vector;
 
-
 #define DISABLE_METADEX
-
-#define LOG_FILENAME    "mastercore.log"
-#define INFO_FILENAME   "mastercore_crowdsales.log"
-#define OWNERS_FILENAME "mastercore_owners.log"
 
 int const MAX_STATE_HISTORY = 50;
 
@@ -150,54 +147,6 @@ enum FILETYPES {
 #define OMNI_PROPERTY_BTC   0
 #define OMNI_PROPERTY_MSC   1
 #define OMNI_PROPERTY_TMSC  2
-
-#include <boost/multiprecision/cpp_dec_float.hpp>
-using boost::multiprecision::cpp_dec_float_100;
-typedef cpp_dec_float_100 XDOUBLE;
-
-int mp_LogPrintStr(const std::string &str);
-
-/* When we switch to C++11, this can be switched to variadic templates instead
- * of this macro-based construction (see tinyformat.h).
- */
-#define MP_MAKE_ERROR_AND_LOG_FUNC(n)                                        \
-    /*   Print to debug.log if -debug=category switch is given OR category is NULL. */ \
-    template<TINYFORMAT_ARGTYPES(n)>                                          \
-    static inline int mp_category_log(const char* category, const char* format, TINYFORMAT_VARARGS(n))  \
-    {                                                                         \
-        if(!LogAcceptCategory(category)) return 0;                            \
-        return mp_LogPrintStr(tfm::format(format, TINYFORMAT_PASSARGS(n))); \
-    }                                                                         \
-    template<TINYFORMAT_ARGTYPES(n)>                                          \
-    static inline int mp_log(TINYFORMAT_VARARGS(n))  \
-    {                                                                         \
-        return mp_LogPrintStr(tfm::format("%s", TINYFORMAT_PASSARGS(n))); \
-    }                                                                         \
-    template<TINYFORMAT_ARGTYPES(n)>                                          \
-    static inline int mp_log(const char* format, TINYFORMAT_VARARGS(n))  \
-    {                                                                         \
-        return mp_LogPrintStr(tfm::format(format, TINYFORMAT_PASSARGS(n))); \
-    }                                                                         \
-    template<TINYFORMAT_ARGTYPES(n)>                                          \
-    static inline int file_log(const char* format, TINYFORMAT_VARARGS(n))  \
-    {                                                                         \
-        return mp_LogPrintStr(tfm::format(format, TINYFORMAT_PASSARGS(n))); \
-    }                                                                         \
-    template<TINYFORMAT_ARGTYPES(n)>                                          \
-    static inline int file_log(TINYFORMAT_VARARGS(n))  \
-    {                                                                         \
-        return mp_LogPrintStr(tfm::format("%s", TINYFORMAT_PASSARGS(n))); \
-    }                                                                         \
-    /*   Log error and return false */                                        \
-    template<TINYFORMAT_ARGTYPES(n)>                                          \
-    static inline bool mp_error(const char* format, TINYFORMAT_VARARGS(n))                     \
-    {                                                                         \
-        mp_LogPrintStr("ERROR: " + tfm::format(format, TINYFORMAT_PASSARGS(n)) + "\n"); \
-        return false;                                                         \
-    }
-
-TINYFORMAT_FOREACH_ARGNUM(MP_MAKE_ERROR_AND_LOG_FUNC)
-//--- CUT HERE ---
 
 // forward declarations
 std::string FormatPriceMP(double n);

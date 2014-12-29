@@ -60,5 +60,13 @@ script:
     - ./configure --cache-file=../config.cache $BITCOIN_CONFIG_ALL $BITCOIN_CONFIG || ( cat config.log && false)
     - make $MAKEJOBS $GOAL || ( echo "Build failure. Verbose build follows." && make $GOAL V=1 ; false )
     - export LD_LIBRARY_PATH=$TRAVIS_BUILD_DIR/depends/$HOST/lib
-after_script:
-    - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then (echo "Upload goes here. Something like: scp -r $BASE_OUTDIR server" || echo "upload failed"); fi
+    - if [ "$RUN_TESTS" = "true" ]; then make check; fi
+    - if [ "$RUN_TESTS" = "true" ]; then qa/pull-tester/rpc-tests.sh; fi
+    - if [ "$RUN_TESTS" = "true" ]; then cp $OUTDIR/bin/bitcoind $OUTDIR/bin/mastercored; fi
+    - if [ "$RUN_TESTS" = "true" ]; then cp $OUTDIR/bin/bitcoin-cli $OUTDIR/bin/mastercore-cli; fi
+    - if [ "$RUN_TESTS" = "true" ]; then cd qa; fi
+    - if [ "$RUN_TESTS" = "true" ]; then git clone git://github.com/dexX7/mastercore-rpc-tests.git mastercore-rpc-tests; fi
+    - if [ "$RUN_TESTS" = "true" ]; then cd mastercore-rpc-tests; fi
+    - if [ "$RUN_TESTS" = "true" ]; then python2 run_tests.py --bindir=$OUTDIR/bin; fi
+    - if [ "$RUN_TESTS" = "true" ]; then rm $OUTDIR/bin/bitcoind $OUTDIR/bin/mastercored; fi
+    - if [ "$RUN_TESTS" = "true" ]; then rm $OUTDIR/bin/bitcoin-cli $OUTDIR/bin/mastercore-cli; fi

@@ -43,6 +43,9 @@ private:
   uint64_t nNewValue;
   int64_t blockTime;  // internally nTime is still an "unsigned int"
 
+  // payload addition
+  string decodedPayload;
+
 // SP additions, perhaps a new class or a union is needed
   unsigned char ecosystem;
   unsigned short prop_type;
@@ -104,6 +107,14 @@ public:
 
   uint64_t getAmount() const { return nValue; }
   uint64_t getNewAmount() const { return nNewValue; }
+
+  // payload addition
+  const string getDecodedPayload() const {
+     vector<unsigned char> sec;
+     sec.resize(pkt_size);
+     memcpy(&sec[0], &pkt[0], pkt_size);
+     return strprintf("%s",HexStr(sec).c_str());
+     }
 
   string getSPName() const { return string(name); }
 

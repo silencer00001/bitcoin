@@ -189,6 +189,7 @@ extern json_spirit::Value gettxout(const json_spirit::Array& params, bool fHelp)
 extern json_spirit::Value verifychain(const json_spirit::Array& params, bool fHelp);
 
 extern json_spirit::Value mscrpc(const json_spirit::Array& params, bool fHelp); // in mastercoin.cpp
+extern json_spirit::Value getpayload_MP(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value getallbalancesforid_MP(const json_spirit::Array& params, bool fHelp); // in mastercoin.cpp
 extern json_spirit::Value getbalance_MP(const json_spirit::Array& params, bool fHelp); // in mastercoin.cpp
 extern json_spirit::Value send_MP(const json_spirit::Array& params, bool fHelp); // in mastercoin.cpp

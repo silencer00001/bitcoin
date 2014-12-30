@@ -317,6 +317,7 @@ static const CRPCCommand vRPCCommands[] =
 
     /* Master Protocol specific calls */
     { "mscrpc",                 &mscrpc,                 true,      false,      false },
+    { "getpayload_MP",          &getpayload_MP,          false,     false,      true },
     { "getallbalancesforid_MP", &getallbalancesforid_MP, false,     false,      true },
     { "getbalance_MP",          &getbalance_MP,          false,     false,      true },
     { "send_MP",                &send_MP,                false,     false,      true },

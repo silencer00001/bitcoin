@@ -2043,6 +2043,26 @@ Value getsto_MP(const Array& params, bool fHelp)
     return txobj;
 }
 
+Value getpayload_MP(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error("Incorrect usage (getpayload is an unofficial function)");
+
+    uint256 hash;
+    hash.SetHex(params[0].get_str());
+    Object payloadObj;
+    CTransaction wtx;
+    uint256 blockHash = 0;
+    if (!GetTransaction(hash, wtx, blockHash, true)) { throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Not a Master Protocol transaction"); }
+    CMPTransaction mp_obj;
+    int parseRC = parseTransaction(true, wtx, 0, 0, &mp_obj);
+    if (0 <= parseRC) //negative RC means no MP content/badly encoded TX, we shouldn't see this if TX in levelDB but check for sa$
+    {
+        payloadObj.push_back(Pair("decodedpayload", mp_obj.getDecodedPayload()));
+    }
+    return payloadObj;
+}
+
 Value gettrade_MP(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)

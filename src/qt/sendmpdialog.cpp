@@ -1,69 +1,36 @@
-// Copyright (c) 2011-2014 The Bitcoin developers
+// Copyright (c) 2011-2015 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "sendmpdialog.h"
 #include "ui_sendmpdialog.h"
 
-#include "addresstablemodel.h"
-#include "bitcoinunits.h"
-#include "coincontroldialog.h"
+#include "mastercore.h"
+#include "mastercore_parse_string.h"
+
 #include "guiutil.h"
 #include "optionsmodel.h"
 #include "walletmodel.h"
+
+#include "base58.h"
+#include "core.h"
+#include "sync.h"
+#include "uint256.h"
 #include "wallet.h"
-#include "base58.h"
-#include "coincontrol.h"
-#include "ui_interface.h"
 
-#include <boost/filesystem.hpp>
-
-#include "leveldb/db.h"
-#include "leveldb/write_batch.h"
-
-// potentially overzealous includes here
-#include "base58.h"
-#include "rpcserver.h"
-#include "init.h"
-#include "util.h"
-#include <fstream>
-#include <algorithm>
-#include <vector>
-#include <utility>
-#include <string>
-#include <boost/assign/list_of.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/find.hpp>
-#include <boost/algorithm/string/join.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/format.hpp>
-#include <boost/filesystem.hpp>
-#include "json/json_spirit_utils.h"
-#include "json/json_spirit_value.h"
-#include "leveldb/db.h"
-#include "leveldb/write_batch.h"
-// end potentially overzealous includes
-using namespace json_spirit; // since now using Array in mastercore.h this needs to come first
-
-#include "mastercore.h"
-using namespace mastercore;
-
-// potentially overzealous using here
-using namespace std;
-using namespace boost;
-using namespace boost::assign;
-using namespace leveldb;
-// end potentially overzealous using
-
-#include "mastercore_dex.h"
-#include "mastercore_parse_string.h"
-#include "mastercore_tx.h"
-#include "mastercore_sp.h"
 
 #include <QDateTime>
 #include <QMessageBox>
 #include <QScrollBar>
 #include <QTextDocument>
+
+#include <string>
+
+using std::string;
+
+using namespace mastercore;
+
 
 SendMPDialog::SendMPDialog(QWidget *parent) :
     QDialog(parent),

@@ -191,29 +191,6 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     if (strMethod == "listtransactions_MP"    && n > 4) ConvertTo<int64_t>(params[4]);
     if (strMethod == "getallbalancesforid_MP"    && n > 0) ConvertTo<int64_t>(params[0]);
     if (strMethod == "listblocktransactions_MP"    && n > 0) ConvertTo<int64_t>(params[0]);
-
-    if (strMethod == "encode_simple_send"     && n > 0) ConvertTo<uint64_t>(params[0]);
-    if (strMethod == "encode_simple_send"     && n > 1) ConvertTo<int64_t>(params[1]);
-    /*
-    if (strMethod == "encode_send_to_owners"  && n > 0) ConvertTo<uint64_t>(params[0]);
-    if (strMethod == "encode_send_to_owners"  && n > 1) ConvertTo<int64_t>(params[1]);
-    
-    if (strMethod == "encode_offer_tokens"    && n > 0) ConvertTo<uint64_t>(params[0]);
-    if (strMethod == "encode_offer_tokens"    && n > 1) ConvertTo<int64_t>(params[1]);
-    if (strMethod == "encode_offer_tokens"    && n > 2) ConvertTo<int64_t>(params[2]);
-    if (strMethod == "encode_offer_tokens"    && n > 3) ConvertTo<uint64_t>(params[3]);    
-    if (strMethod == "encode_offer_tokens"    && n > 4) ConvertTo<int64_t>(params[4]);
-    if (strMethod == "encode_offer_tokens"    && n > 5) ConvertTo<uint64_t>(params[5]);
-        
-    if (strMethod == "encode_trade_tokens"    && n > 0) ConvertTo<uint64_t>(params[0]);
-    if (strMethod == "encode_trade_tokens"    && n > 1) ConvertTo<int64_t>(params[1]);
-    if (strMethod == "encode_trade_tokens"    && n > 2) ConvertTo<uint64_t>(params[2]);
-    if (strMethod == "encode_trade_tokens"    && n > 3) ConvertTo<int64_t>(params[3]);
-    if (strMethod == "encode_trade_tokens"    && n > 4) ConvertTo<uint64_t>(params[4]);
-    
-    if (strMethod == "encode_accept_offer"    && n > 0) ConvertTo<uint64_t>(params[0]);
-    if (strMethod == "encode_accept_offer"    && n > 1) ConvertTo<int64_t>(params[1]);
-*/
 #if 0
     if (strMethod == "trade_MP"                && n > 2) ConvertTo<int64_t>(params[2]);
     if (strMethod == "trade_MP"                && n > 4) ConvertTo<int64_t>(params[4]);
@@ -327,4 +304,3 @@ std::string HelpMessageCli(bool mainProgram)
 
     return strUsage;
 }
-

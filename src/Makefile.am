@@ -44,7 +44,9 @@ BITCOIN_CORE_H = \
   mastercore_tx.h \
   mastercore_dex.h \
   mastercore_rpc.h \
+  mastercore_rpc_extensions.h \
   mastercore_sp.h \
+  mastercore_types.h \
   mastercore_errors.h \
   mastercore_version.h \
   mastercore_txs/serialize.h \

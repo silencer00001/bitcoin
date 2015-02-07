@@ -228,5 +228,6 @@ extern json_spirit::Value encode_close_crowdsale(const json_spirit::Array& param
 extern json_spirit::Value encode_create_managed_property(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value encode_grant_token(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value encode_revoke_token(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value encode_change_issuer(const json_spirit::Array& params, bool fHelp);
 
 #endif // _BITCOINRPC_SERVER_H_

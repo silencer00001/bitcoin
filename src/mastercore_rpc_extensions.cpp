@@ -312,3 +312,17 @@ Value encode_revoke_token(const Array& params, bool fHelp) {
 
     return HexStr(vch);
 }
+
+Value encode_change_issuer(const Array& params, bool fHelp) {
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "encode_change_issuer property\n"
+    );
+
+    CTemplateChangeIssuer tx(
+            Cast<PropertyIdentifierType>(params[0]));
+
+    std::vector<unsigned char> vch = tx.Serialize();
+
+    return HexStr(vch);
+}

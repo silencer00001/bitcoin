@@ -20,19 +20,19 @@ namespace transaction {
 
 
 #define CAN_BE_SERIALIZED(statements)                                   \
-    std::vector<unsigned char> Serialize()                              \
+    std::vector<unsigned char> Serialize() const                        \
     {                                                                   \
         std::vector<unsigned char> vch;                                 \
         {statements}                                                    \
         return vch;                                                     \
     }                                                                   \
-    void Serialize(std::vector<unsigned char>& vch)                     \
+    void Serialize(std::vector<unsigned char>& vch) const               \
     {                                                                   \
         {statements}                                                    \
     }                                                                   \
 
 #define CAN_BE_SERIALIZED_WITH_LABEL(statements)                        \
-    void Serialize(json_spirit::Object& obj)                            \
+    void Serialize(json_spirit::Object& obj) const                      \
     {                                                                   \
         {statements}                                                    \
     }

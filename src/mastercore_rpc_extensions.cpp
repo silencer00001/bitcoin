@@ -37,6 +37,13 @@ static bool PayloadToJSON(std::vector<unsigned char>& vch, Object& entry)
     return true;
 }
 
+static std::string EncodeAsHex(const CTemplateBase& tx)
+{
+    std::vector<unsigned char> vch = tx.Serialize();
+
+    return HexStr(vch);
+}
+
 Value getpayload_MP(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
@@ -122,9 +129,7 @@ Value encode_simple_send(const Array& params, bool fHelp) {
             Cast<PropertyIdentifierType>(params[0]),
             Cast<TokenAmountType>(params[1]));
 
-    std::vector<unsigned char> vch = tx.Serialize();
-
-    return HexStr(vch);
+    return EncodeAsHex(tx);
 }
 
 Value encode_send_to_owners(const Array& params, bool fHelp) {
@@ -137,9 +142,7 @@ Value encode_send_to_owners(const Array& params, bool fHelp) {
             Cast<PropertyIdentifierType>(params[0]),
             Cast<TokenAmountType>(params[1]));
 
-    std::vector<unsigned char> vch = tx.Serialize();
-
-    return HexStr(vch);
+    return EncodeAsHex(tx);
 }
 
 Value encode_offer_tokens(const Array& params, bool fHelp) {
@@ -157,9 +160,7 @@ Value encode_offer_tokens(const Array& params, bool fHelp) {
             Cast<TokenAmountType>(params[4]),
             Cast<DexActionType>(params[5]));
 
-    std::vector<unsigned char> vch = tx.Serialize();
-
-    return HexStr(vch);
+    return EncodeAsHex(tx);
 }
 
 Value encode_trade_tokens(const Array& params, bool fHelp) {
@@ -176,9 +177,7 @@ Value encode_trade_tokens(const Array& params, bool fHelp) {
             Cast<TokenAmountType>(params[3]),
             Cast<MetaDexActionType>(params[4]));
 
-    std::vector<unsigned char> vch = tx.Serialize();
-
-    return HexStr(vch);
+    return EncodeAsHex(tx);
 }
 
 Value encode_accept_offer(const Array& params, bool fHelp) {
@@ -191,9 +190,7 @@ Value encode_accept_offer(const Array& params, bool fHelp) {
             Cast<PropertyIdentifierType>(params[0]),
             Cast<TokenAmountType>(params[1]));
 
-    std::vector<unsigned char> vch = tx.Serialize();
-
-    return HexStr(vch);
+    return EncodeAsHex(tx);
 }
 
 Value encode_create_property(const Array& params, bool fHelp) {
@@ -214,9 +211,7 @@ Value encode_create_property(const Array& params, bool fHelp) {
             Cast<StringType>(params[7]),
             Cast<TokenAmountType>(params[8]));
 
-    std::vector<unsigned char> vch = tx.Serialize();
-
-    return HexStr(vch);
+    return EncodeAsHex(tx);
 }
 
 Value encode_create_crowdsale(const Array& params, bool fHelp) {
@@ -242,9 +237,7 @@ Value encode_create_crowdsale(const Array& params, bool fHelp) {
             Cast<PercentageType>(params[11]),
             Cast<PercentageType>(params[12]));
 
-    std::vector<unsigned char> vch = tx.Serialize();
-
-    return HexStr(vch);
+    return EncodeAsHex(tx);
 }
 
 Value encode_close_crowdsale(const Array& params, bool fHelp) {
@@ -256,9 +249,7 @@ Value encode_close_crowdsale(const Array& params, bool fHelp) {
     CTemplateCloseCrowdsale tx(
             Cast<PropertyIdentifierType>(params[0]));
 
-    std::vector<unsigned char> vch = tx.Serialize();
-
-    return HexStr(vch);
+    return EncodeAsHex(tx);
 }
 
 Value encode_create_managed_property(const Array& params, bool fHelp) {
@@ -278,9 +269,7 @@ Value encode_create_managed_property(const Array& params, bool fHelp) {
             Cast<StringType>(params[6]),
             Cast<StringType>(params[7]));
 
-    std::vector<unsigned char> vch = tx.Serialize();
-
-    return HexStr(vch);
+    return EncodeAsHex(tx);
 }
 
 Value encode_grant_token(const Array& params, bool fHelp) {
@@ -293,9 +282,7 @@ Value encode_grant_token(const Array& params, bool fHelp) {
             Cast<PropertyIdentifierType>(params[0]),
             Cast<TokenAmountType>(params[1]));
 
-    std::vector<unsigned char> vch = tx.Serialize();
-
-    return HexStr(vch);
+    return EncodeAsHex(tx);
 }
 
 Value encode_revoke_token(const Array& params, bool fHelp) {
@@ -308,9 +295,7 @@ Value encode_revoke_token(const Array& params, bool fHelp) {
             Cast<PropertyIdentifierType>(params[0]),
             Cast<TokenAmountType>(params[1]));
 
-    std::vector<unsigned char> vch = tx.Serialize();
-
-    return HexStr(vch);
+    return EncodeAsHex(tx);
 }
 
 Value encode_change_issuer(const Array& params, bool fHelp) {
@@ -322,7 +307,5 @@ Value encode_change_issuer(const Array& params, bool fHelp) {
     CTemplateChangeIssuer tx(
             Cast<PropertyIdentifierType>(params[0]));
 
-    std::vector<unsigned char> vch = tx.Serialize();
-
-    return HexStr(vch);
+    return EncodeAsHex(tx);
 }

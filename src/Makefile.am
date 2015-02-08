@@ -158,7 +158,8 @@ libbitcoin_common_a_SOURCES = \
   mastercore_dex.cpp \
   mastercore_parse_string.cpp \
   mastercore_rpc.cpp \
-  mastercore_rpc_extensions.cpp \
+  mastercore_rpc_decode.cpp \
+  mastercore_rpc_encode.cpp \
   mastercore_sp.cpp \
   mastercore_tx.cpp \
   mastercore_txs/factory.cpp \

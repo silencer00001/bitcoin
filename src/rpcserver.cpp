@@ -270,19 +270,21 @@ static const CRPCCommand vRPCCommands[] =
     
     /* Omni Core extensions */
     { "getpayload_MP",          &getpayload_MP,          true,      false,      false },
-    { "decodepacket_MP",        &decodepacket_MP,        true,      false,      false },
+    { "decodepacket_MP",        &decodepacket_MP,        false,     false,      false },
     
-    { "encode_simple_send",     &encode_simple_send,     true,      false,      false },
-    { "encode_send_to_owners",  &encode_send_to_owners,  true,      false,      false },
-    { "encode_offer_tokens",    &encode_offer_tokens,    true,      false,      false },
-    { "encode_trade_tokens",    &encode_trade_tokens,    true,      false,      false },        
-    { "encode_accept_offer",    &encode_accept_offer,    true,      false,      false },    
-    { "encode_create_property", &encode_create_property, true,      false,      false },
-    { "encode_create_crowdsale",&encode_create_crowdsale,true,      false,      false },
-    { "encode_close_crowdsale", &encode_close_crowdsale, true,      false,      false },
-    { "encode_create_managed_property",  &encode_create_managed_property, true, false, false },        
-    { "encode_grant_token",     &encode_grant_token,     true,      false,      false },
-    { "encode_revoke_token",    &encode_revoke_token,    true,      false,      false },
+    { "encode_simple_send",     &encode_simple_send,     false,     false,      false },
+    { "encode_send_to_owners",  &encode_send_to_owners,  false,     false,      false },
+    { "encode_offer_tokens",    &encode_offer_tokens,    false,     false,      false },
+    { "encode_trade_tokens",    &encode_trade_tokens,    false,     false,      false },        
+    { "encode_accept_offer",    &encode_accept_offer,    false,     false,      false },    
+    { "encode_create_property", &encode_create_property, false,     false,      false },
+    { "encode_create_crowdsale",&encode_create_crowdsale,false,     false,      false },
+    { "encode_close_crowdsale", &encode_close_crowdsale, false,     false,      false },
+    { "encode_create_managed_property",                 &encode_create_managed_property,
+                                                         false,     false,      false },        
+    { "encode_grant_token",     &encode_grant_token,     false,     false,      false },
+    { "encode_revoke_token",    &encode_revoke_token,    false,     false,      false },
+    { "encode_change_issuer",   &encode_change_issuer,   false,     false,      false },
 
 #ifdef ENABLE_WALLET
     /* Wallet */

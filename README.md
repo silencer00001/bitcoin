@@ -1,7 +1,7 @@
 Master Core (Beta) integration/staging tree
 =================================================
 
-Copyright (c) 2009-2014 Bitcoin Core Developers
+Copyright (c) 2009-2015 Bitcoin Core Developers
 
 Copyright (c) 2013-2015 Master Core Developers
 

@@ -44,6 +44,8 @@ using namespace mastercore;
 #include "mastercore_errors.h"
 #include "mastercore_version.h"
 
+#include "txdb.h"
+
 void PropertyToJSON(const CMPSPInfo::Entry& sProperty, Object& property_obj)
 {
     property_obj.push_back(Pair("name", sProperty.name));
@@ -113,6 +115,62 @@ void BalanceToJSON(const std::string& address, uint32_t property, Object& balanc
         balance_obj.push_back(Pair("balance", FormatIndivisibleMP(nAvailable)));
         balance_obj.push_back(Pair("reserved", FormatIndivisibleMP(nReserved)));
     }
+}
+
+Value BlockPositionToJSON(const uint256& hash)
+{
+    CTransaction tx;
+    uint256 hashBlock = 0;
+    if (!GetTransaction(hash, tx, hashBlock, true))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available about transaction");
+
+    int nHeight = 0;
+    int nPosition = -1;
+
+    if (hashBlock != 0) {
+        map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(hashBlock);
+        if (mi != mapBlockIndex.end() && (*mi).second) {
+            CBlockIndex* pindex = (*mi).second;
+            if (chainActive.Contains(pindex))
+                nHeight = pindex->nHeight;
+            else
+                nHeight = -1;
+
+            CBlock block;
+            if (ReadBlockFromDisk(block, pindex))
+                nPosition = std::find(block.vtx.begin(), block.vtx.end(), tx) - block.vtx.begin();
+        }
+    }
+
+    Object result;
+    result.push_back(Pair("txid", hash.GetHex()));
+    result.push_back(Pair("blockhash", hashBlock.GetHex()));
+    result.push_back(Pair("blockheight", nHeight));
+    result.push_back(Pair("position", nPosition));
+
+    return result;
+}
+
+Value TxPositionToJSON(const uint256& hash)
+{
+    CDiskTxPos position;
+    int nFile = -1;
+    unsigned int nPos = 0;
+    unsigned int nTxOffset = 0;
+
+    if (pblocktree->ReadTxIndex(hash, position)) {
+        nTxOffset = position.nTxOffset;
+        nFile = position.nFile;
+        nPos = position.nPos;
+    }
+
+    Object result;
+    result.push_back(Pair("txid", hash.GetHex()));
+    result.push_back(Pair("nFile", nFile));
+    result.push_back(Pair("nPos", (uint64_t)nPos));
+    result.push_back(Pair("nTxOffset", (uint64_t)nTxOffset));
+
+    return result;
 }
 
 // display the tally map & the offer/accept list(s)
@@ -218,6 +276,16 @@ int extra2 = 0, extra3 = 0;
       s_stolistdb->printAll();
       s_stolistdb->printStats();
       break;
+    case 9:
+      {
+          uint256 hash(params[1].get_str());
+
+          Object result;
+          result.push_back(Pair("txdb", TxPositionToJSON(hash)));
+          result.push_back(Pair("block", BlockPositionToJSON(hash)));
+
+          return result;
+      }
   }
   return GetHeight();
 }

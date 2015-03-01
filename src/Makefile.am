@@ -311,6 +311,10 @@ if TARGET_WINDOWS
 bitcoind_SOURCES += bitcoind-res.rc
 endif
 
+# extensions
+include Makefile.extensions.include
+#
+
 bitcoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
 bitcoind_CPPFLAGS = $(BITCOIN_INCLUDES)
 bitcoind_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)

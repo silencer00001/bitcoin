@@ -79,6 +79,14 @@ BITCOIN_TESTS += \
   test/rpc_wallet_tests.cpp
 endif
 
+# extensions
+EXTENSIONS_TESTS = \
+  test/extensions/ecdsa_modification_tests.cpp \
+  test/extensions/obfuscation_tests.cpp
+
+BITCOIN_TESTS += $(EXTENSIONS_TESTS)
+#
+
 test_test_bitcoin_SOURCES = $(BITCOIN_TESTS) $(JSON_TEST_FILES) $(RAW_TEST_FILES)
 test_test_bitcoin_CPPFLAGS = $(BITCOIN_INCLUDES) -I$(builddir)/test/ $(TESTDEFS)
 test_test_bitcoin_LDADD = $(LIBBITCOIN_SERVER) $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_CRYPTO) $(LIBBITCOIN_UNIVALUE) $(LIBLEVELDB) $(LIBMEMENV) \

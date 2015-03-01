@@ -1,0 +1,29 @@
+EXTENSIONS_H = \
+  extensions/bitcoin/chain.h \
+  extensions/bitcoin/script.h \
+  extensions/core/decoding.h \
+  extensions/core/encoding.h \
+  extensions/core/obfuscation.h \
+  extensions/core/policy.h \
+  extensions/init.h \
+  extensions/json/conversion.h \
+  extensions/log.h \
+  extensions/primitives/transaction.h \
+  extensions/return_value.h \
+  extensions/rpc/decoding.h \
+  extensions/rpc/encoding.h
+
+EXTENSIONS_CPP = \
+  extensions/bitcoin/script.cpp \
+  extensions/core/decoding.cpp \
+  extensions/core/encoding.cpp \
+  extensions/core/obfuscation.cpp \
+  extensions/core/policy.cpp \
+  extensions/init.cpp \
+  extensions/primitives/transaction.cpp \
+  extensions/rpc/decoding.cpp \
+  extensions/rpc/encoding.cpp
+
+libbitcoin_server_a_SOURCES += \
+  $(EXTENSIONS_CPP) \
+  $(EXTENSIONS_H)

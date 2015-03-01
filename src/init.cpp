@@ -29,6 +29,8 @@
 #include "walletdb.h"
 #endif
 
+#include "extensions/init.h"
+
 #include <stdint.h>
 #include <stdio.h>
 
@@ -1093,6 +1095,11 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (!est_filein.IsNull())
         mempool.ReadFeeEstimates(est_filein);
     fFeeEstimatesInitialized = true;
+
+    // ********************************************************* Step 7.5: load extensions
+
+    uiInterface.InitMessage(_("Initializing extensions..."));
+    Extensions::Initialize();
 
     // ********************************************************* Step 8: load wallet
 #ifdef ENABLE_WALLET

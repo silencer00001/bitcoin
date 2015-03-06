@@ -20,7 +20,9 @@
 #include "tinyformat.h"
 #include "uint256.h"
 #include "utilstrencodings.h"
+#ifdef ENABLE_WALLET
 #include "wallet.h"
+#endif
 
 #include <boost/algorithm/string.hpp>
 #include <boost/exception/to_string.hpp>
@@ -298,8 +300,6 @@ if (fHelp || params.size() < 4 || params.size() > 6)
 
   std::string strAdditional = (params.size() > 5) ? (params[5].get_str()): "0";
   additional = StrToInt64(strAdditional, true);
-
-  int n = params.size();
 
   if ((0.01 * COIN) < additional)
    throw JSONRPCError(RPC_TYPE_ERROR, "Invalid reference amount");
@@ -1776,6 +1776,7 @@ Value gettransaction_MP(const Array& params, bool fHelp)
     return txobj;
 }
 
+
 Value listtransactions_MP(const Array& params, bool fHelp)
 {
     // note this call has been refactored to use the singular populateRPCTransactionObject function
@@ -1789,8 +1790,8 @@ Value listtransactions_MP(const Array& params, bool fHelp)
             + HelpExampleRpc("listtransactions_MP", "")
         );
 
-    CWallet *wallet = pwalletMain;
-    string sAddress = "";
+    Array response;
+#ifdef ENABLE_WALLET
     string addressParam = "";
     bool addressFilter;
 
@@ -1819,8 +1820,6 @@ Value listtransactions_MP(const Array& params, bool fHelp)
     if (params.size() > 4) nEndBlock = params[4].get_int64();
     if (nEndBlock < 0) throw JSONRPCError(RPC_INVALID_PARAMETER, "Negative end block");
 
-    Array response; //prep an array to hold our output
-
     // STO has no inbound transaction, so we need to use an insert methodology here
     // get STO receipts affecting me
     string mySTOReceipts = s_stolistdb->getMySTOReceipts(addressParam);
@@ -1829,9 +1828,12 @@ Value listtransactions_MP(const Array& params, bool fHelp)
     int64_t lastTXBlock = 999999;
 
     // rewrite to use original listtransactions methodology from core
-    LOCK(wallet->cs_wallet);
-    std::list<CAccountingEntry> acentries;
-    CWallet::TxItems txOrdered = pwalletMain->OrderedTxItems(acentries, "*");
+    CWallet::TxItems txOrdered;
+    if (pwalletMain) {
+        LOCK(pwalletMain->cs_wallet);
+        std::list<CAccountingEntry> acentries;
+        txOrdered = pwalletMain->OrderedTxItems(acentries, "*");
+    }
 
     // iterate backwards until we have nCount items to return:
     for (CWallet::TxItems::reverse_iterator it = txOrdered.rbegin(); it != txOrdered.rend(); ++it)
@@ -1914,6 +1916,7 @@ Value listtransactions_MP(const Array& params, bool fHelp)
     if (first != response.begin()) response.erase(response.begin(), first);
 
     std::reverse(response.begin(), response.end()); // return oldest to newest?
+#endif
     return response;   // return response array for JSON serialization
 }
 

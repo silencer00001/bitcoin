@@ -37,7 +37,10 @@
 #include "util.h"
 #include "utilstrencodings.h"
 #include "utiltime.h"
+#include "ui_interface.h"
+#ifdef ENABLE_WALLET
 #include "wallet.h"
+#endif
 
 #include <boost/algorithm/string.hpp>
 #include <boost/exception/to_string.hpp>
@@ -2698,32 +2701,32 @@ int interp_ret = -555555, pop_ret;
 // IsMine wrapper to determine whether the address is in our local wallet
 bool IsMyAddress(const std::string &address) 
 {
+  bool fMine = false;
+#ifdef ENABLE_WALLET
   if (!pwalletMain) return false;
-
   const CBitcoinAddress& mscaddress = address;
-
   CTxDestination lookupaddress = mscaddress.Get(); 
-
-  return (IsMine(*pwalletMain, lookupaddress));
+  fMine = IsMine(*pwalletMain, lookupaddress);
+#endif
+  return fMine;
 }
 
 // gets a label for a Bitcoin address from the wallet, mainly to the UI (used in demo)
 string getLabel(const string &address)
 {
-CWallet *wallet = pwalletMain;
-
-  if (wallet)
-   {
-        LOCK(wallet->cs_wallet);
+#ifdef ENABLE_WALLET
+    if (pwalletMain)
+    {
+        LOCK(pwalletMain->cs_wallet);
         CBitcoinAddress address_parsed(address);
-        std::map<CTxDestination, CAddressBookData>::iterator mi = wallet->mapAddressBook.find(address_parsed.Get());
-        if (mi != wallet->mapAddressBook.end())
+        std::map<CTxDestination, CAddressBookData>::iterator mi = pwalletMain->mapAddressBook.find(address_parsed.Get());
+        if (mi != pwalletMain->mapAddressBook.end())
         {
             return (mi->second.name);
         }
-    }
-
-  return string();
+     }
+#endif
+    return string();
 }
 
 //
@@ -2753,12 +2756,14 @@ int64_t GetDustLimit(const CScript& scriptPubKey)
 
 static int64_t selectCoins(const string &FromAddress, CCoinControl &coinControl, int64_t additional)
 {
+  int64_t n_total = 0; // total output funds collected
+#ifdef ENABLE_WALLET
   CWallet *wallet = pwalletMain;
   if (NULL == wallet) { return 0; }
 
   int64_t n_max = (COIN * (20 * (0.0001))); // assume 20KBytes max TX size at 0.0001 per kilobyte
   // FUTURE: remove n_max and try 1st smallest input, then 2 smallest inputs etc. -- i.e. move Coin Control selection closer to CreateTransaction
-  int64_t n_total = 0;  // total output funds collected
+
 
   // if referenceamount is set it is needed to be accounted for here too
   if (0 < additional) n_max += additional;
@@ -2825,9 +2830,8 @@ static int64_t selectCoins(const string &FromAddress, CCoinControl &coinControl,
       if (n_max <= n_total)
         break;
     } // for iterate over the wallet end
-
-// return 0;
-return n_total;
+#endif
+    return n_total;
 }
 
 int64_t feeCheck(const string &address)
@@ -2842,6 +2846,10 @@ int64_t feeCheck(const string &address)
 // returns 0 if everything is OK, the transaction was sent
 int mastercore::ClassB_send(const string &senderAddress, const string &receiverAddress, const string &redemptionAddress, const vector<unsigned char> &data, uint256 & txid, int64_t referenceamount)
 {
+#ifndef ENABLE_WALLET
+  return MP_ERR_WALLET_ACCESS;
+#else
+if (!pwalletMain) return MP_ERR_WALLET_ACCESS;
 CWallet *wallet = pwalletMain;
 CCoinControl coinControl;
 vector< pair<CScript, int64_t> > vecSend;
@@ -3009,6 +3017,7 @@ vector< pair<CScript, int64_t> > vecSend;
   txid = wtxNew.GetHash();
 
   return 0;
+#endif
 }
 
 // WIP: expanding the function to a general-purpose one, but still sending 1 packet only for now (30-31 bytes)

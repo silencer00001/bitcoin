@@ -15,13 +15,6 @@
 using namespace std;
 using namespace json_spirit;
 
-class CRPCConvertParam
-{
-public:
-    std::string methodName;            //! method whose params want conversion
-    int paramIdx;                      //! 0-based idx of param to convert
-};
-
 static const CRPCConvertParam vRPCConvertParams[] =
 {
     { "stop", 0 },
@@ -90,31 +83,27 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "prioritisetransaction", 2 },
 };
 
-class CRPCConvertTable
-{
-private:
-    std::set<std::pair<std::string, int> > members;
-
-public:
-    CRPCConvertTable();
-
-    bool convert(const std::string& method, int idx) {
-        return (members.count(std::make_pair(method, idx)) > 0);
-    }
-};
-
 CRPCConvertTable::CRPCConvertTable()
 {
     const unsigned int n_elem =
         (sizeof(vRPCConvertParams) / sizeof(vRPCConvertParams[0]));
 
     for (unsigned int i = 0; i < n_elem; i++) {
-        members.insert(std::make_pair(vRPCConvertParams[i].methodName,
-                                      vRPCConvertParams[i].paramIdx));
+        addConversion(vRPCConvertParams[i]);;
     }
 }
 
-static CRPCConvertTable rpcCvtTable;
+void CRPCConvertTable::addConversion(const CRPCConvertParam& param)
+{
+    members.insert(std::make_pair(param.methodName, param.paramIdx));
+}
+
+bool CRPCConvertTable::convert(const std::string& method, int idx)
+{
+    return (members.count(std::make_pair(method, idx)) > 0);
+}
+
+CRPCConvertTable rpcCvtTable;
 
 /** Convert strings to command-specific RPC representation */
 Array RPCConvertValues(const std::string &strMethod, const std::vector<std::string> &strParams)

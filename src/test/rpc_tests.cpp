@@ -153,4 +153,28 @@ BOOST_AUTO_TEST_CASE(rpc_boostasiotocnetaddr)
     BOOST_CHECK_EQUAL(BoostAsioToCNetAddr(boost::asio::ip::address::from_string("::ffff:127.0.0.1")).ToString(), "127.0.0.1");
 }
 
+BOOST_AUTO_TEST_CASE(rpc_add_conversion)
+{
+    RPCAddConversion("testcommand", 1);
+    RPCAddConversion("testcommand", 2);
+
+    std::vector<std::string> vstrParams;
+
+    vstrParams.push_back("1234");
+    vstrParams.push_back("false");
+    vstrParams.push_back("481516");
+
+    Array params = RPCConvertValues("testcommand", vstrParams);
+
+    BOOST_CHECK_NO_THROW(params[0].get_str());
+    BOOST_CHECK_NO_THROW(params[1].get_bool());
+    BOOST_CHECK_NO_THROW(params[2].get_int());
+
+    BOOST_CHECK_THROW(params[0].get_int(), std::runtime_error);
+
+    BOOST_CHECK_EQUAL(params[0].get_str(), "1234");
+    BOOST_CHECK_EQUAL(params[1].get_bool(), false);
+    BOOST_CHECK_EQUAL(params[2].get_int(), 481516);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

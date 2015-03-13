@@ -59,7 +59,7 @@ Value null_data(const Array& params, bool fHelp)
         vouts.push_back(vout);
     }
 
-    result.push_back(Pair("packets", vouts));
+    result.push_back(Pair("txouts", vouts));
 
     return result;
     
@@ -92,7 +92,7 @@ Value bare_multisig(const Array& params, bool fHelp)
         vouts.push_back(vout);
     }
 
-    result.push_back(Pair("packets", vouts));
+    result.push_back(Pair("txouts", vouts));
 
     return result;
 }
@@ -139,7 +139,7 @@ Value obfuscated_multisig(const Array& params, bool fHelp)
         vouts.push_back(vout);
     }
 
-    result.push_back(Pair("packets", vouts));
+    result.push_back(Pair("txouts", vouts));
 
     return result;
 }

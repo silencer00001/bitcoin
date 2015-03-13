@@ -80,11 +80,7 @@ BITCOIN_TESTS += \
 endif
 
 # extensions
-EXTENSIONS_TESTS = \
-  test/extensions/ecdsa_modification_tests.cpp \
-  test/extensions/obfuscation_tests.cpp
-
-BITCOIN_TESTS += $(EXTENSIONS_TESTS)
+include Makefile.extensionstest.include
 #
 
 test_test_bitcoin_SOURCES = $(BITCOIN_TESTS) $(JSON_TEST_FILES) $(RAW_TEST_FILES)

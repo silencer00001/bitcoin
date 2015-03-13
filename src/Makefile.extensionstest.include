@@ -1,36 +1,12 @@
-bin_PROGRAMS += extensions/test/test_bitcoin-extensions
-TESTS += extensions/test/test_bitcoin-extensions
+EXTENSIONS_TEST_H = \
+  test/extensions/test_utils.h
 
-BITCOIN_EXTENSIONS_TESTS = \
-  extensions/test/ecdsa_modification_tests.cpp \
-  extensions/test/obfuscation_tests.cpp \
-  extensions/test/encoding_speed_tests.cpp \
-  extensions/test/test_bitcoin_extensions.cpp
+EXTENSIONS_TEST_CPP = \
+  test/extensions/test_utils_tests.cpp \
+  test/extensions/mod_pubkeys_tests.cpp \
+  test/extensions/mod_seqnums_tests.cpp \
+  test/extensions/mod_uppersha256_tests.cpp
 
-nodist_extensions_test_test_bitcoin_extensions_SOURCES =
-
-extensions_test_test_bitcoin_extensions_SOURCES = $(BITCOIN_EXTENSIONS_TESTS)
-
-extensions_test_test_bitcoin_extensions_CPPFLAGS = $(BITCOIN_INCLUDES) -I$(builddir)/extensions/test/ $(TESTDEFS)
-
-extensions_test_test_bitcoin_extensions_LDADD = $(LIBBITCOIN_SERVER) $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_CRYPTO) $(LIBBITCOIN_UNIVALUE) $(LIBLEVELDB) $(LIBMEMENV) \
-  $(BOOST_LIBS) $(BOOST_UNIT_TEST_FRAMEWORK_LIB) $(LIBSECP256K1) $(LIBBITCOIN_WALLET)
-
-#if ENABLE_WALLET
-extensions_test_test_bitcoin_extensions_LDADD += $(LIBBITCOIN_WALLET)
-#endif
-
-extensions_test_test_bitcoin_extensions_LDADD += $(LIBBITCOIN_CONSENSUS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
-extensions_test_test_bitcoin_extensions_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) -static
-
-CLEAN_BITCOIN_EXTENSIONS_TEST = extensions/test/*.gcda extensions/test/*.gcno
-
-CLEANFILES += $(CLEAN_BITCOIN_EXTENSIONS_TEST)
-
-test_bitcoin_extensions : extensions/test/test_bitcoin-extensions$(EXEEXT)
-
-test_bitcoin_extensions_check : extensions/test/test_bitcoin-extensions$(EXEEXT) FORCE
-	$(MAKE) check-TESTS TESTS=$^
-
-test_bitcoin_extensions_clean: FORCE
-	rm -f $(CLEAN_BITCOIN_EXTENSIONS_TEST) $(extensions_test_test_bitcoin_extensions_OBJECTS)
+BITCOIN_TESTS += \
+  $(EXTENSIONS_TEST_CPP) \
+  $(EXTENSIONS_TEST_H)

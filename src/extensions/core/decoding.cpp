@@ -3,7 +3,7 @@
 // <editor-fold desc="Includes">
 #include "extensions/bitcoin/chain.h"
 #include "extensions/bitcoin/script.h"
-#include "extensions/core/obfuscation.h"
+#include "extensions/core/modifications/uppersha256.h"
 #include "extensions/core/policy.h"
 #include "extensions/log.h"
 #include "extensions/primitives/transaction.h"

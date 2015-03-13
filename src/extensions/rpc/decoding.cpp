@@ -31,7 +31,7 @@ Value get_payload(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw std::runtime_error(
-            "getpayload txid\n"
+            "get_payload txid\n"
             "\nIncorrect usage (getpayload_MP is an unofficial function).\n"
     );
 
@@ -79,11 +79,11 @@ Value get_payload(const Array& params, bool fHelp)
     return entry;
 }
 
-Value decode_packet(const Array& params, bool fHelp)
+Value decode_payload(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw std::runtime_error(
-            "decodepacket hex\n"
+            "decode_payload hex\n"
             "\nIncorrect usage (decodepacket_MP is an unofficial function).\n"
     );
 

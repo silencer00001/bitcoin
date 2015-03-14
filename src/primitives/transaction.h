@@ -136,6 +136,9 @@ public:
 
     bool IsDust(CFeeRate minRelayTxFee) const
     {
+        if (scriptPubKey.IsUnspendable())
+        { return false; }
+
         // "Dust" is defined in terms of CTransaction::minRelayTxFee,
         // which has units satoshis-per-kilobyte.
         // If you'd pay more than 1/3 in fees

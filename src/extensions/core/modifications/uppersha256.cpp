@@ -11,8 +11,57 @@ static const size_t gMaxSha256ObfuscationTimes = 255;
 
 static const size_t gPacketSize = 31;
 
+/** To be deprechiated. Used for compability of old functions. */
+void PrepareObfuscatedHashes(const std::string& strSeed, std::vector<std::string>& vstrHashes, size_t nCount)
+{
+    std::string strHash(strSeed);
+    vstrHashes.reserve(nCount);
+
+    for (size_t n = 0; n < nCount; ++n) {
+        strHash = UpperSha256(strHash);
+        vstrHashes.push_back(strHash);
+    }
+}
+
+/** To be deprechiated. Used for compability of old functions. */
+void PrepareObfuscatedHashes(const std::string& strSeed, std::string(&pstrHashes)[1 + gMaxSha256ObfuscationTimes])
+{
+    std::vector<std::string> vstrHashes;
+    PrepareObfuscatedHashes(strSeed, vstrHashes, gMaxSha256ObfuscationTimes);
+    std::copy(vstrHashes.begin(), vstrHashes.end(), pstrHashes + 1);
+}
+
 /**
- * Obfuscates a chuck of data by xor-ing it with another chuck.
+ * Creates a SHA256 hash.
+ *
+ * @param[in] strInput  The string to hash
+ * @return The SHA256 hash
+ */
+std::string Sha256(const std::string& strInput)
+{
+    unsigned char pHash[CSHA256::OUTPUT_SIZE];
+    const unsigned char* pData = reinterpret_cast<const unsigned char*>(strInput.c_str());
+    CSHA256().Write(pData, strInput.size()).Finalize(pHash);
+
+    return HexStr(pHash, pHash + CSHA256::OUTPUT_SIZE);
+}
+
+/**
+ * Creates a SHA256 hash and transforms the hash as string to upper characters.
+ *
+ * @param strInput  The string to hash and transform
+ * @return The SHA256 hash with upper characters
+ */
+std::string UpperSha256(const std::string& strInput)
+{
+    std::string strHash = Sha256(strInput);
+    std::transform(strHash.begin(), strHash.end(), strHash.begin(), ::toupper);
+
+    return strHash;
+}
+
+/**
+ * Obfuscates a chuck of data by xor-ing it with another chuck, with a size of 31 byte.
  *
  * @param[in]     strHash  A string of data
  * @param[in,out] vchData  A vector of data
@@ -31,41 +80,6 @@ std::vector<unsigned char> XorHashMix(const std::string& strHash, std::vector<un
     }
 
     return vchHash;
-}
-
-std::string Sha256(const std::string& strInput)
-{
-    unsigned char pHash[CSHA256::OUTPUT_SIZE];
-    const unsigned char* pData = reinterpret_cast<const unsigned char*>(strInput.c_str());
-    CSHA256().Write(pData, strInput.size()).Finalize(pHash);
-
-    return HexStr(pHash, pHash + CSHA256::OUTPUT_SIZE);
-}
-
-std::string UpperSha256(const std::string& strInput)
-{
-    std::string strHash = Sha256(strInput);
-    std::transform(strHash.begin(), strHash.end(), strHash.begin(), ::toupper);
-
-    return strHash;
-}
-
-void PrepareObfuscatedHashes(const std::string& strSeed, std::vector<std::string>& vstrHashes, size_t nCount)
-{
-    std::string strHash(strSeed);
-    vstrHashes.reserve(nCount);
-
-    for (size_t n = 0; n < nCount; ++n) {
-        strHash = UpperSha256(strHash);
-        vstrHashes.push_back(strHash);
-    }
-}
-
-void PrepareObfuscatedHashes(const std::string& strSeed, std::string(&pstrHashes)[1 + gMaxSha256ObfuscationTimes])
-{
-    std::vector<std::string> vstrHashes;
-    PrepareObfuscatedHashes(strSeed, vstrHashes, gMaxSha256ObfuscationTimes);
-    std::copy(vstrHashes.begin(), vstrHashes.end(), pstrHashes + 1);
 }
 
 /**

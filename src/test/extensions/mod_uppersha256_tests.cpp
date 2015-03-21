@@ -21,8 +21,7 @@ BOOST_AUTO_TEST_CASE(obfuscate_upper_sha256_test)
     std::vector<unsigned char> vchObfuscated;
     vchObfuscated = ObfuscateUpperSha256(ParseHex(strData), strSeed);
 
-    BOOST_CHECK_EQUAL(HexStr(vchObfuscated.begin(), vchObfuscated.end()),
-            "1c9a3de5c2e22bf89b1e41e6fed84fb502f8a0c3ae14394a59366293dd130c");
+    BOOST_CHECK_EQUAL(HexStr(vchObfuscated), "1c9a3de5c2e22bf89b1e41e6fed84fb502");
 }
 
 BOOST_AUTO_TEST_CASE(obfuscation_test)

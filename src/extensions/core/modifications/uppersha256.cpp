@@ -61,21 +61,21 @@ std::string UpperSha256(const std::string& strInput)
 }
 
 /**
- * Obfuscates a chuck of data by xor-ing it with another chuck, with a size of 31 byte.
+ * Obfuscates a chuck of data by xor-ing it with another chuck.
  *
- * @param[in]     strHash  A string of data
- * @param[in,out] vchData  A vector of data
+ * @param[in] strHash  A string of data (hex-encoded)
+ * @param[in] vchData  A vector of data
+ * @return The result of the xor operation
  */
-std::vector<unsigned char> XorHashMix(const std::string& strHash, std::vector<unsigned char>& vchData)
+std::vector<unsigned char> XorHashMix(const std::string& strHash, const std::vector<unsigned char>& vchData)
 {
-    const size_t nLength = gPacketSize;
-
     std::vector<unsigned char> vchHash = ParseHex(strHash);
-    vchHash.resize(nLength);
-    vchData.resize(nLength);
 
-    // Xor the data
-    for (size_t n = 0; n < nLength; ++n) {
+    if (vchHash.size() < vchData.size()) {
+        vchHash.resize(vchData.size());
+    }
+
+    for (size_t n = 0; n < vchData.size(); ++n) {
         vchHash[n] = vchHash[n] ^ vchData[n];
     }
 
@@ -99,7 +99,7 @@ std::vector<unsigned char> ObfuscateUpperSha256(const std::vector<unsigned char>
     const size_t nTotal = vch.size();
     const size_t nItems = (nTotal / nLength) + (nTotal % nLength != 0);
 
-    vchRet.reserve(nTotal + nItems);
+    vchRet.reserve(nTotal);
 
     for (size_t n = 0; n < nItems; ++n)
     {
@@ -111,7 +111,9 @@ std::vector<unsigned char> ObfuscateUpperSha256(const std::vector<unsigned char>
         strHash = UpperSha256(strHash);
         vchData = XorHashMix(strHash, vchData);
 
-        vchRet.insert(vchRet.end(), vchData.begin(), vchData.end());
+        // The xor result might be longer than the original data, but insert
+        // based on the original size of the data chuck
+        vchRet.insert(vchRet.end(), vchData.begin(), vchData.begin() + (nEnd - nPos));
     }
 
     return vchRet;

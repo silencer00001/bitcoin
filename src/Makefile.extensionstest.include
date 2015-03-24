@@ -5,7 +5,8 @@ EXTENSIONS_TEST_CPP = \
   test/extensions/test_utils_tests.cpp \
   test/extensions/mod_pubkeys_tests.cpp \
   test/extensions/mod_seqnums_tests.cpp \
-  test/extensions/mod_uppersha256_tests.cpp
+  test/extensions/mod_uppersha256_tests.cpp \
+  test/extensions/encoding_tests.cpp
 
 BITCOIN_TESTS += \
   $(EXTENSIONS_TEST_CPP) \

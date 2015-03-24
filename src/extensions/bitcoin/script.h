@@ -8,8 +8,11 @@
 
 class CScript;
 
+/** Determines minimum output amount to be spent by an output. */
 int64_t GetDustThreshold(const CScript& scriptPubKey);
+/** Identifies standard output types based on a scriptPubKey. */
 bool GetOutputType(const CScript& scriptPubKey, txnouttype& typeRet);
-bool GetScriptPushes(const CScript& scriptIn, std::vector<std::string>& vstrRet, bool fSkipFirst = false);
+/** Extracts the pushed data from a script. */
+bool GetScriptPushes(const CScript& script, std::vector<std::vector<unsigned char> >& vvchRet, bool fSkipFirst = false);
 
 #endif // EXTENSIONS_BITCOIN_SCRIPT_H

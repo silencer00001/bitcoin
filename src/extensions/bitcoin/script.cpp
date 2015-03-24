@@ -9,10 +9,13 @@
 #include <string>
 #include <vector>
 
-///
-/// Determines minimum output amount to be spent by an output based on
-/// scriptPubKey size in relation to the minimum relay fee.
-///
+/**
+ * Determines minimum output amount to be spent by an output, based on
+ * scriptPubKey size in relation to the minimum relay fee.
+ *
+ * @param scriptPubKey[in]  The scriptPubKey
+ * @return The dust threshold value
+ */
 int64_t GetDustThreshold(const CScript& scriptPubKey)
 {
     // The total size is based on a typical scriptSig size of 148 byte,
@@ -30,6 +33,13 @@ int64_t GetDustThreshold(const CScript& scriptPubKey)
     return nRelayTxFee * 3;
 }
 
+/**
+ * Identifies standard output types based on a scriptPubKey.
+ *
+ * @param scriptPubKey[in]  The script
+ * @param typeRet[out]      The output type
+ * @return True if a standard script was found
+ */
 bool GetOutputType(const CScript& scriptPubKey, txnouttype& typeRet) {
     std::vector<std::vector<unsigned char> > vSolutions;
 
@@ -39,18 +49,26 @@ bool GetOutputType(const CScript& scriptPubKey, txnouttype& typeRet) {
     return true;
 }
 
-bool GetScriptPushes(const CScript& scriptIn, std::vector<std::string>& vstrRet, bool fSkipFirst)
+/**
+ * Extracts the pushed data from a script.
+ *
+ * @param script[in]      The script
+ * @param vvchRet[out]    The extracted pushed data
+ * @param fSkipFirst[in]  Whether the first push operation should be skipped (default: false)
+ * @return True if the extraction was successful (can be empty)
+ */
+bool GetScriptPushes(const CScript& script, std::vector<std::vector<unsigned char> >& vvchRet, bool fSkipFirst)
 {
     int count = 0;
-    CScript::const_iterator pc = scriptIn.begin();
-    while (pc < scriptIn.end())
+    CScript::const_iterator pc = script.begin();
+    while (pc < script.end())
     {
         opcodetype opcode;
         std::vector<unsigned char> data;
-        if (!scriptIn.GetOp(pc, opcode, data))
+        if (!script.GetOp(pc, opcode, data))
             return false;
         if (0 <= opcode && opcode <= OP_PUSHDATA4)
-            if (count++ || !fSkipFirst) vstrRet.push_back(HexStr(data));
+            if (count++ || !fSkipFirst) vvchRet.push_back(data);
     }
 
     return true;

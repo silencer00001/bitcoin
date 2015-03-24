@@ -1,6 +1,7 @@
 #include "extensions/core/encoding.h"
 
 #include "extensions/bitcoin/script.h"
+#include "extensions/core/modifications/packets.h"
 #include "extensions/core/modifications/pubkeys.h"
 #include "extensions/core/modifications/seqnums.h"
 #include "extensions/core/modifications/slice.h"
@@ -54,23 +55,6 @@ bool EncodeBareMultisig(const CPubKey& redeemingPubKey, const std::vector<unsign
     }
 
     return true;
-}
-
-/**
- * Pads the payload to the size of completely filled data packets.
- *
- * To ensure empty space is not filled with zeros during the public key conversion, the
- * payload should be padded before obfuscation, so that the fillers are also obfuscated.
- *
- * @param vchPayload[in,out]  The payload to modify
- * @param nPacketSize[in]     The packet size (defaults to 31 byte)
- */
-static void PadBeforeObfuscationIn(std::vector<unsigned char>& vchPayload, size_t nPacketSize = 31)
-{
-    const size_t nSize = vchPayload.size();
-    const size_t nPackets = (nSize / nPacketSize) + (nSize % nPacketSize != 0);
-
-    vchPayload.resize(nPackets * nPacketSize);
 }
 
 /**

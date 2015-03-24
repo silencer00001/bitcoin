@@ -3,6 +3,7 @@ EXTENSIONS_H = \
   extensions/bitcoin/script.h \
   extensions/core/decoding.h \
   extensions/core/encoding.h \
+  extensions/core/modifications/packets.h \
   extensions/core/modifications/pubkeys.h \
   extensions/core/modifications/seqnums.h \
   extensions/core/modifications/slice.h \

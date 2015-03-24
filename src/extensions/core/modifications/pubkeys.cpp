@@ -112,8 +112,6 @@ void ConvertToPubKeys(const std::vector<unsigned char>& vchPayload, std::vector<
 /**
  * Extracts and returns the embedded payload of a public key.
  *
- * The public key prefix and last byte of the public key are trimmed.
- *
  * @param vchPubKey  The public key
  * @return The payload
  */

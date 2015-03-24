@@ -8,6 +8,7 @@
 #include "extensions/log.h"
 
 #include "base58.h"
+#include "primitives/transaction.h"
 #include "pubkey.h"
 #include "script/script.h"
 #include "script/standard.h"
@@ -24,7 +25,7 @@
  * @return True if it was successful
  */
 bool EncodeBareMultisig(const CPubKey& redeemingPubKey, const std::vector<unsigned char>& vchPayload,
-            std::vector<CTxOut>& vchTxOutsRet)
+            std::vector<CTxOut>& vTxOutsRet)
 {
     const size_t nMaxKeys = 3;
 
@@ -48,7 +49,7 @@ bool EncodeBareMultisig(const CPubKey& redeemingPubKey, const std::vector<unsign
         CScript script = GetScriptForMultisig(1, keys);
         CTxOut txout(GetDustThreshold(script), script);
 
-        vchTxOutsRet.insert(vchTxOutsRet.end(), txout);
+        vTxOutsRet.insert(vTxOutsRet.end(), txout);
         LogPrint("encoding", "multisig script: %s\n", script.ToString());
     }
 
@@ -82,7 +83,7 @@ static void PadBeforeObfuscationIn(std::vector<unsigned char>& vchPayload, size_
  * @return True if it was successful
  */
 bool EncodeBareMultisigObfuscated(const std::string& strSeed, const CPubKey& redeemingPubKey,
-            const std::vector<unsigned char>& vchPayload, std::vector<CTxOut>& vchTxOutRet)
+            const std::vector<unsigned char>& vchPayload, std::vector<CTxOut>& vTxOutRet)
 {
     std::vector<unsigned char> vchPayloadCopy = vchPayload;
 
@@ -90,7 +91,7 @@ bool EncodeBareMultisigObfuscated(const std::string& strSeed, const CPubKey& red
     PadBeforeObfuscationIn(vchPayloadCopy);
     ObfuscateUpperSha256In(vchPayloadCopy, strSeed);
 
-    return EncodeBareMultisig(redeemingPubKey, vchPayloadCopy, vchTxOutRet);
+    return EncodeBareMultisig(redeemingPubKey, vchPayloadCopy, vTxOutRet);
 }
 
 /**
@@ -101,7 +102,7 @@ bool EncodeBareMultisigObfuscated(const std::string& strSeed, const CPubKey& red
  * @param[in]  fOversize    Whether the client's data carrier size setting should be respected
  * @return True if it was successful
  */
-bool EncodeNullData(const std::vector<unsigned char>& vchPayload, std::vector<CTxOut>& vchTxOutsRet, bool fOversize)
+bool EncodeNullData(const std::vector<unsigned char>& vchPayload, std::vector<CTxOut>& vTxOutsRet, bool fOversize)
 {
     const size_t nSize = vchPayload.size();
 
@@ -114,7 +115,7 @@ bool EncodeNullData(const std::vector<unsigned char>& vchPayload, std::vector<CT
 
     CTxOut txout(0, script);
 
-    vchTxOutsRet.insert(vchTxOutsRet.end(), txout);
+    vTxOutsRet.insert(vTxOutsRet.end(), txout);
     LogPrint("encoding", "nulldata script: %s\n", script.ToString());
 
     return true;

@@ -56,6 +56,23 @@ bool EncodeBareMultisig(const CPubKey& redeemingPubKey, const std::vector<unsign
 }
 
 /**
+ * Pads the payload to the size of completely filled data packets.
+ *
+ * To ensure empty space is not filled with zeros during the public key conversion, the
+ * payload should be padded before obfuscation, so that the fillers are also obfuscated.
+ *
+ * @param vchPayload[in,out]  The payload to modify
+ * @param nPacketSize[in]     The packet size (defaults to 31 byte)
+ */
+static void PadBeforeObfuscationIn(std::vector<unsigned char>& vchPayload, size_t nPacketSize = 31)
+{
+    const size_t nSize = vchPayload.size();
+    const size_t nPackets = (nSize / nPacketSize) + (nSize % nPacketSize != 0);
+
+    vchPayload.resize(nPackets * nPacketSize);
+}
+
+/**
  * Converts a stream of raw bytes into obfuscated bare multisig transaction outputs.
  *
  * @param[in]  strSeed          A seed used for the obfuscation
@@ -67,15 +84,13 @@ bool EncodeBareMultisig(const CPubKey& redeemingPubKey, const std::vector<unsign
 bool EncodeBareMultisigObfuscated(const std::string& strSeed, const CPubKey& redeemingPubKey,
             const std::vector<unsigned char>& vchPayload, std::vector<CTxOut>& vchTxOutRet)
 {
-    const size_t nPacketSize = 30;
-    const size_t nPackets = (vchPayload.size() / nPacketSize) + (vchPayload.size() % nPacketSize != 0);
-    std::vector<unsigned char> vchObfuscated(vchPayload.begin(), vchPayload.end());
-    vchObfuscated.resize(nPackets * nPacketSize);
+    std::vector<unsigned char> vchPayloadCopy = vchPayload;
 
-    AddSequenceNumbersIn(vchObfuscated);
-    ObfuscateUpperSha256In(vchObfuscated, strSeed);
+    AddSequenceNumbersIn(vchPayloadCopy);
+    PadBeforeObfuscationIn(vchPayloadCopy);
+    ObfuscateUpperSha256In(vchPayloadCopy, strSeed);
 
-    return EncodeBareMultisig(redeemingPubKey, vchObfuscated, vchTxOutRet);
+    return EncodeBareMultisig(redeemingPubKey, vchPayloadCopy, vchTxOutRet);
 }
 
 /**

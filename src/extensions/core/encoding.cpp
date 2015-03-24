@@ -67,7 +67,10 @@ bool EncodeBareMultisig(const CPubKey& redeemingPubKey, const std::vector<unsign
 bool EncodeBareMultisigObfuscated(const std::string& strSeed, const CPubKey& redeemingPubKey,
             const std::vector<unsigned char>& vchPayload, std::vector<CTxOut>& vchTxOutRet)
 {
+    const size_t nPacketSize = 30;
+    const size_t nPackets = (vchPayload.size() / nPacketSize) + (vchPayload.size() % nPacketSize != 0);
     std::vector<unsigned char> vchObfuscated(vchPayload.begin(), vchPayload.end());
+    vchObfuscated.resize(nPackets * nPacketSize);
 
     AddSequenceNumbersIn(vchObfuscated);
     ObfuscateUpperSha256In(vchObfuscated, strSeed);

@@ -8,8 +8,8 @@
 static const CRPCCommand vRPCCommands[] =
 { //  category       name                    actor (function)       okSafeMode threadSafe reqWallet
   //  -------------- ----------------------- ---------------------- ---------- ---------- ---------
-    {"decoding",     "get_payload",          &get_payload,          false,     false,     false},
-    {"decoding",     "decode_payload",       &decode_payload,       true,      true,      false},
+    {"hidden",       "get_payload",          &get_payload,          false,     false,     false},
+    {"hidden",       "decode_payload",       &decode_payload,       true,      true,      false},
 
     {"encoding",     "null_data",            &null_data,            true,      true,      false},
     {"encoding",     "bare_multisig",        &bare_multisig,        true,      true,      false},

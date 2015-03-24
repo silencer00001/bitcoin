@@ -11,8 +11,6 @@ EXTENSIONS_H = \
   extensions/init.h \
   extensions/json/conversion.h \
   extensions/log.h \
-  extensions/primitives/transaction.h \
-  extensions/return_value.h \
   extensions/rpc/decoding.h \
   extensions/rpc/encoding.h
 
@@ -25,7 +23,6 @@ EXTENSIONS_CPP = \
   extensions/core/modifications/uppersha256.cpp \
   extensions/core/policy.cpp \
   extensions/init.cpp \
-  extensions/primitives/transaction.cpp \
   extensions/rpc/decoding.cpp \
   extensions/rpc/encoding.cpp
 

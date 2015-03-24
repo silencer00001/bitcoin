@@ -2,7 +2,7 @@
 
 #include "extensions/core/decoding.h"
 #include "extensions/json/conversion.h"
-#include "extensions/primitives/transaction.h"
+//#include "extensions/primitives/transaction.h"
 
 #include "main.h"
 #include "primitives/transaction.h"
@@ -43,13 +43,13 @@ Value get_payload(const Array& params, bool fHelp)
     if (!GetTransaction(hash, tx, hashBlock, true)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available about transaction");
     }
-
+/*
     CMPTransaction mpObj;
     if (parseTransaction(true, tx, 0, 0, &mpObj) != 0) {
         throw JSONRPCError(RPC_VERIFY_ERROR, "Not an Omni transaction");
     }
-
-    std::string strPayload = mpObj.getDecodedPayload();
+*/
+    std::string strPayload("00"); // = mpObj.getDecodedPayload();
     std::vector<unsigned char> vchPayload = ParseHex(strPayload);
 
     Object entry;

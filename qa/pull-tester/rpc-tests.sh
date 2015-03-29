@@ -16,6 +16,7 @@ fi
 #Run the tests
 
 testScripts=(
+    'test_locale.py'
     'wallet.py'
     'listtransactions.py'
     'mempool_resurrect_test.py'

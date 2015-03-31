@@ -5,6 +5,7 @@
 #define BOOST_TEST_MODULE Bitcoin Test Suite
 
 #include "main.h"
+#include "mastercore.h"
 #include "random.h"
 #include "txdb.h"
 #include "ui_interface.h"

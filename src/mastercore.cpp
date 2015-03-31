@@ -34,10 +34,10 @@
 #include "sync.h"
 #include "tinyformat.h"
 #include "uint256.h"
+#include "ui_interface.h"
 #include "util.h"
 #include "utilstrencodings.h"
 #include "utiltime.h"
-#include "ui_interface.h"
 #ifdef ENABLE_WALLET
 #include "wallet.h"
 #endif

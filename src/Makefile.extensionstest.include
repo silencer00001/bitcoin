@@ -6,6 +6,7 @@ EXTENSIONS_TEST_CPP = \
   extensions/test/mod_pubkeys_tests.cpp \
   extensions/test/mod_seqnums_tests.cpp \
   extensions/test/mod_uppersha256_tests.cpp \
+  extensions/test/script_extraction_tests.cpp \
   extensions/test/encoding_tests.cpp
 
 BITCOIN_TESTS += \

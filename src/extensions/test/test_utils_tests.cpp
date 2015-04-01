@@ -1,14 +1,9 @@
 #include "extensions/test/test_utils.h"
 
-#include "extensions/core/modifications/slice.h"
-
 #include "utilstrencodings.h"
 
 #include <string>
 #include <vector>
-
-#include <stdio.h>
-#include "utiltime.h"
 
 #include <boost/test/unit_test.hpp>
 
@@ -94,27 +89,6 @@ BOOST_AUTO_TEST_CASE(vector_generation_conversion_test)
     BOOST_CHECK_EQUAL(HexStr(std::vector<unsigned char>(1, 0xff)), "ff");
     BOOST_CHECK_EQUAL(HexStr(std::vector<unsigned char>(3, 5)), "050505");
     BOOST_CHECK_EQUAL(HexStr(std::vector<unsigned char>(2, 255)), "ffff");
-}
-
-BOOST_AUTO_TEST_CASE(vector_slice_test)
-{
-    size_t nNumChucks = 0;
-
-    std::vector<std::vector<unsigned char> > vvchExact;
-    nNumChucks = Slice(ParseHex("11223344"), vvchExact, 2);
-
-    // Check vector slicing into two equally sized chucks
-    BOOST_CHECK_EQUAL(vvchExact.size(), nNumChucks);
-    BOOST_CHECK_EQUAL(HexStr(vvchExact[0]), "1122");
-    BOOST_CHECK_EQUAL(HexStr(vvchExact[1]), "3344");
-
-    std::vector<std::vector<unsigned char> > vvchExcess;
-    nNumChucks = Slice(ParseHex("aabbcc"), vvchExcess, 2);
-
-    // Check vector slicing into three chucks
-    BOOST_CHECK_EQUAL(vvchExcess.size(), nNumChucks);
-    BOOST_CHECK_EQUAL(HexStr(vvchExcess[0]), "aabb");
-    BOOST_CHECK_EQUAL(HexStr(vvchExcess[1]), "cc");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

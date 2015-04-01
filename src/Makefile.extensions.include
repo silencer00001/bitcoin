@@ -6,7 +6,6 @@ EXTENSIONS_H = \
   extensions/core/modifications/packets.h \
   extensions/core/modifications/pubkeys.h \
   extensions/core/modifications/seqnums.h \
-  extensions/core/modifications/slice.h \
   extensions/core/modifications/uppersha256.h \
   extensions/core/policy.h \
   extensions/init.h \

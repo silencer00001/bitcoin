@@ -1,6 +1,6 @@
 #include "extensions/core/modifications/pubkeys.h"
 
-#include "extensions/core/modifications/slice.h"
+#include "extensions/core/modifications/packets.h"
 
 #include "pubkey.h"
 

@@ -3,6 +3,7 @@ EXTENSIONS_TEST_H = \
 
 EXTENSIONS_TEST_CPP = \
   extensions/test/test_utils_tests.cpp \
+  extensions/test/packets_tests.cpp \
   extensions/test/mod_pubkeys_tests.cpp \
   extensions/test/mod_seqnums_tests.cpp \
   extensions/test/mod_uppersha256_tests.cpp \

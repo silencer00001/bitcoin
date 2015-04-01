@@ -4,7 +4,6 @@
 #include "extensions/core/modifications/packets.h"
 #include "extensions/core/modifications/pubkeys.h"
 #include "extensions/core/modifications/seqnums.h"
-#include "extensions/core/modifications/slice.h"
 #include "extensions/core/modifications/uppersha256.h"
 #include "extensions/log.h"
 

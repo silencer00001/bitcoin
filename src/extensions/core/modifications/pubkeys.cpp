@@ -71,16 +71,15 @@ CPubKey CreatePubKeyUnchecked(const std::vector<unsigned char>& vchPayload)
  */
 CPubKey CreatePubKey(const std::vector<unsigned char>& vchPayload)
 {
+    std::vector<unsigned char> vchPayloadCopy = vchPayload;
+
     // Use random byte as seed, if none was given
     if (vchPayload.size() < 32) {
-        std::vector<unsigned char> vchPayloadCopy = vchPayload;
         vchPayloadCopy.resize(32);
         vchPayloadCopy[31] = std::rand() % 256;
-
-        return CreatePubKey(vchPayloadCopy);
     }
 
-    CPubKey pubKey = CreatePubKeyUnchecked(vchPayload);
+    CPubKey pubKey = CreatePubKeyUnchecked(vchPayloadCopy);
     ModifyEcdsaPoint(pubKey);
 
     return pubKey;

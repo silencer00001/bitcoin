@@ -4,9 +4,7 @@
 #include "main.h"
 #include "script/script.h"
 #include "script/standard.h"
-#include "utilstrencodings.h"
 
-#include <string>
 #include <vector>
 
 /**
@@ -61,14 +59,15 @@ bool GetScriptPushes(const CScript& script, std::vector<std::vector<unsigned cha
 {
     int count = 0;
     CScript::const_iterator pc = script.begin();
-    while (pc < script.end())
-    {
+    while (pc < script.end()) {
         opcodetype opcode;
         std::vector<unsigned char> data;
         if (!script.GetOp(pc, opcode, data))
             return false;
-        if (0 <= opcode && opcode <= OP_PUSHDATA4)
+        if (0x00 <= opcode && opcode <= OP_PUSHDATA4)
             if (count++ || !fSkipFirst) vvchRet.push_back(data);
+        // TODO: check whether it makes sense to return only data with size > 0
+        // TODO: check whether it makes sense to increase the range to <= OP_16
     }
 
     return true;

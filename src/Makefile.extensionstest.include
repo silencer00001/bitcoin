@@ -1,12 +1,12 @@
 EXTENSIONS_TEST_H = \
-  test/extensions/test_utils.h
+  extensions/test/test_utils.h
 
 EXTENSIONS_TEST_CPP = \
-  test/extensions/test_utils_tests.cpp \
-  test/extensions/mod_pubkeys_tests.cpp \
-  test/extensions/mod_seqnums_tests.cpp \
-  test/extensions/mod_uppersha256_tests.cpp \
-  test/extensions/encoding_tests.cpp
+  extensions/test/test_utils_tests.cpp \
+  extensions/test/mod_pubkeys_tests.cpp \
+  extensions/test/mod_seqnums_tests.cpp \
+  extensions/test/mod_uppersha256_tests.cpp \
+  extensions/test/encoding_tests.cpp
 
 BITCOIN_TESTS += \
   $(EXTENSIONS_TEST_CPP) \

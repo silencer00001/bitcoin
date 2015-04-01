@@ -5,7 +5,7 @@
 #include <vector>
 
 /**
- * Pads the payload to the size of completely filled data packets.
+ * Pads a payload to the size of completely filled data packets.
  *
  * To ensure empty space is not filled with zeros during the public key conversion, the
  * payload should be padded before obfuscation, so that the fillers are also obfuscated.
@@ -13,7 +13,8 @@
  * @param vchPayload[in,out]  The payload to modify
  * @param nPacketSize[in]     The packet size (defaults to 31 byte)
  */
-void PadBeforeObfuscationIn(std::vector<unsigned char>& vchPayload, size_t nPacketSize = 31)
+template <typename T>
+void PadBeforeObfuscationIn(std::vector<T>& vchPayload, size_t nPacketSize = 31)
 {
     const size_t nSize = vchPayload.size();
     const size_t nPackets = (nSize / nPacketSize) + (nSize % nPacketSize != 0);

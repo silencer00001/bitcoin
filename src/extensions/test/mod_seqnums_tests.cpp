@@ -1,4 +1,4 @@
-#include "test/extensions/test_utils.h"
+#include "extensions/test/test_utils.h"
 
 #include "extensions/core/modifications/seqnums.h"
 

@@ -1,4 +1,6 @@
-#include "test/extensions/test_utils.h"
+#include "extensions/test/test_utils.h"
+
+#include "extensions/core/modifications/slice.h"
 
 #include "utilstrencodings.h"
 
@@ -7,7 +9,6 @@
 
 #include <stdio.h>
 #include "utiltime.h"
-#include "extensions/core/modifications/slice.h"
 
 #include <boost/test/unit_test.hpp>
 

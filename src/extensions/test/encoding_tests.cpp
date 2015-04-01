@@ -1,6 +1,5 @@
-#include "test/extensions/test_utils.h"
-
 #include "extensions/core/encoding.h"
+#include "extensions/test/test_utils.h"
 
 #include "base58.h"
 #include "primitives/transaction.h"

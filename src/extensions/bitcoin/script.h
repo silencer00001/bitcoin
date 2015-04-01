@@ -3,6 +3,7 @@
 
 #include "script/standard.h"
 
+#include <stdint.h>
 #include <string>
 #include <vector>
 

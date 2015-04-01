@@ -22,7 +22,7 @@
  *
  * @param[in]  redeemingPubKey  A public key which should be used to spent the outputs
  * @param[in]  vchPayload       The raw data
- * @param[out] vchTxOutsRet     The transaction outputs
+ * @param[out] vTxOutsRet       The transaction outputs
  * @return True if it was successful
  */
 bool EncodeBareMultisig(const CPubKey& redeemingPubKey, const std::vector<unsigned char>& vchPayload,
@@ -63,7 +63,7 @@ bool EncodeBareMultisig(const CPubKey& redeemingPubKey, const std::vector<unsign
  * @param[in]  strSeed          A seed used for the obfuscation
  * @param[in]  redeemingPubKey  A key which should be used to spent the outputs
  * @param[in]  vchPayload       The raw data
- * @param[out] vchTxOutRet      The obfuscated transaction outputs
+ * @param[out] vTxOutRet        The obfuscated transaction outputs
  * @return True if it was successful
  */
 bool EncodeBareMultisigObfuscated(const std::string& strSeed, const CPubKey& redeemingPubKey,
@@ -81,16 +81,14 @@ bool EncodeBareMultisigObfuscated(const std::string& strSeed, const CPubKey& red
 /**
  * Converts a stream of raw bytes into OP_RETURN outputs.
  *
- * @param[in]  vchPayload   The raw data
- * @param[out] vchTxOutRet  The transaction outputs
- * @param[in]  fOversize    Whether the client's data carrier size setting should be respected
+ * @param[in]  vchPayload  The raw data
+ * @param[out] vTxOutRet   The transaction outputs
+ * @param[in]  nMaxSize    The maximum payload size (default: nMaxDatacarrierBytes)
  * @return True if it was successful
  */
-bool EncodeNullData(const std::vector<unsigned char>& vchPayload, std::vector<CTxOut>& vTxOutsRet, bool fOversize)
+bool EncodeNullData(const std::vector<unsigned char>& vchPayload, std::vector<CTxOut>& vTxOutsRet, size_t nMaxSize)
 {
-    const size_t nSize = vchPayload.size();
-
-    if (!fOversize && nSize > nMaxDatacarrierBytes) {
+    if (vchPayload.size() < nMaxSize) {
         return false;
     }
 

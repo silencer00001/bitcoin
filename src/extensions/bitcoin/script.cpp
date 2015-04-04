@@ -35,16 +35,17 @@ int64_t GetDustThreshold(const CScript& scriptPubKey)
  * Identifies standard output types based on a scriptPubKey.
  *
  * @param scriptPubKey[in]  The script
- * @param typeRet[out]      The output type
- * @return True if a standard script was found
+ * @return The output type
  */
-bool GetOutputType(const CScript& scriptPubKey, txnouttype& typeRet) {
+txnouttype GetOutputType(const CScript& scriptPubKey) {
     std::vector<std::vector<unsigned char> > vSolutions;
 
-    if (!Solver(scriptPubKey, typeRet, vSolutions))
-        return false;
+    txnouttype outtype;
+    if (!Solver(scriptPubKey, outtype, vSolutions)) {
+        outtype = TX_NONSTANDARD;
+    }
 
-    return true;
+    return outtype;
 }
 
 /**

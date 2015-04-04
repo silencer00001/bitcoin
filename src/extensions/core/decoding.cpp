@@ -26,11 +26,7 @@ bool DecodeBareMultisig(const std::vector<CTxOut>& vTxOuts, std::vector<unsigned
     // TODO: this is very inconvenient
     // TODO: fail hard or continue, if not multisig?
     for (std::vector<CTxOut>::const_iterator it = vTxOuts.begin(); it != vTxOuts.end(); ++it) {
-        txnouttype outtype;
-        if (!GetOutputType(it->scriptPubKey, outtype))
-            return false;
-
-        if (outtype != TX_MULTISIG)
+        if (GetOutputType(it->scriptPubKey) != TX_MULTISIG)
             return false;
 
         std::vector<std::vector<unsigned char> > vvchChucks;

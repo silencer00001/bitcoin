@@ -27,9 +27,7 @@ BOOST_AUTO_TEST_CASE(extract_pubkey_test)
     script << ToByteVector(pubKey) << OP_CHECKSIG;
 
     // confirm script type
-    txnouttype outtype;
-    BOOST_CHECK(GetOutputType(script, outtype));
-    BOOST_CHECK_EQUAL(outtype, TX_PUBKEY);
+    BOOST_CHECK_EQUAL(GetOutputType(script), TX_PUBKEY);
 
     // confirm extracted data
     std::vector<std::vector<unsigned char> > vvchSolutions;
@@ -51,9 +49,7 @@ BOOST_AUTO_TEST_CASE(extract_pubkeyhash_test)
     script << OP_DUP << OP_HASH160 << ToByteVector(keyId) << OP_EQUALVERIFY << OP_CHECKSIG;
 
     // confirm script type
-    txnouttype outtype;
-    BOOST_CHECK(GetOutputType(script, outtype));
-    BOOST_CHECK_EQUAL(outtype, TX_PUBKEYHASH);
+    BOOST_CHECK_EQUAL(GetOutputType(script), TX_PUBKEYHASH);
 
     // confirm extracted data
     std::vector<std::vector<unsigned char> > vvchSolutions;
@@ -83,9 +79,7 @@ BOOST_AUTO_TEST_CASE(extract_multisig_test)
     script << OP_CHECKMULTISIG;
 
     // confirm script type
-    txnouttype outtype;
-    BOOST_CHECK(GetOutputType(script, outtype));
-    BOOST_CHECK_EQUAL(outtype, TX_MULTISIG);
+    BOOST_CHECK_EQUAL(GetOutputType(script), TX_MULTISIG);
 
     // confirm extracted data
     std::vector<std::vector<unsigned char> > vvchSolutions;
@@ -113,9 +107,7 @@ BOOST_AUTO_TEST_CASE(extract_scripthash_test)
     script << OP_HASH160 << ToByteVector(innerId) << OP_EQUAL;
 
     // confirm script type
-    txnouttype outtype;
-    BOOST_CHECK(GetOutputType(script, outtype));
-    BOOST_CHECK_EQUAL(outtype, TX_SCRIPTHASH);
+    BOOST_CHECK_EQUAL(GetOutputType(script), TX_SCRIPTHASH);
 
     // confirm extracted data
     std::vector<std::vector<unsigned char> > vvchSolutions;
@@ -134,9 +126,7 @@ BOOST_AUTO_TEST_CASE(extract_nulldata_test)
     script << OP_RETURN << vchPayload;
 
     // confirm script type
-    txnouttype outtype;
-    BOOST_CHECK(GetOutputType(script, outtype));
-    BOOST_CHECK_EQUAL(outtype, TX_NULL_DATA);
+    BOOST_CHECK_EQUAL(GetOutputType(script), TX_NULL_DATA);
 
     // confirm extracted data
     std::vector<std::vector<unsigned char> > vvchSolutions;
@@ -160,6 +150,9 @@ BOOST_AUTO_TEST_CASE(extract_anypush_test)
     script << vvchPayloads[2] << OP_DROP;
     script << vvchPayloads[3] << OP_DROP;
     script << vvchPayloads[4];
+
+    // confirm script type
+    BOOST_CHECK_EQUAL(GetOutputType(script), TX_NONSTANDARD);
 
     // confirm extracted data
     std::vector<std::vector<unsigned char> > vvchSolutions;

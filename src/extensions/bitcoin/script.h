@@ -12,7 +12,7 @@ class CScript;
 /** Determines minimum output amount to be spent by an output. */
 int64_t GetDustThreshold(const CScript& scriptPubKey);
 /** Identifies standard output types based on a scriptPubKey. */
-bool GetOutputType(const CScript& scriptPubKey, txnouttype& typeRet);
+txnouttype GetOutputType(const CScript& scriptPubKey);
 /** Extracts the pushed data from a script. */
 bool GetScriptPushes(const CScript& script, std::vector<std::vector<unsigned char> >& vvchRet, bool fSkipFirst = false);
 

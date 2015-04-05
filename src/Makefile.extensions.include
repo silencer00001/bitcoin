@@ -3,10 +3,12 @@ EXTENSIONS_H = \
   extensions/bitcoin/script.h \
   extensions/core/decoding.h \
   extensions/core/encoding.h \
+  extensions/core/modifications/marker.h \
   extensions/core/modifications/packets.h \
   extensions/core/modifications/pubkeys.h \
   extensions/core/modifications/seqnums.h \
   extensions/core/modifications/uppersha256.h \
+  extensions/core/transactions.h \
   extensions/init.h \
   extensions/json/conversion.h \
   extensions/log.h \
@@ -17,9 +19,11 @@ EXTENSIONS_CPP = \
   extensions/bitcoin/script.cpp \
   extensions/core/decoding.cpp \
   extensions/core/encoding.cpp \
+  extensions/core/modifications/marker.cpp \
   extensions/core/modifications/pubkeys.cpp \
   extensions/core/modifications/seqnums.cpp \
   extensions/core/modifications/uppersha256.cpp \
+  extensions/core/transactions.cpp \
   extensions/init.cpp \
   extensions/rpc/decoding.cpp \
   extensions/rpc/encoding.cpp

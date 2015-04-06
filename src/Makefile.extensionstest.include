@@ -9,7 +9,7 @@ EXTENSIONS_TEST_CPP = \
   extensions/test/mod_uppersha256_tests.cpp \
   extensions/test/script_extraction_tests.cpp \
   extensions/test/data_embedding_tests.cpp \
-  extensions/test/marker_tests.cpp
+  extensions/test/sender_selection_tests.cpp
 
 BITCOIN_TESTS += \
   $(EXTENSIONS_TEST_CPP) \

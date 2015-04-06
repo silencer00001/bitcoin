@@ -1,6 +1,7 @@
 #ifndef EXTENSIONS_CORE_TRANSACTIONS_H
 #define EXTENSIONS_CORE_TRANSACTIONS_H
 
+class CBitcoinAddress;
 class CTransaction;
 class CTxOut;
 

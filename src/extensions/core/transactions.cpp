@@ -3,14 +3,13 @@
 #include "extensions/core/modifications/marker.h"
 
 #include "base58.h"
-#include "script/standard.h"
 #include "primitives/transaction.h"
+#include "script/standard.h"
 
-#include <stdio.h>
 #include <stdint.h>
-#include <vector>
 #include <map>
 #include <string>
+#include <vector>
 
 bool HasExodusMarker(const CTransaction& tx)
 {
@@ -31,25 +30,21 @@ bool HasExodusMarker(const CTransaction& tx)
 bool GetSenderByContribution(const std::vector<CTxOut>& vouts, std::string& strSender)
 {
     strSender.clear();
-    std::map<std::string, uint64_t> mapInputSum;
+    std::map<std::string, int64_t> mapInputSum;
 
     for (unsigned int n = 0; n < vouts.size(); n++) {
         CTxDestination dest;
         if (!ExtractDestination(vouts[n].scriptPubKey, dest)) {
-            continue;
+            return false;
         }
-
         CBitcoinAddress addressSource(dest);
         mapInputSum[addressSource.ToString()] += vouts[n].nValue;
     }
 
-    uint64_t nMax = 0;
-    std::map<std::string, uint64_t>::const_iterator it;
+    int64_t nMax = 0;
+    std::map<std::string, int64_t>::const_iterator it;
     for (it = mapInputSum.begin(); it != mapInputSum.end(); ++it) {
-        
-        printf("%s = %lu\n", it->first.c_str(), it->second);
-
-        uint64_t nTemp = it->second;
+        int64_t nTemp = it->second;
         if (nTemp > nMax) {
             strSender = it->first;
             nMax = nTemp;

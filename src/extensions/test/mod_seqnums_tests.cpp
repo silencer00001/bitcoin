@@ -16,9 +16,9 @@ static const size_t nPacketSize = 31;
 BOOST_AUTO_TEST_CASE(seqnums_insertion_test)
 {
     // Check default sequence number is 0x01
-    BOOST_CHECK(IsEqual(
+    CHECK_COLLECTIONS(
             AddSequenceNumbers(ParseHex("00"), (unsigned char) 0x01),
-            AddSequenceNumbers(ParseHex("00"))));
+            AddSequenceNumbers(ParseHex("00")));
 
     // Check the insertion increases the size by 1 byte
     BOOST_CHECK_EQUAL(
@@ -26,63 +26,63 @@ BOOST_AUTO_TEST_CASE(seqnums_insertion_test)
             ParseHex("00").size() + (size_t) 1);
 
     // Check sequence number 0x02 is prepended
-    BOOST_CHECK(IsEqual(
+    CHECK_COLLECTIONS(
             AddSequenceNumbers(ParseHex("0304050607"), (unsigned char) 0x02),
-            ParseHex("020304050607")));
+            ParseHex("020304050607"));
 
     // Check sequence number 0xff is prepended
-    BOOST_CHECK(IsEqual(
+    CHECK_COLLECTIONS(
             AddSequenceNumbers(ParseHex("040815162342"), (unsigned char) 0xff),
-            ParseHex("ff040815162342")));
+            ParseHex("ff040815162342"));
 
     // Confirm one sequence number is prepended to a then whole packet
-    BOOST_CHECK(IsEqual(
+    CHECK_COLLECTIONS(
             AddSequenceNumbers(ParseHex(
             "000000000000000000000000000000000000000000000000000000000000")),
             ParseHex(
-            "01000000000000000000000000000000000000000000000000000000000000")));
+            "01000000000000000000000000000000000000000000000000000000000000"));
 
     // Confirm two sequence numbers are prepended
-    BOOST_CHECK(IsEqual(
+    CHECK_COLLECTIONS(
             AddSequenceNumbers(ParseHex(
             "000000000000000000000000000000000000000000000000000000000000"
             "00")),
             ParseHex(
             "01000000000000000000000000000000000000000000000000000000000000"
-            "0200")));
+            "0200"));
 
     // Check sequence numbers 0x42 and 0x43 are prepended
-    BOOST_CHECK(IsEqual(
+    CHECK_COLLECTIONS(
             AddSequenceNumbers(ParseHex(
             "54686973206973206c6f6e676572207468616e206120726567756c617220"
             "64617461207061636b6167652e"), (unsigned char) 0x42),
             ParseHex(
             "4254686973206973206c6f6e676572207468616e206120726567756c617220"
-            "4364617461207061636b6167652e")));
+            "4364617461207061636b6167652e"));
 }
 
 BOOST_AUTO_TEST_CASE(seqnums_removal_test)
 {
     // Check sequence number 0x01 is removed
-    BOOST_CHECK(IsEqual(
+    CHECK_COLLECTIONS(
             RemoveSequenceNumbers(ParseHex("0100000000000000010000000005f5e100")),
-            ParseHex("00000000000000010000000005f5e100")));
+            ParseHex("00000000000000010000000005f5e100"));
 
     // Check sequence number is removed from a whole packet
-    BOOST_CHECK(IsEqual(
+    CHECK_COLLECTIONS(
             RemoveSequenceNumbers(ParseHex(
             "01000000000000000000000000000000000000000000000000000000000000")),
             ParseHex(
-            "000000000000000000000000000000000000000000000000000000000000")));
+            "000000000000000000000000000000000000000000000000000000000000"));
 
     // Check sequence numbers are removed from more than one packet
-    BOOST_CHECK(IsEqual(
+    CHECK_COLLECTIONS(
             RemoveSequenceNumbers(ParseHex(
             "01000000000000000000000000000000000000000000000000000000000000"
             "0200")),
             ParseHex(
             "000000000000000000000000000000000000000000000000000000000000"
-            "00")));
+            "00"));
 }
 
 BOOST_AUTO_TEST_CASE(seqnums_empty_test)
@@ -96,11 +96,11 @@ BOOST_AUTO_TEST_CASE(seqnums_empty_test)
     BOOST_CHECK(!AddSequenceNumbers(vchEmpty).size());
 
     // Check it's possible to remove one remaining element
-    BOOST_CHECK(IsEqual(RemoveSequenceNumbers(ParseHex("01")), vchEmpty));
+    CHECK_COLLECTIONS(RemoveSequenceNumbers(ParseHex("01")), vchEmpty);
 
     // Check trying to remove sequence numbers from an empty stream is safe
     BOOST_CHECK_NO_THROW(RemoveSequenceNumbers(vchEmpty));
-    BOOST_CHECK(IsEqual(RemoveSequenceNumbers(vchEmpty), vchEmpty));
+    CHECK_COLLECTIONS(RemoveSequenceNumbers(vchEmpty), vchEmpty);
     BOOST_CHECK(RemoveSequenceNumbers(vchEmpty).empty());
     BOOST_CHECK(!RemoveSequenceNumbers(vchEmpty).size());
 }
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(seqnums_full_test)
 
     // Confirm sequence numbers were removed
     BOOST_CHECK_EQUAL(vchAfterRemoval.size(), nSizeWithoutSeqNums);
-    BOOST_CHECK(IsEqual(vchAfterRemoval, vchWithoutSeqNums));
+    CHECK_COLLECTIONS(vchAfterRemoval, vchWithoutSeqNums);
 }
 
 BOOST_AUTO_TEST_CASE(seqnums_back_and_forth_test)
@@ -154,23 +154,23 @@ BOOST_AUTO_TEST_CASE(seqnums_back_and_forth_test)
     std::vector<unsigned char> vchModified(vchWithout);
 
     vchModified = AddSequenceNumbers(vchModified, nFirstSeqNum);
-    BOOST_CHECK(!IsEqual(vchWithout, vchModified));
+    CHECK_COLLECTIONS_NE(vchWithout, vchModified);
     BOOST_CHECK_EQUAL(vchModified.at(0), nFirstSeqNum);
     BOOST_CHECK_EQUAL(vchModified.size(), nSizeWithSeqNums);
 
     vchModified = RemoveSequenceNumbers(vchModified);
-    BOOST_CHECK(IsEqual(vchWithout, vchModified));
+    CHECK_COLLECTIONS(vchWithout, vchModified);
 
     AddSequenceNumbersIn(vchModified);
-    BOOST_CHECK(!IsEqual(vchWithout, vchModified));
+    CHECK_COLLECTIONS_NE(vchWithout, vchModified);
     BOOST_CHECK_EQUAL(vchModified.at(0), 0x01); // default first sequence number
     BOOST_CHECK_EQUAL(vchModified.size(), nSizeWithSeqNums);
 
     RemoveSequenceNumbersIn(vchModified);
-    BOOST_CHECK(IsEqual(vchWithout, vchModified));
+    CHECK_COLLECTIONS(vchWithout, vchModified);
 
-    BOOST_CHECK(IsEqual(vchModified, RemoveSequenceNumbers(AddSequenceNumbers(vchModified))));
-    BOOST_CHECK(IsEqual(vchModified, vchWithout));
+    CHECK_COLLECTIONS(vchModified, RemoveSequenceNumbers(AddSequenceNumbers(vchModified)));
+    CHECK_COLLECTIONS(vchModified, vchWithout);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

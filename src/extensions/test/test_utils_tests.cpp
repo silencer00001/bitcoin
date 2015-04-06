@@ -64,6 +64,18 @@ BOOST_AUTO_TEST_CASE(is_equal_vector_test)
     BOOST_CHECK(!IsEqual(ParseHex("00"), ParseHex("0000")));
 }
 
+BOOST_AUTO_TEST_CASE(check_collections_vector_test)
+{
+    // Check is true when comparing equal vectors
+    CHECK_COLLECTIONS(std::vector<unsigned char>(), std::vector<unsigned char>());
+    CHECK_COLLECTIONS(ParseHex("0102030405060708"), ParseHex("0102030405060708"));
+
+    // Check is false when comparing unequal vectors
+    CHECK_COLLECTIONS_NE(ParseHex("00"), ParseHex("11"));
+    CHECK_COLLECTIONS_NE(ParseHex("11"), ParseHex("00"));
+    CHECK_COLLECTIONS_NE(ParseHex("00"), ParseHex("0000"));
+}
+
 BOOST_AUTO_TEST_CASE(fill_vector_test)
 {
     // Check vector generation by filling with 1 byte

@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(encode_decode_obfuscated_multisig_test)
 
     std::vector<unsigned char> vchPayloadOut;
     BOOST_CHECK(DecodeBareMultisigObfuscated(strSeed, vTxOuts, vchPayloadOut));
-    BOOST_CHECK(IsEqual(vchPayloadIn, vchPayloadOut));
+    CHECK_COLLECTIONS(vchPayloadIn, vchPayloadOut);
 }
 
 BOOST_AUTO_TEST_CASE(decode_obfuscated_multisig_mainsafe_test)
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(decode_obfuscated_multisig_mainsafe_test)
 
     std::vector<unsigned char> vchPayload;
     BOOST_CHECK(DecodeBareMultisigObfuscated(strSeed, vTxOuts, vchPayload));
-    BOOST_CHECK(IsEqual(vchPayload, ParseHex(
+    CHECK_COLLECTIONS(vchPayload, ParseHex(
         // Transaction version: 0
         "0000"
         // Transaction type: Create Crowdsale (51)
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(decode_obfuscated_multisig_mainsafe_test)
         // Percentage for issuer: 0 %
         "00"
         // Payload padding
-        "000000")));
+        "000000"));
 }
 
 BOOST_AUTO_TEST_CASE(decode_obfuscated_multisig_tetherus_test)
@@ -200,13 +200,13 @@ BOOST_AUTO_TEST_CASE(decode_obfuscated_multisig_tetherus_test)
 
     std::vector<unsigned char> vchPayload;
     BOOST_CHECK(DecodeBareMultisigObfuscated(strSeed, vTxOuts, vchPayload));
-    BOOST_CHECK(IsEqual(vchPayload, ParseHex(
+    CHECK_COLLECTIONS(vchPayload, ParseHex(
         "000000360100020000000046696e616e6369616c20616e6420696e737572"
         "616e63652061637469766974696573004163746976697469657320617578"
         "696c6961727920746f2066696e616e6369616c207365727669636520616e"
         "6420696e737572616e636520616374697669746965730054657468657255"
         "530068747470733a2f2f7465746865722e746f00546865206e6578742070"
-        "6172616469676d206f66206d6f6e65792e00000000000000000000000000")));
+        "6172616469676d206f66206d6f6e65792e00000000000000000000000000"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

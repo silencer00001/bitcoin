@@ -63,8 +63,8 @@ BOOST_AUTO_TEST_CASE(obfuscate_back_and_forth_test)
     BOOST_CHECK_EQUAL(vch0.size(), vch.size());
     BOOST_CHECK_EQUAL(vch0.size(), vch1.size());
     BOOST_CHECK_EQUAL(vch1.size(), vch2.size());
-    BOOST_CHECK(IsEqual(vch0, vch));
-    BOOST_CHECK(IsEqual(vch0, vch2));
+    CHECK_COLLECTIONS(vch0, vch);
+    CHECK_COLLECTIONS(vch0, vch2);
 }
 
 BOOST_AUTO_TEST_CASE(obfuscate_inplace_test)
@@ -77,10 +77,10 @@ BOOST_AUTO_TEST_CASE(obfuscate_inplace_test)
     std::vector<unsigned char> vchMutable(vchInput);
 
     ObfuscateUpperSha256In(vchMutable, strSeed);
-    BOOST_CHECK(!IsEqual(vchMutable, vchInput));
+    CHECK_COLLECTIONS_NE(vchMutable, vchInput);
 
     DeobfuscateUpperSha256In(vchMutable, strSeed);
-    BOOST_CHECK(IsEqual(vchMutable, vchInput));
+    CHECK_COLLECTIONS(vchMutable, vchInput);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(extract_pubkey_test)
     std::vector<std::vector<unsigned char> > vvchSolutions;
     BOOST_CHECK(GetScriptPushes(script, vvchSolutions));
     BOOST_CHECK_EQUAL(vvchSolutions.size(), 1);
-    BOOST_CHECK(IsEqual(vvchSolutions[0], vchPayload));
+    CHECK_COLLECTIONS(vvchSolutions[0], vchPayload);
 }
 
 BOOST_AUTO_TEST_CASE(extract_pubkeyhash_test)
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(extract_pubkeyhash_test)
     std::vector<std::vector<unsigned char> > vvchSolutions;
     BOOST_CHECK(GetScriptPushes(script, vvchSolutions));
     BOOST_CHECK_EQUAL(vvchSolutions.size(), 1);
-    BOOST_CHECK(IsEqual(vvchSolutions[0], ToByteVector(keyId)));
+    CHECK_COLLECTIONS(vvchSolutions[0], ToByteVector(keyId));
 }
 
 BOOST_AUTO_TEST_CASE(extract_multisig_test)
@@ -85,9 +85,9 @@ BOOST_AUTO_TEST_CASE(extract_multisig_test)
     std::vector<std::vector<unsigned char> > vvchSolutions;
     BOOST_CHECK(GetScriptPushes(script, vvchSolutions));
     BOOST_CHECK_EQUAL(vvchSolutions.size(), 3);
-    BOOST_CHECK(IsEqual(vvchSolutions[0], vchPayload1));
-    BOOST_CHECK(IsEqual(vvchSolutions[1], vchPayload2));
-    BOOST_CHECK(IsEqual(vvchSolutions[2], vchPayload3));
+    CHECK_COLLECTIONS(vvchSolutions[0], vchPayload1);
+    CHECK_COLLECTIONS(vvchSolutions[1], vchPayload2);
+    CHECK_COLLECTIONS(vvchSolutions[2], vchPayload3);
 }
 
 BOOST_AUTO_TEST_CASE(extract_scripthash_test)
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(extract_scripthash_test)
     std::vector<std::vector<unsigned char> > vvchSolutions;
     BOOST_CHECK(GetScriptPushes(script, vvchSolutions));
     BOOST_CHECK_EQUAL(vvchSolutions.size(), 1);
-    BOOST_CHECK(IsEqual(vvchSolutions[0], ToByteVector(innerId)));
+    CHECK_COLLECTIONS(vvchSolutions[0], ToByteVector(innerId));
 }
 
 BOOST_AUTO_TEST_CASE(extract_nulldata_test)
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(extract_nulldata_test)
     std::vector<std::vector<unsigned char> > vvchSolutions;
     BOOST_CHECK(GetScriptPushes(script, vvchSolutions));
     BOOST_CHECK_EQUAL(vvchSolutions.size(), 1);
-    BOOST_CHECK(IsEqual(vvchSolutions[0], vchPayload));
+    CHECK_COLLECTIONS(vvchSolutions[0], vchPayload);
 }
 
 BOOST_AUTO_TEST_CASE(extract_anypush_test)
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(extract_anypush_test)
     BOOST_CHECK(GetScriptPushes(script, vvchSolutions));
     BOOST_CHECK_EQUAL(vvchSolutions.size(), vvchPayloads.size());
     for (size_t n = 0; n < vvchSolutions.size(); ++n) {
-        BOOST_CHECK(IsEqual(vvchSolutions[n], vvchPayloads[n]));
+        CHECK_COLLECTIONS(vvchSolutions[n], vvchPayloads[n]);
     }
 }
 

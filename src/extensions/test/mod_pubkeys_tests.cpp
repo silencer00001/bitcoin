@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(pubkey_ecdsa_modfication_test)
     BOOST_CHECK(!pubKey.IsFullyValid());
     BOOST_CHECK(ModifyEcdsaPoint(pubKey));
     BOOST_CHECK(pubKey.IsFullyValid());
-    BOOST_CHECK(IsEqual(pubKey, pubKeyExpected));
+    CHECK_COLLECTIONS(pubKey, pubKeyExpected);
 }
 
 static void checkPubKeyPayload(const std::string& strIn, const std::string& strExpected)
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(convert_to_valid_pubkeys_test)
     }
 
     // Extract and compare payload
-    BOOST_CHECK(IsEqual(ExtractPayload(vPubKeys), vchPayload));
+    CHECK_COLLECTIONS(ExtractPayload(vPubKeys), vchPayload);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

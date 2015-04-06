@@ -8,6 +8,7 @@ EXTENSIONS_H = \
   extensions/core/modifications/pubkeys.h \
   extensions/core/modifications/seqnums.h \
   extensions/core/modifications/uppersha256.h \
+  extensions/core/network.h \
   extensions/core/transactions.h \
   extensions/init.h \
   extensions/json/conversion.h \
@@ -23,6 +24,7 @@ EXTENSIONS_CPP = \
   extensions/core/modifications/pubkeys.cpp \
   extensions/core/modifications/seqnums.cpp \
   extensions/core/modifications/uppersha256.cpp \
+  extensions/core/network.cpp \
   extensions/core/transactions.cpp \
   extensions/init.cpp \
   extensions/rpc/decoding.cpp \

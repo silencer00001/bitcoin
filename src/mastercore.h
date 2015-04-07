@@ -58,6 +58,14 @@ int const MAX_STATE_HISTORY = 50;
 #define FORMAT_BOOST_TXINDEXKEY "index-tx-%s"
 #define FORMAT_BOOST_SPKEY      "sp-%d"
 
+// Omni Layer Transaction Class
+#define OMNI_CLASS_A 1
+#define OMNI_CLASS_B 2
+#define OMNI_CLASS_C 3
+
+// Maximum number of keys supported in Class B
+#define CLASS_B_MAX_SENDABLE_PACKETS 2
+
 // Master Protocol Transaction (Packet) Version
 #define MP_TX_PKT_V0  0
 #define MP_TX_PKT_V1  1
@@ -67,6 +75,7 @@ int const MAX_STATE_HISTORY = 50;
 
 #define MAX_SHA256_OBFUSCATION_TIMES  255
 
+#define MIN_PAYLOAD_SIZE     8
 #define PACKET_SIZE_CLASS_A 19
 #define PACKET_SIZE         31
 #define MAX_PACKETS         64
@@ -120,6 +129,7 @@ enum BLOCKHEIGHTRESTRICTIONS {
   MSC_BET_BLOCK     = 999999,
   MSC_MANUALSP_BLOCK= 323230,
   P2SH_BLOCK        = 322000,
+  OP_RETURN_BLOCK   = 999999
 };
 
 enum FILETYPES {
@@ -208,7 +218,7 @@ const std::string ExodusAddress();
 extern int msc_debug_ui;
 
 extern CCriticalSection cs_tally;
-
+extern bool autoCommit;
 extern const int msc_debug_dex;
 
 enum TallyType { BALANCE = 0, SELLOFFER_RESERVE = 1, ACCEPT_RESERVE = 2, PENDING = 3, METADEX_RESERVE = 4, TALLY_TYPE_COUNT };
@@ -511,11 +521,15 @@ extern uint64_t global_balance_reserved_maineco[100000];
 extern uint64_t global_balance_money_testeco[100000];
 extern uint64_t global_balance_reserved_testeco[100000];
 
+extern std::string exodus_address;
+
 int mastercore_init(void);
 
 int64_t getMPbalance(const string &Address, unsigned int property, TallyType ttype);
 int64_t getUserAvailableMPbalance(const string &Address, unsigned int property);
 bool IsMyAddress(const std::string &address);
+bool isRangeOK(const uint64_t input);
+int pendingAdd(const uint256 &txid, const string &FromAddress, unsigned int propId, int64_t Amount, int64_t type, const string &txDesc);
 
 string getLabel(const string &address);
 
@@ -547,10 +561,8 @@ bool isCrowdsalePurchase(uint256 txid, string address, int64_t *propertyId = NUL
 bool isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound);
 std::string FormatIndivisibleMP(int64_t n);
 
-int ClassB_send(const string &senderAddress, const string &receiverAddress, const string &redemptionAddress, const std::vector<unsigned char> &data, uint256 & txid, int64_t additional = 0);
-
-uint256 send_INTERNAL_1packet(const string &FromAddress, const string &ToAddress, const string &RedeemAddress, unsigned int PropertyID, uint64_t Amount,
- unsigned int PropertyID_2, uint64_t Amount_2, unsigned int TransactionType, int64_t additional, int *error_code = NULL);
+int ClassAgnosticWalletTXBuilder(const string &senderAddress, const string &receiverAddress, const string &redemptionAddress,
+                 int64_t referenceAmount, const std::vector<unsigned char> &data, uint256 & txid, string &rawHex, bool commit);
 
 bool isTestEcosystemProperty(unsigned int property);
 bool isMainEcosystemProperty(unsigned int property);

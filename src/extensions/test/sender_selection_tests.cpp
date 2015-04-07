@@ -17,11 +17,13 @@ static const unsigned nOutputs = 256;
 static const unsigned nAllRounds = 2;
 static const unsigned nShuffleRounds = 64;
 
+/** Helper to create a CTxOut object. */
 static CTxOut createTxOut(int64_t amount, const std::string& dest)
 {
     return CTxOut(amount, GetScriptForDestination(CBitcoinAddress(dest).Get()));
 }
 
+/** Helper to create a CKeyID object with random value.*/
 static CKeyID createRandomKeyId()
 {
     std::vector<unsigned char> vch;
@@ -32,6 +34,7 @@ static CKeyID createRandomKeyId()
     return CKeyID(uint160(vch));
 }
 
+/** Helper to create a CScriptID object with random value.*/
 static CScriptID createRandomScriptId()
 {
     std::vector<unsigned char> vch;
@@ -39,9 +42,15 @@ static CScriptID createRandomScriptId()
     for (int i = 0; i < 20; ++i) {
         vch.push_back(static_cast<unsigned char>(std::rand() % 256));
     }
-    return CKeyID(uint160(vch));
+    return CScriptID(uint160(vch));
 }
 
+/**
+ * Identifies the sender of a transaction, based on the list of provided transaction
+ * outputs, and then shuffles the list n times, while checking, if this produces the
+ * same result. The "contribution by sum" sender selection doesn't require specific
+ * positions or order of outputs, and should work in all cases.
+ */
 void shuffleAndCheck(std::vector<CTxOut>& vouts, unsigned nRounds)
 {
     std::string strSenderFirst;
@@ -56,50 +65,10 @@ void shuffleAndCheck(std::vector<CTxOut>& vouts, unsigned nRounds)
     }
 }
 
-BOOST_AUTO_TEST_CASE(sender_selection_same_amount_test)
-{
-    for (unsigned i = 0; i < nAllRounds; ++i) {
-        std::vector<CTxOut> vouts;
-        for (unsigned n = 0; n < nOutputs; ++n) {
-            CTxOut output(static_cast<int64_t>(1000),
-                    GetScriptForDestination(createRandomKeyId()));
-            vouts.push_back(output);
-        }
-        shuffleAndCheck(vouts, nShuffleRounds);
-    }
-}
-
-BOOST_AUTO_TEST_CASE(sender_selection_increasing_amount_test)
-{
-    for (unsigned i = 0; i < nAllRounds; ++i) {
-        std::vector<CTxOut> vouts;
-        for (unsigned n = 0; n < nOutputs; ++n) {
-            CTxOut output(static_cast<int64_t>(1000 + n),
-                    GetScriptForDestination(createRandomKeyId()));
-            vouts.push_back(output);
-        }
-        shuffleAndCheck(vouts, nShuffleRounds);
-    }
-}
-
-BOOST_AUTO_TEST_CASE(sender_selection_mixed_test)
-{
-    for (unsigned i = 0; i < nAllRounds; ++i) {
-        std::vector<CTxOut> vouts;
-        for (unsigned n = 0; n < nOutputs; ++n) {
-            CScript scriptPubKey;
-            if (std::rand() % 2 == 0) {
-                scriptPubKey = GetScriptForDestination(createRandomKeyId());
-            } else {
-                scriptPubKey = GetScriptForDestination(createRandomScriptId());
-            };
-            int64_t nAmount = static_cast<int64_t>(1000 - n * (n % 2 == 0));
-            vouts.push_back(CTxOut(nAmount, scriptPubKey));
-        }
-        shuffleAndCheck(vouts, nShuffleRounds);
-    }
-}
-
+/**
+ * Tests sender selection "by sum" with pay-to-pubkey-hash outputs, where a single
+ * candidate has the highest output value.
+ */
 BOOST_AUTO_TEST_CASE(p2pkh_contribution_by_sum_test)
 {
     std::vector<CTxOut> vouts;
@@ -124,6 +93,10 @@ BOOST_AUTO_TEST_CASE(p2pkh_contribution_by_sum_test)
     }
 }
 
+/**
+ * Tests sender selection "by sum" with pay-to-pubkey-hash outputs, where a candidate
+ * with the highest output value by sum, with more than one output, is chosen.
+ */
 BOOST_AUTO_TEST_CASE(p2pkh_contribution_by_total_sum_test)
 {
     std::vector<CTxOut> vouts;
@@ -137,7 +110,7 @@ BOOST_AUTO_TEST_CASE(p2pkh_contribution_by_total_sum_test)
 
     std::string strExpected("1CE8bBr1dYZRMnpmyYsFEoexa1YoPz2mfB");
 
-    for (int i = 0; i < 1; ++i) {
+    for (int i = 0; i < 10; ++i) {
         std::random_shuffle(vouts.begin(), vouts.end(), GetRandInt);
 
         std::string strSender;
@@ -146,6 +119,13 @@ BOOST_AUTO_TEST_CASE(p2pkh_contribution_by_total_sum_test)
     }
 }
 
+/**
+ * Tests sender selection "by sum" with pay-to-pubkey-hash outputs, where all outputs
+ * have equal values, and a candidate is chosen based on the lexicographical order of
+ * the base58 string representation (!) of the candidate.
+ *
+ * Note: it reflects the behavior of Omni Core, but this edge case is not specified.
+ */
 BOOST_AUTO_TEST_CASE(p2pkh_contribution_by_sum_order_test)
 {
     std::vector<CTxOut> vouts;
@@ -170,6 +150,10 @@ BOOST_AUTO_TEST_CASE(p2pkh_contribution_by_sum_order_test)
     }
 }
 
+/**
+ * Tests sender selection "by sum" with pay-to-script-hash outputs, where a single
+ * candidate has the highest output value.
+ */
 BOOST_AUTO_TEST_CASE(p2sh_contribution_by_sum_test)
 {
     std::vector<CTxOut> vouts;
@@ -193,6 +177,11 @@ BOOST_AUTO_TEST_CASE(p2sh_contribution_by_sum_test)
     }
 }
 
+/**
+ * Tests sender selection "by sum" with pay-to-pubkey-hash and pay-to-script-hash 
+ * outputs mixed, where a candidate with the highest output value by sum, with more 
+ * than one output, is chosen.
+ */
 BOOST_AUTO_TEST_CASE(p2sh_contribution_by_total_sum_test)
 {
     std::vector<CTxOut> vouts;
@@ -207,7 +196,7 @@ BOOST_AUTO_TEST_CASE(p2sh_contribution_by_total_sum_test)
 
     std::string strExpected("3CD1QW6fjgTwKq3Pj97nty28WZAVkziNom");
 
-    for (int i = 0; i < 1; ++i) {
+    for (int i = 0; i < 10; ++i) {
         std::random_shuffle(vouts.begin(), vouts.end(), GetRandInt);
 
         std::string strSender;
@@ -216,6 +205,13 @@ BOOST_AUTO_TEST_CASE(p2sh_contribution_by_total_sum_test)
     }
 }
 
+/**
+ * Tests sender selection "by sum" with pay-to-script-hash outputs, where all outputs
+ * have equal values, and a candidate is chosen based on the lexicographical order of
+ * the base58 string representation (!) of the candidate.
+ *
+ * Note: it reflects the behavior of Omni Core, but this edge case is not specified.
+ */
 BOOST_AUTO_TEST_CASE(p2sh_contribution_by_sum_order_test)
 {
     std::vector<CTxOut> vouts;
@@ -240,16 +236,27 @@ BOOST_AUTO_TEST_CASE(p2sh_contribution_by_sum_order_test)
     }
 }
 
+/**
+ * Tests sender selection "by sum", where the lexicographical order of the base58 
+ * representation as string (instead of uint160) determines the chosen candidate.
+ *
+ * In practise this implies selecting the sender "by sum" via a comparison of 
+ * CBitcoinAddress objects would yield faulty results.
+ *
+ * Note: it reflects the behavior of Omni Core, but this edge case is not specified.
+ */
 BOOST_AUTO_TEST_CASE(sender_selection_string_based_test)
 {
-    // Omni Core currently processes everything as string!
-    // This has implications for the actual order.
     std::vector<CTxOut> vouts;
+    // Hash 160: 539a7a290034e0107f27cb36cb2d1095b1768d10
     vouts.push_back(createTxOut(1000, "18d49BjkbBCoK659fuktKjB3HugxK9NbpW")); // Winner
+    // Hash 160: 70161ebf72f894fbee554e88cf7889035899827f
     vouts.push_back(createTxOut(1000, "1BDfBRCA3WBuHYHcaAdy4vojgmWZQncc16"));
+    // Hash 160: b94b91c9e0423f6e5279de68989dda9032d67e87
     vouts.push_back(createTxOut(1000, "1HtkY9cvSBEQugk1R3XT5wjJZuyvSyzT8W"));
-    vouts.push_back(createTxOut(1000, "1aWp2ceCw95EVBwAv8HwX4Gofx9ksthjv"));  
-    
+    // Hash 160: 06569c8f59f428db748c94bf1d5d9f5f9d0db116
+    vouts.push_back(createTxOut(1000, "1aWp2ceCw95EVBwAv8HwX4Gofx9ksthjv"));  // Not!
+
     std::string strExpected("18d49BjkbBCoK659fuktKjB3HugxK9NbpW");
 
     for (int i = 0; i < 24; ++i) {
@@ -258,6 +265,63 @@ BOOST_AUTO_TEST_CASE(sender_selection_string_based_test)
         std::string strSender;
         BOOST_CHECK(GetSenderByContribution(vouts, strSender));
         BOOST_CHECK_EQUAL(strExpected, strSender);
+    }
+}
+
+/**
+ * Tests order independence of the sender selection "by sum" for pay-to-pubkey-hash
+ * outputs, where all output values are equal.
+ */
+BOOST_AUTO_TEST_CASE(sender_selection_same_amount_test)
+{
+    for (unsigned i = 0; i < nAllRounds; ++i) {
+        std::vector<CTxOut> vouts;
+        for (unsigned n = 0; n < nOutputs; ++n) {
+            CTxOut output(static_cast<int64_t>(1000),
+                    GetScriptForDestination(createRandomKeyId()));
+            vouts.push_back(output);
+        }
+        shuffleAndCheck(vouts, nShuffleRounds);
+    }
+}
+
+/**
+ * Tests order independence of the sender selection "by sum" for pay-to-pubkey-hash
+ * outputs, where output values are different for each output.
+ */
+BOOST_AUTO_TEST_CASE(sender_selection_increasing_amount_test)
+{
+    for (unsigned i = 0; i < nAllRounds; ++i) {
+        std::vector<CTxOut> vouts;
+        for (unsigned n = 0; n < nOutputs; ++n) {
+            CTxOut output(static_cast<int64_t>(1000 + n),
+                    GetScriptForDestination(createRandomKeyId()));
+            vouts.push_back(output);
+        }
+        shuffleAndCheck(vouts, nShuffleRounds);
+    }
+}
+
+/**
+ * Tests order independence of the sender selection "by sum" for pay-to-pubkey-hash
+ * and pay-to-script-hash outputs mixed together, where output values are equal for 
+ * every second output.
+ */
+BOOST_AUTO_TEST_CASE(sender_selection_mixed_test)
+{
+    for (unsigned i = 0; i < nAllRounds; ++i) {
+        std::vector<CTxOut> vouts;
+        for (unsigned n = 0; n < nOutputs; ++n) {
+            CScript scriptPubKey;
+            if (std::rand() % 2 == 0) {
+                scriptPubKey = GetScriptForDestination(createRandomKeyId());
+            } else {
+                scriptPubKey = GetScriptForDestination(createRandomScriptId());
+            };
+            int64_t nAmount = static_cast<int64_t>(1000 - n * (n % 2 == 0));
+            vouts.push_back(CTxOut(nAmount, scriptPubKey));
+        }
+        shuffleAndCheck(vouts, nShuffleRounds);
     }
 }
 

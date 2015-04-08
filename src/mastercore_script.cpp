@@ -37,7 +37,7 @@ bool GetScriptPushes(const CScript& scriptIn, std::vector<std::string>& vstrRet,
 /**
  * Return public keys or hashes from scriptPubKey, for 'standard' transaction types.
  */
-bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsigned char> >& vSolutionsRet)
+bool SafeSolver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsigned char> >& vSolutionsRet)
 {
     // Templates
     static multimap<txnouttype, CScript> mTemplates;
@@ -159,11 +159,11 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
     return false;
 }
 
-bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet)
+bool SafeExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet)
 {
     vector<valtype> vSolutions;
     txnouttype whichType;
-    if (!Solver(scriptPubKey, whichType, vSolutions))
+    if (!SafeSolver(scriptPubKey, whichType, vSolutions))
         return false;
 
     if (whichType == TX_PUBKEY)
@@ -189,12 +189,12 @@ bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet)
     return false;
 }
 
-bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, vector<CTxDestination>& addressRet, int& nRequiredRet)
+bool SafeExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, vector<CTxDestination>& addressRet, int& nRequiredRet)
 {
     addressRet.clear();
     typeRet = TX_NONSTANDARD;
     vector<valtype> vSolutions;
-    if (!Solver(scriptPubKey, typeRet, vSolutions))
+    if (!SafeSolver(scriptPubKey, typeRet, vSolutions))
         return false;
     if (typeRet == TX_NULL_DATA){
         // This is data, not addresses
@@ -221,7 +221,7 @@ bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, vecto
     {
         nRequiredRet = 1;
         CTxDestination address;
-        if (!ExtractDestination(scriptPubKey, address))
+        if (!SafeExtractDestination(scriptPubKey, address))
            return false;
         addressRet.push_back(address);
     }

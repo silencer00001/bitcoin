@@ -1085,7 +1085,7 @@ static bool getOutputType(const CScript& scriptPubKey, txnouttype& whichTypeRet)
 {
 vector<vector<unsigned char> > vSolutions;
 
-  if (!Solver(scriptPubKey, whichTypeRet, vSolutions)) return false;
+  if (!SafeSolver(scriptPubKey, whichTypeRet, vSolutions)) return false;
 
   return true;
 }
@@ -1178,7 +1178,7 @@ int parseTransaction(bool bRPConly, const CTransaction &wtx, int nBlock, unsigne
           CTxDestination dest;
           string strAddress;
           outAll += wtx.vout[i].nValue;
-          if (ExtractDestination(wtx.vout[i].scriptPubKey, dest)) {
+          if (SafeExtractDestination(wtx.vout[i].scriptPubKey, dest)) {
               strAddress = CBitcoinAddress(dest).ToString();
               if (exodus_address == strAddress) {
                   ExodusValues[marker_count++] = wtx.vout[i].nValue;
@@ -1213,7 +1213,7 @@ int parseTransaction(bool bRPConly, const CTransaction &wtx, int nBlock, unsigne
       bool validType = false;
       if (!getOutputType(wtx.vout[i].scriptPubKey, whichType)) validType=false;
       if (isAllowedOutputType(whichType, nBlock)) validType=true;
-      if (ExtractDestination(wtx.vout[i].scriptPubKey, dest)) {
+      if (SafeExtractDestination(wtx.vout[i].scriptPubKey, dest)) {
           strAddress = CBitcoinAddress(dest).ToString();
           if ((exodus_address != strAddress) && (validType)) {
               if (msc_debug_parser_data) file_log("saving address_data #%d: %s:%s\n", i, strAddress.c_str(), wtx.vout[i].scriptPubKey.ToString().c_str());
@@ -1233,7 +1233,7 @@ int parseTransaction(bool bRPConly, const CTransaction &wtx, int nBlock, unsigne
               txnouttype type;
               std::vector<CTxDestination> vDest;
               int nRequired;
-              if (ExtractDestinations(wtx.vout[i].scriptPubKey, type, vDest, nRequired)) ++fMultisig;
+              if (SafeExtractDestinations(wtx.vout[i].scriptPubKey, type, vDest, nRequired)) ++fMultisig;
           }
       }
   }
@@ -1258,7 +1258,7 @@ int parseTransaction(bool bRPConly, const CTransaction &wtx, int nBlock, unsigne
       CTxDestination source;
       txnouttype whichType;
       inAll += txPrev.vout[n].nValue;
-      if (ExtractDestination(txPrev.vout[n].scriptPubKey, source)) { // extract the destination of the previous transaction's vout[n] and check it's allowed type
+      if (SafeExtractDestination(txPrev.vout[n].scriptPubKey, source)) { // extract the destination of the previous transaction's vout[n] and check it's allowed type
           if (!getOutputType(txPrev.vout[n].scriptPubKey, whichType)) { ++inputs_errors; break; }
           if (!isAllowedOutputType(whichType, nBlock)) { ++inputs_errors; break; }
           CBitcoinAddress addressSource(source);
@@ -1296,12 +1296,12 @@ int parseTransaction(bool bRPConly, const CTransaction &wtx, int nBlock, unsigne
   // ### POPULATE MULTISIG SCRIPT DATA ###
   for (unsigned int i = 0; i < wtx.vout.size(); i++) {
       CTxDestination address;
-      if (ExtractDestination(wtx.vout[i].scriptPubKey, address)) {} else { // if true it's a plain pay-to-pubkeyhash output
+      if (SafeExtractDestination(wtx.vout[i].scriptPubKey, address)) {} else { // if true it's a plain pay-to-pubkeyhash output
           txnouttype type;
           std::vector<CTxDestination> vDest;
           int nRequired;
           if (msc_debug_script) file_log("scriptPubKey: %s\n", HexStr(wtx.vout[i].scriptPubKey));
-          if (ExtractDestinations(wtx.vout[i].scriptPubKey, type, vDest, nRequired)) {
+          if (SafeExtractDestinations(wtx.vout[i].scriptPubKey, type, vDest, nRequired)) {
               if (msc_debug_script) file_log(" >> multisig: ");
               BOOST_FOREACH(const CTxDestination &dest, vDest) {
                   CBitcoinAddress address = CBitcoinAddress(dest);
@@ -1407,7 +1407,7 @@ int parseTransaction(bool bRPConly, const CTransaction &wtx, int nBlock, unsigne
           int count = 0;
           for (unsigned int i = 0; i < wtx.vout.size(); i++) {
               CTxDestination dest;
-              if (ExtractDestination(wtx.vout[i].scriptPubKey, dest)) {
+              if (SafeExtractDestination(wtx.vout[i].scriptPubKey, dest)) {
                   const string strAddress = CBitcoinAddress(dest).ToString();
                   if (exodus_address == strAddress) continue;
                   file_log("payment #%d %s %11.8lf\n", count, strAddress.c_str(), (double)wtx.vout[i].nValue/(double)COIN);

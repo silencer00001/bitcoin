@@ -140,9 +140,7 @@ bool SafeSolver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<
             }
             else if (opcode2 == OP_SMALLDATA)
             {
-                // small pushdata, <= nMaxDatacarrierBytes
-                if (vch1.size() > nMaxDatacarrierBytes)
-                    break;
+                // No size limit enforced
             }
             else if (opcode1 != opcode2 || vch1 != vch2)
             {

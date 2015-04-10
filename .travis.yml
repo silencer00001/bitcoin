@@ -27,7 +27,7 @@ matrix:
     - compiler: ": ARM"
       env: HOST=arm-linux-gnueabihf PACKAGES="g++-arm-linux-gnueabihf" DEP_OPTS="NO_QT=1" GOAL="install" BITCOIN_CONFIG="--enable-glibc-back-compat"
     - compiler: ": bitcoind"
-      env: HOST=x86_64-unknown-linux-gnu PACKAGES="bc" DEP_OPTS="NO_QT=1 NO_UPNP=1 DEBUG=1" RUN_TESTS=true GOAL="install" BITCOIN_CONFIG="--enable-glibc-back-compat CPPFLAGS=-DDEBUG_LOCKORDER"
+      env: HOST=x86_64-unknown-linux-gnu PACKAGES="bc" DEP_OPTS="NO_QT=1 NO_UPNP=1 DEBUG=1" RUN_SPOCK_TESTS=true RUN_TESTS=true GOAL="install" BITCOIN_CONFIG="--enable-glibc-back-compat CPPFLAGS=-DDEBUG_LOCKORDER"
     - compiler: ": 64-bit"
       env: HOST=x86_64-unknown-linux-gnu RUN_TESTS=true GOAL="install" BITCOIN_CONFIG="--enable-glibc-back-compat"
     - compiler: ": 32-bit + dash"
@@ -62,5 +62,13 @@ script:
     - export LD_LIBRARY_PATH=$TRAVIS_BUILD_DIR/depends/$HOST/lib
     - if [ "$RUN_TESTS" = "true" ]; then make check; fi
     - if [ "$RUN_TESTS" = "true" ]; then qa/pull-tester/rpc-tests.sh; fi
+    - if [ "$RUN_SPOCK_TESTS" = "true" ]; then DATADIR=$OUTDIR/.bitcoin; fi
+    - if [ "$RUN_SPOCK_TESTS" = "true" ]; then mkdir -p $DATADIR; fi
+    - if [ "$RUN_SPOCK_TESTS" = "true" ]; then $OUTDIR/bin/bitcoind -datadir="$DATADIR" -server -daemon -rpcuser=bitcoinrpc -rpcpassword=pass -rpcallowip=127.0.0.1 -regtest -txindex -discover=0 -listen=0 -debug -logtimestamps; fi
+    - if [ "$RUN_SPOCK_TESTS" = "true" ]; then $OUTDIR/bin/bitcoin-cli -datadir="$DATADIR" -rpcuser=bitcoinrpc -rpcpassword=pass -regtest -rpcwait getinfo; fi
+    - if [ "$RUN_SPOCK_TESTS" = "true" ]; then git clone -b test-ignore-send-to-many https://github.com/dexX7/bitcoin-spock.git qa/bitcoin-spock; fi
+    - if [ "$RUN_SPOCK_TESTS" = "true" ]; then cd qa/bitcoin-spock; fi
+    - if [ "$RUN_SPOCK_TESTS" = "true" ]; then ./gradlew :omnij-rpc:regTest; fi
+    - if [ "$RUN_SPOCK_TESTS" = "true" ]; then $OUTDIR/bin/bitcoin-cli -datadir="$DATADIR" -rpcuser=bitcoinrpc -rpcpassword=pass -regtest -rpcwait stop; fi
 after_script:
     - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then (echo "Upload goes here. Something like: scp -r $BASE_OUTDIR server" || echo "upload failed"); fi

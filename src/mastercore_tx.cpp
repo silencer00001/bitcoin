@@ -7,6 +7,7 @@
 #include "mastercore_dex.h"
 #include "mastercore_log.h"
 #include "mastercore_sp.h"
+#include "omnicore_auditor.h"
 
 #include "alert.h"
 #include "amount.h"
@@ -637,6 +638,9 @@ int CMPTransaction::logicMath_GrantTokens()
     sp.update_block = chainActive[block]->GetBlockHash();
     _my_sps->updateSP(property, sp);
 
+    // notify the auditor that we've granted some tokens
+    if (auditorEnabled) Auditor_NotifyPropertyTotalChanged(OMNI_AUDITOR_INCREASE, property, nValue, "Grant (txid: " + txid.GetHex() + ")");
+
     return rc;
 }
 
@@ -682,6 +686,9 @@ int CMPTransaction::logicMath_RevokeTokens()
     sp.historicalData.insert(std::make_pair(txidStr, dataPt));
     sp.update_block = chainActive[block]->GetBlockHash();
     _my_sps->updateSP(property, sp);
+
+    // notify the auditor that we've revoked some tokens
+    if (auditorEnabled) Auditor_NotifyPropertyTotalChanged(OMNI_AUDITOR_DECREASE, property, nValue, "Revoke (txid: " + txid.GetHex() + ")");
 
     rc = 0;
     return rc;

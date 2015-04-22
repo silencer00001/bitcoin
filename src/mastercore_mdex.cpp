@@ -52,17 +52,17 @@ enum MatchReturnType
   CANCELLED,
 };
 
-const string getTradeReturnType(MatchReturnType ret)
+const std::string getTradeReturnType(MatchReturnType ret)
 {
   switch (ret)
   {
-    case NOTHING: return string("NOTHING");
-    case TRADED: return string("TRADED");
-    case TRADED_MOREINSELLER: return string("TRADED_MOREINSELLER");
-    case TRADED_MOREINBUYER: return string("TRADED_MOREINBUYER");
-    case ADDED: return string("ADDED");
-    case CANCELLED: return string("CANCELLED");
-    default: return string("* unknown *");
+    case NOTHING: return "NOTHING";
+    case TRADED: return "TRADED";
+    case TRADED_MOREINSELLER: return "TRADED_MOREINSELLER";
+    case TRADED_MOREINBUYER: return "TRADED_MOREINBUYER";
+    case ADDED: return "ADDED";
+    case CANCELLED: return "CANCELLED";
+    default: return "* unknown *";
   }
 }
 
@@ -86,7 +86,7 @@ bool operator>=(XDOUBLE first, XDOUBLE second)
   return ((first.str(INTERNAL_PRECISION_LEN, std::ios_base::fixed) > second.str(INTERNAL_PRECISION_LEN, std::ios_base::fixed)) || (first == second));
 }
 
-static void PriceCheck(const string &label, XDOUBLE left, XDOUBLE right)
+static void PriceCheck(const std::string& label, XDOUBLE left, XDOUBLE right)
 {
 const bool bOK = (left == right);
 
@@ -321,7 +321,7 @@ void mastercore::MetaDEx_debug_print(bool bShowPriceLevel, bool bDisplay)
   file_log(">>>\n");
 }
 
-void CMPMetaDEx::Set(const string &sa, int b, unsigned int c, uint64_t nValue, unsigned int cd, uint64_t ad, const uint256 &tx, unsigned int i, unsigned char suba)
+void CMPMetaDEx::Set(const std::string &sa, int b, unsigned int c, uint64_t nValue, unsigned int cd, uint64_t ad, const uint256 &tx, unsigned int i, unsigned char suba)
 {
   addr = sa;
   block = b;
@@ -628,7 +628,7 @@ XDOUBLE effective_price = 0;
 
 void CMPMetaDEx::saveOffer(std::ofstream &file, SHA256_CTX *shaCtx) const
 {
-    string lineOut = (boost::format("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d")
+    std::string lineOut = (boost::format("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d")
       % addr
       % block
       % amount_forsale

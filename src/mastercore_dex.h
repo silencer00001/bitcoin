@@ -4,8 +4,6 @@
 #include "mastercore.h"
 #include "mastercore_log.h"
 
-#include "mastercore_mdex.h" // TODO: remove me! just for compability
-
 #include "amount.h"
 #include "tinyformat.h"
 #include "uint256.h"

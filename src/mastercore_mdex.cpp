@@ -66,13 +66,17 @@ const std::string getTradeReturnType(MatchReturnType ret)
     }
 }
 
+static inline std::string xToString(XDOUBLE value)
+{
+    return value.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed);
+}
+
 static void PriceCheck(const std::string& label, XDOUBLE left, XDOUBLE right)
 {
     const bool bOK = (left == right);
 
     file_log("PRICE CHECK %s: buyer = %s , inserted = %s : %s\n", label,
-            left.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed),
-            right.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), bOK ? "good" : "PROBLEM!");
+        xToString(left), xToString(right), bOK ? "good" : "PROBLEM!");
 }
 
 // find the best match on the market
@@ -91,7 +95,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
     const XDOUBLE desprice = (1 / buyersprice); // inverse, to be matched against that of the existing older order
 
     if (msc_debug_metadex1) file_log("%s(%s: prop=%u, desprop=%u, desprice= %s);newo: %s\n",
-        __FUNCTION__, newo->getAddr(), prop, desprop, desprice.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), newo->ToString());
+        __FUNCTION__, newo->getAddr(), prop, desprop, xToString(desprice), newo->ToString());
 
     prices = get_Prices(desprop);
 
@@ -106,7 +110,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
         XDOUBLE sellers_price = (my_it->first);
 
         if (msc_debug_metadex2) file_log("comparing prices: desprice %s needs to be GREATER THAN OR EQUAL TO %s\n",
-            desprice.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), sellers_price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed));
+            xToString(desprice), xToString(sellers_price));
 
         // Is the desired price check satisfied? The buyer's inverse price must be larger than that of the seller.
         if (desprice < sellers_price) continue;
@@ -119,7 +123,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
             p_older = &(*iitt);
 
             if (msc_debug_metadex1) file_log("Looking at existing: %s (its prop= %u, its des prop= %u) = %s\n",
-                sellers_price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), p_older->getProperty(), p_older->getDesProperty(), p_older->ToString());
+                xToString(sellers_price), p_older->getProperty(), p_older->getDesProperty(), p_older->ToString());
 
             // is the desired property correct?
             if (p_older->getDesProperty() != prop) {
@@ -127,7 +131,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
                 continue;
             }
 
-            if (msc_debug_metadex1) file_log("MATCH FOUND, Trade: %s = %s\n", sellers_price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), p_older->ToString());
+            if (msc_debug_metadex1) file_log("MATCH FOUND, Trade: %s = %s\n", xToString(sellers_price), p_older->ToString());
 
             // All Matched ! Trade now.
             // p_older is the old order pointer
@@ -138,7 +142,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
             const int64_t buyer_amountOffered = newo->getAmountForSale();
 
             if (msc_debug_metadex1) file_log("$$ trading using price: %s; seller: forsale= %ld, wanted= %ld, buyer amount offered= %ld\n",
-                sellers_price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), seller_amountForSale, seller_amountWanted, buyer_amountOffered);
+                xToString(sellers_price), seller_amountForSale, seller_amountWanted, buyer_amountOffered);
             if (msc_debug_metadex1) file_log("$$ old: %s\n", p_older->ToString());
             if (msc_debug_metadex1) file_log("$$ new: %s\n", newo->ToString());
 
@@ -362,7 +366,7 @@ int mastercore::MetaDEx_ADD(const std::string& sender_addr, unsigned int prop, u
 
             PriceCheck("Insert", neworder_buyersprice, new_mdex.effectivePrice());
 
-            if (msc_debug_metadex1) file_log("==== INSERTED: %s= %s\n", neworder_buyersprice.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), new_mdex.ToString());
+            if (msc_debug_metadex1) file_log("==== INSERTED: %s= %s\n", xToString(neworder_buyersprice), new_mdex.ToString());
         }
 
         if (!p_prices) p_prices = &temp_prices;
@@ -509,10 +513,10 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
             XDOUBLE price = it->first;
             md_Set& indexes = it->second;
 
-            file_log("  # Price Level: %s\n", price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed));
+            file_log("  # Price Level: %s\n", xToString(price));
 
             for (md_Set::iterator it = indexes.begin(); it != indexes.end();) {
-                file_log("%s= %s\n", price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), it->ToString());
+                file_log("%s= %s\n", xToString(price), it->ToString());
 
                 if (it->getAddr() != sender_addr) {
                     ++it;
@@ -554,13 +558,13 @@ void mastercore::MetaDEx_debug_print(bool bShowPriceLevel, bool bDisplay)
             XDOUBLE price = (it->first);
             md_Set & indexes = (it->second);
 
-            if (bShowPriceLevel) file_log("  # Price Level: %s\n", price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed));
+            if (bShowPriceLevel) file_log("  # Price Level: %s\n", xToString(price));
 
             for (md_Set::iterator it = indexes.begin(); it != indexes.end(); ++it) {
                 CMPMetaDEx obj = *it;
 
-                if (bDisplay) PrintToConsole("%s= %s\n", price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), obj.ToString());
-                else file_log("%s= %s\n", price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), obj.ToString());
+                if (bDisplay) PrintToConsole("%s= %s\n", xToString(price), obj.ToString());
+                else file_log("%s= %s\n", xToString(price), obj.ToString());
 
                 // extra checks: price or either of the amounts is 0
                 //        assert((XDOUBLE)0 != obj.effectivePrice());

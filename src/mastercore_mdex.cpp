@@ -71,6 +71,15 @@ static inline std::string xToString(XDOUBLE value)
     return value.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed);
 }
 
+static inline int64_t xToInt64(XDOUBLE value, bool fRoundUp = true)
+{
+    if (fRoundUp) value += (XDOUBLE) 0.5; // ROUND UP
+    std::string str_value = value.str(INTERNAL_PRECISION_LEN, std::ios_base::fixed);
+    std::string str_value_int_part = str_value.substr(0, str_value.find_first_of("."));
+
+    return boost::lexical_cast<int64_t>(str_value_int_part);
+}
+
 static void PriceCheck(const std::string& label, XDOUBLE left, XDOUBLE right)
 {
     const bool bOK = (left == right);
@@ -156,10 +165,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
 
             ///////////////////////////
             XDOUBLE x_buyer_got = (XDOUBLE) seller_amountGot / sellers_price;
-            x_buyer_got += (XDOUBLE) 0.5; // ROUND UP
-            std::string str_buyer_got = x_buyer_got.str(INTERNAL_PRECISION_LEN, std::ios_base::fixed);
-            std::string str_buyer_got_int_part = str_buyer_got.substr(0, str_buyer_got.find_first_of("."));
-            const int64_t buyer_amountGot = boost::lexical_cast<int64_t>(str_buyer_got_int_part);
+            const int64_t buyer_amountGot = xToInt64(x_buyer_got);
 
             const int64_t seller_amountLeft = p_older->getAmountForSale() - buyer_amountGot;
 
@@ -167,15 +173,13 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
                 buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountStillForSale);
 
             XDOUBLE seller_amount_stilldesired = (XDOUBLE) seller_amountLeft * sellers_price;
-            seller_amount_stilldesired += (XDOUBLE) 0.5; // ROUND UP
-            std::string str_amount_stilldesired = seller_amount_stilldesired.str(INTERNAL_PRECISION_LEN, std::ios_base::fixed);
-            std::string str_stilldesired_int_part = str_amount_stilldesired.substr(0, str_amount_stilldesired.find_first_of("."));
+            const int64_t seller_amountStillDesired = xToInt64(seller_amount_stilldesired);
 
             ///////////////////////////
             CMPMetaDEx seller_replacement = *p_older;
 
             seller_replacement.setAmountForSale(seller_amountLeft, "seller_replacement");
-            seller_replacement.setAmountDesired(boost::lexical_cast<int64_t>(str_stilldesired_int_part), "seller_replacement");
+            seller_replacement.setAmountDesired(seller_amountStillDesired, "seller_replacement");
 
             // transfer the payment property from buyer to seller
             // TODO: do something when failing here............
@@ -197,12 +201,10 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
             NewReturn = TRADED;
 
             XDOUBLE will_pay = (XDOUBLE) buyer_amountStillForSale * newo->effectivePrice();
-            will_pay += (XDOUBLE) 0.5; // ROUND UP
-            std::string str_will_pay = will_pay.str(INTERNAL_PRECISION_LEN, std::ios_base::fixed);
-            std::string str_will_pay_int_part = str_will_pay.substr(0, str_will_pay.find_first_of("."));
+            const int64_t buyer_amountStillDesired = xToInt64(will_pay);
 
             newo->setAmountForSale(buyer_amountStillForSale, "buyer");
-            newo->setAmountDesired(boost::lexical_cast<int64_t>(str_will_pay_int_part), "buyer");
+            newo->setAmountDesired(buyer_amountStillDesired, "buyer");
 
             if (0 < buyer_amountStillForSale) {
                 NewReturn = TRADED_MOREINBUYER;

@@ -616,6 +616,16 @@ bool MetaDEx_compare::operator()(const CMPMetaDEx &lhs, const CMPMetaDEx &rhs) c
   else return lhs.getBlock() < rhs.getBlock();
 }
 
+XDOUBLE CMPMetaDEx::effectivePrice() const
+{
+XDOUBLE effective_price = 0;
+
+  // I am the seller
+  if (amount_forsale) effective_price = (XDOUBLE) amount_desired / (XDOUBLE) amount_forsale; // division by 0 check
+
+  return (effective_price);
+}
+
 void CMPMetaDEx::saveOffer(std::ofstream &file, SHA256_CTX *shaCtx) const
 {
     string lineOut = (boost::format("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d")

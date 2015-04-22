@@ -92,15 +92,7 @@ public:
 
   std::string ToString() const;
 
-  XDOUBLE effectivePrice() const
-  {
-  XDOUBLE effective_price = 0;
-
-    // I am the seller
-    if (amount_forsale) effective_price = (XDOUBLE) amount_desired / (XDOUBLE) amount_forsale; // division by 0 check
-
-    return (effective_price);
-  }
+  XDOUBLE effectivePrice() const;
 
   void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
 };

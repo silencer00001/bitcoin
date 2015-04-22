@@ -7,6 +7,7 @@
 
 #include "chain.h"
 #include "main.h"
+#include "tinyformat.h"
 #include "uint256.h"
 
 #include <boost/multiprecision/cpp_dec_float.hpp>
@@ -628,18 +629,18 @@ XDOUBLE effective_price = 0;
 
 void CMPMetaDEx::saveOffer(std::ofstream &file, SHA256_CTX *shaCtx) const
 {
-    std::string lineOut = (boost::format("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d")
-      % addr
-      % block
-      % amount_forsale
-      % property
-      % amount_desired
-      % desired_property
-      % (unsigned int) subaction
-      % idx
-      % txid.ToString()
-      % still_left_forsale
-      ).str();
+    std::string lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d",
+        addr,
+        block,
+        amount_forsale,
+        property,
+        amount_desired,
+        desired_property,
+        (unsigned int) subaction,
+        idx,
+        txid.ToString(),
+        still_left_forsale
+      );
 
     // add the line to the hash
     SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());

@@ -17,14 +17,8 @@
 #include <map>
 #include <set>
 #include <string>
-#include <utility>
 
-using std::ofstream;
-using std::string;
-
-using boost::multiprecision::cpp_dec_float_100;
-
-typedef cpp_dec_float_100 XDOUBLE;
+typedef boost::multiprecision::cpp_dec_float_100 XDOUBLE;
 
 #define DISPLAY_PRECISION_LEN  50
 #define INTERNAL_PRECISION_LEN 50
@@ -46,23 +40,23 @@ private:
 
 public:
   uint256 getHash() const { return txid; }
-  void setHash(uint256 hash) { txid = hash; }
+  void setHash(const uint256& hash) { txid = hash; }
 
   unsigned int getProperty() const { return property; }
 
   unsigned int getDesProperty() const { return desired_property; }
-  const string & getAddr() const { return addr; }
+  const std::string& getAddr() const { return addr; }
 
   uint64_t getAmountForSale() const { return amount_forsale; }
   int64_t getAmountDesired() const { return amount_desired; }
 
-  void setAmountForSale(int64_t ao, const string &label = "")
+  void setAmountForSale(int64_t ao, const std::string &label = "")
   {
     amount_forsale = ao;
     file_log("%s(%ld %s):%s\n", __FUNCTION__, ao, label, ToString());
   }
 
-  void setAmountDesired(int64_t ad, const string &label = "")
+  void setAmountDesired(int64_t ad, const std::string &label = "")
   {
     amount_desired = ad;
     file_log("%s(%ld %s):%s\n", __FUNCTION__, ad, label, ToString());
@@ -94,7 +88,7 @@ public:
   {
   }
 
-  void Set(const string &, int, unsigned int, uint64_t, unsigned int, uint64_t, const uint256 &, unsigned int, unsigned char);
+  void Set(const std::string&, int, unsigned int, uint64_t, unsigned int, uint64_t, const uint256&, unsigned int, unsigned char);
 
   std::string ToString() const;
 
@@ -108,17 +102,13 @@ public:
     return (effective_price);
   }
 
-  void saveOffer(ofstream &file, SHA256_CTX *shaCtx) const;
+  void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
 };
 
 namespace mastercore
 {
-typedef std::pair < uint64_t, uint64_t > MetaDExTypePrice; // the price split up into integer & fractional part for precision
-
-class MetaDEx_compare
+struct MetaDEx_compare
 {
-public:
-
   bool operator()(const CMPMetaDEx &lhs, const CMPMetaDEx &rhs) const;
 };
 

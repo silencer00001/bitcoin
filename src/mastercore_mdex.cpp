@@ -34,7 +34,7 @@ md_PricesMap* mastercore::get_Prices(unsigned int prop)
     return (md_PricesMap*) NULL;
 }
 
-md_Set* mastercore::get_Indexes(md_PricesMap *p, XDOUBLE price)
+md_Set* mastercore::get_Indexes(md_PricesMap* p, XDOUBLE price)
 {
     md_PricesMap::iterator it = p->find(price);
 
@@ -264,35 +264,14 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
     return NewReturn;
 }
 
-void mastercore::MetaDEx_debug_print(bool bShowPriceLevel, bool bDisplay)
+XDOUBLE CMPMetaDEx::effectivePrice() const
 {
-    file_log("<<<\n");
-    for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
-        unsigned int prop = my_it->first;
+    XDOUBLE effective_price = 0;
 
-        file_log(" ## property: %u\n", prop);
-        md_PricesMap & prices = my_it->second;
+    // I am the seller
+    if (amount_forsale) effective_price = (XDOUBLE) amount_desired / (XDOUBLE) amount_forsale; // division by 0 check
 
-        for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-            XDOUBLE price = (it->first);
-            md_Set & indexes = (it->second);
-
-            if (bShowPriceLevel) file_log("  # Price Level: %s\n", price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed));
-
-            for (md_Set::iterator it = indexes.begin(); it != indexes.end(); ++it) {
-                CMPMetaDEx obj = *it;
-
-                if (bDisplay) PrintToConsole("%s= %s\n", price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), obj.ToString());
-                else file_log("%s= %s\n", price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), obj.ToString());
-
-                // extra checks: price or either of the amounts is 0
-                //        assert((XDOUBLE)0 != obj.effectivePrice());
-                //        assert(obj.getAmountForSale());
-                //        assert(obj.getAmountDesired());
-            }
-        }
-    }
-    file_log(">>>\n");
+    return (effective_price);
 }
 
 void CMPMetaDEx::Set(const std::string& sa, int b, unsigned int c, uint64_t nValue, unsigned int cd, uint64_t ad, const uint256& tx, unsigned int i, unsigned char suba)
@@ -314,6 +293,34 @@ std::string CMPMetaDEx::ToString() const
         effectivePrice().str(DISPLAY_PRECISION_LEN, std::ios_base::fixed),
         addr.c_str(), block, idx, txid.ToString().substr(0, 10).c_str(),
         property, FormatMP(property, amount_forsale), desired_property, FormatMP(desired_property, amount_desired));
+}
+
+void CMPMetaDEx::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
+{
+    std::string lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d",
+        addr,
+        block,
+        amount_forsale,
+        property,
+        amount_desired,
+        desired_property,
+        (unsigned int) subaction,
+        idx,
+        txid.ToString(),
+        still_left_forsale
+    );
+
+    // add the line to the hash
+    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+
+    // write the line
+    file << lineOut << std::endl;
+}
+
+bool MetaDEx_compare::operator()(const CMPMetaDEx &lhs, const CMPMetaDEx &rhs) const
+{
+    if (lhs.getBlock() == rhs.getBlock()) return lhs.getIdx() < rhs.getIdx();
+    else return lhs.getBlock() < rhs.getBlock();
 }
 
 // pretty much directly linked to the ADD TX21 command off the wire
@@ -495,7 +502,9 @@ int mastercore::MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256& txid, unsigned int bl
     return rc;
 }
 
-// scan the orderbook and remove everything for an address
+/**
+ * Scans the orderbook and remove everything for an address.
+ */
 int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem)
 {
     int rc = METADEX_ERROR -40;
@@ -552,41 +561,33 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
     return rc;
 }
 
-bool MetaDEx_compare::operator()(const CMPMetaDEx &lhs, const CMPMetaDEx &rhs) const
+void mastercore::MetaDEx_debug_print(bool bShowPriceLevel, bool bDisplay)
 {
-    if (lhs.getBlock() == rhs.getBlock()) return lhs.getIdx() < rhs.getIdx();
-    else return lhs.getBlock() < rhs.getBlock();
+    file_log("<<<\n");
+    for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
+        unsigned int prop = my_it->first;
+
+        file_log(" ## property: %u\n", prop);
+        md_PricesMap & prices = my_it->second;
+
+        for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
+            XDOUBLE price = (it->first);
+            md_Set & indexes = (it->second);
+
+            if (bShowPriceLevel) file_log("  # Price Level: %s\n", price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed));
+
+            for (md_Set::iterator it = indexes.begin(); it != indexes.end(); ++it) {
+                CMPMetaDEx obj = *it;
+
+                if (bDisplay) PrintToConsole("%s= %s\n", price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), obj.ToString());
+                else file_log("%s= %s\n", price.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), obj.ToString());
+
+                // extra checks: price or either of the amounts is 0
+                //        assert((XDOUBLE)0 != obj.effectivePrice());
+                //        assert(obj.getAmountForSale());
+                //        assert(obj.getAmountDesired());
+            }
+        }
+    }
+    file_log(">>>\n");
 }
-
-XDOUBLE CMPMetaDEx::effectivePrice() const
-{
-    XDOUBLE effective_price = 0;
-
-    // I am the seller
-    if (amount_forsale) effective_price = (XDOUBLE) amount_desired / (XDOUBLE) amount_forsale; // division by 0 check
-
-    return (effective_price);
-}
-
-void CMPMetaDEx::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
-{
-    std::string lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d",
-        addr,
-        block,
-        amount_forsale,
-        property,
-        amount_desired,
-        desired_property,
-        (unsigned int) subaction,
-        idx,
-        txid.ToString(),
-        still_left_forsale
-    );
-
-    // add the line to the hash
-    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-
-    // write the line
-    file << lineOut << std::endl;
-}
-

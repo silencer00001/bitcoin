@@ -433,11 +433,14 @@ public:
   void insertDatabase(std::string txhash, std::vector<uint64_t> txdata ) { txFundraiserData.insert(std::make_pair<std::string, std::vector<uint64_t>& >(txhash,txdata)); }
   std::map<std::string, std::vector<uint64_t> > getDatabase() const { return txFundraiserData; }
 
-  void print(const std::string& address, FILE *fp = stdout) const
-  {
-    fprintf(fp, "%34s : id=%u=%X; prop=%u, value= %lu, deadline: %s (%lX)\n", address.c_str(), propertyId, propertyId,
-     property_desired, nValue, DateTimeStrFormat("%Y-%m-%d %H:%M:%S", deadline).c_str(), deadline);
-  }
+    void print(const std::string& address, FILE* fp = stdout) const
+    {
+        std::string str = strprintf(
+                "%34s : id=%d=%X; prop=%d, value= %d, deadline: %s (%X)\n",
+                address, propertyId, propertyId, property_desired, nValue,
+                DateTimeStrFormat("%Y-%m-%d %H:%M:%S", deadline), deadline);
+        fprintf(fp, str.c_str());
+    }
 
   void saveCrowdSale(std::ofstream &file, SHA256_CTX *shaCtx, std::string const &addr) const
   {

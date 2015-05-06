@@ -100,10 +100,9 @@ static void PriceCheck(const std::string& label, XDOUBLE left, XDOUBLE right)
 // NOTE: sometimes I refer to the older order as seller & the newer order as buyer, in this trade
 // INPUT: property, desprop, desprice = of the new order being inserted; the new object being processed
 // RETURN: 
-static MatchReturnType x_Trade(CMPMetaDEx* newo)
+static MatchReturnType x_Trade(CMPMetaDEx* const newo)
 {
-    const CMPMetaDEx* p_older = NULL;
-    md_PricesMap* prices = NULL;
+    assert(newo != NULL);
     const uint32_t prop = newo->getProperty();
     const uint32_t desprop = newo->getDesProperty();
     MatchReturnType NewReturn = NOTHING;
@@ -112,7 +111,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
     if (msc_debug_metadex1) file_log("%s(%s: prop=%u, desprop=%u, desprice= %s);newo: %s\n",
         __FUNCTION__, newo->getAddr(), prop, desprop, xToString(newo->inversePrice()), newo->ToString());
 
-    prices = get_Prices(desprop);
+    md_PricesMap* const prices = get_Prices(desprop);
 
     // nothing for the desired property exists in the market, sorry!
     if (!prices) {
@@ -122,7 +121,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
 
     // within the desired property map (given one property) iterate over the items looking at prices
     for (md_PricesMap::iterator my_it = prices->begin(); my_it != prices->end(); ++my_it) { // check all prices
-        XDOUBLE sellers_price = my_it->first;
+        const XDOUBLE sellers_price = my_it->first;
 
         if (msc_debug_metadex2) file_log("comparing prices: desprice %s needs to be GREATER THAN OR EQUAL TO %s\n",
             xToString(newo->inversePrice()), xToString(sellers_price));
@@ -130,12 +129,12 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
         // Is the desired price check satisfied? The buyer's inverse price must be larger than that of the seller.
         if (newo->inversePrice() < sellers_price) continue;
 
-        md_Set* indexes = &(my_it->second);
+        md_Set* const indexes = &(my_it->second);
 
         // at good (single) price level and property iterate over offers looking at all parameters to find the match
         md_Set::iterator iitt;
         for (iitt = indexes->begin(); iitt != indexes->end();) { // specific price, check all properties
-            p_older = &(*iitt);
+            const CMPMetaDEx* const p_older = &(*iitt);
             assert(p_older->unitPrice() == sellers_price);
 
             if (msc_debug_metadex1) file_log("Looking at existing: %s (its prop= %u, its des prop= %u) = %s\n",
@@ -194,7 +193,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
             if (msc_debug_metadex1) file_log("$$ buyer_got= %ld, seller_got= %ld, seller_left_for_sale= %ld, buyer_still_for_sale= %ld\n",
                 buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountStillForSale);
 
-            XDOUBLE xEffectivePrice = XDOUBLE(seller_amountGot) / XDOUBLE(buyer_amountGot);
+            const XDOUBLE xEffectivePrice = XDOUBLE(seller_amountGot) / XDOUBLE(buyer_amountGot);
 
             if (msc_debug_metadex1) {
                 file_log("seller    price: %s (unit)\n", xToString(p_older->unitPrice()));

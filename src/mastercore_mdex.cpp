@@ -75,11 +75,17 @@ static inline std::string xToString(XDOUBLE value)
 
 static inline int64_t xToInt64(XDOUBLE value, bool fRoundUp = true)
 {
-    if (fRoundUp) value += (XDOUBLE) 0.5; // ROUND UP
     std::string str_value = value.str(INTERNAL_PRECISION_LEN, std::ios_base::fixed);
     std::string str_value_int_part = str_value.substr(0, str_value.find_first_of("."));
+    int64_t value_int = boost::lexical_cast<int64_t>(str_value_int_part);
 
-    return boost::lexical_cast<int64_t>(str_value_int_part);
+    if (fRoundUp) { // < temporary, all this to be replaced by boost::rational 
+        if (value - value_int > 0) {
+            value_int++;
+        }
+    }
+
+    return value_int;
 }
 
 static void PriceCheck(const std::string& label, XDOUBLE left, XDOUBLE right)

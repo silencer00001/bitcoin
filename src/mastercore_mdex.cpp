@@ -131,7 +131,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
         if (newo->inversePrice() < sellers_price) continue;
 
         md_Set* indexes = &(my_it->second);
-        
+
         // at good (single) price level and property iterate over offers looking at all parameters to find the match
         md_Set::iterator iitt;
         for (iitt = indexes->begin(); iitt != indexes->end();) { // specific price, check all properties
@@ -146,6 +146,14 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
                 ++iitt;
                 continue;
             }
+
+            // ensure correct and sane order matching
+            assert(0 < p_older->getAmountRemaining());
+            assert(0 < newo->getAmountRemaining());
+            assert(p_older->getDesProperty() == newo->getProperty());
+            assert(newo->getDesProperty() == p_older->getProperty());
+            assert(p_older->unitPrice() <= newo->inversePrice());
+            assert(newo->unitPrice() <= p_older->inversePrice());
 
             if (msc_debug_metadex1) file_log("MATCH FOUND, Trade: %s = %s\n", xToString(sellers_price), p_older->ToString());
 
@@ -162,6 +170,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
             if (msc_debug_metadex1) file_log("$$ old: %s\n", p_older->ToString());
             if (msc_debug_metadex1) file_log("$$ new: %s\n", newo->ToString());
 
+            ///////////////////////////
             int64_t seller_amountGot = seller_amountWanted;
 
             if (buyer_amountOffered < seller_amountWanted) {
@@ -170,7 +179,6 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
 
             const int64_t buyer_amountStillForSale = buyer_amountOffered - seller_amountGot;
 
-            ///////////////////////////
             XDOUBLE x_buyer_got = (XDOUBLE) seller_amountGot / sellers_price;
             int64_t buyer_amountGot = xToInt64(x_buyer_got);
 
@@ -201,10 +209,15 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
                 ++iitt;
                 continue;
             }
-
             ///////////////////////////
-            CMPMetaDEx seller_replacement = *p_older;
-            seller_replacement.setAmountRemaining(seller_amountLeft, "seller_replacement");
+
+            // ensure correct and sane trade execution
+            assert(xEffectivePrice >= p_older->unitPrice());
+            assert(xEffectivePrice <= newo->inversePrice());
+            assert(0 <= seller_amountLeft);
+            assert(0 <= buyer_amountStillForSale);
+            assert(seller_amountForSale == seller_amountLeft + buyer_amountGot);
+            assert(buyer_amountOffered == buyer_amountStillForSale + seller_amountGot);
 
             // transfer the payment property from buyer to seller
             assert(update_tally_map(newo->getAddr(), newo->getProperty(), -seller_amountGot, BALANCE));
@@ -215,6 +228,9 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
             assert(update_tally_map(newo->getAddr(), newo->getDesProperty(), buyer_amountGot, BALANCE));
 
             NewReturn = TRADED;
+
+            CMPMetaDEx seller_replacement = *p_older;
+            seller_replacement.setAmountRemaining(seller_amountLeft, "seller_replacement");
 
             newo->setAmountRemaining(buyer_amountStillForSale, "buyer");
 

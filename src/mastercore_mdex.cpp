@@ -172,12 +172,35 @@ static MatchReturnType x_Trade(CMPMetaDEx* newo)
 
             ///////////////////////////
             XDOUBLE x_buyer_got = (XDOUBLE) seller_amountGot / sellers_price;
-            const int64_t buyer_amountGot = xToInt64(x_buyer_got);
+            int64_t buyer_amountGot = xToInt64(x_buyer_got);
+
+            if (buyer_amountGot > p_older->getAmountRemaining()) {
+                if (msc_debug_metadex1) file_log(
+                    "-- adjusting amounts to trade: buyer should get %d, but seller"
+                    "has only %d\n", buyer_amountGot, seller_amountForSale);
+                buyer_amountGot = p_older->getAmountRemaining();
+            }
 
             const int64_t seller_amountLeft = p_older->getAmountRemaining() - buyer_amountGot;
 
             if (msc_debug_metadex1) file_log("$$ buyer_got= %ld, seller_got= %ld, seller_left_for_sale= %ld, buyer_still_for_sale= %ld\n",
                 buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountStillForSale);
+
+            XDOUBLE xEffectivePrice = XDOUBLE(seller_amountGot) / XDOUBLE(buyer_amountGot);
+
+            if (msc_debug_metadex1) {
+                file_log("seller    price: %s (unit)\n", xToString(p_older->unitPrice()));
+                file_log("buyer     price: %s (inverse)\n", xToString(newo->inversePrice()));
+                file_log("effective price: %s (seller_got / buyer_got)\n", xToString(xEffectivePrice));
+            }
+
+            if (xEffectivePrice > newo->inversePrice()) {
+                if (msc_debug_metadex1) file_log(
+                    "-- stopping trade execution, because new price is more than "
+                    "the buyer is willing to buy for\n");
+                ++iitt;
+                continue;
+            }
 
             ///////////////////////////
             CMPMetaDEx seller_replacement = *p_older;

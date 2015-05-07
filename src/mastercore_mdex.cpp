@@ -118,7 +118,10 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             xToString(pnew->inversePrice()), xToString(sellers_price));
 
         // Is the desired price check satisfied? The buyer's inverse price must be larger than that of the seller.
-        if (pnew->inversePrice() < sellers_price) continue;
+        if (pnew->inversePrice() < sellers_price) {
+            file_log("SKIP: %s < %s\n", xToString(pnew->inversePrice()), xToString(sellers_price));
+            continue;
+        }
 
         md_Set* const indexes = &(my_it->second);
 
@@ -190,9 +193,9 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             const XDOUBLE xEffectivePrice = XDOUBLE(seller_amountGot) / XDOUBLE(buyer_amountGot);
 
             if (msc_debug_metadex1) {
-                file_log("seller    price: %s (unit)\n", xToString(pold->unitPrice()));
-                file_log("buyer     price: %s (inverse)\n", xToString(pnew->inversePrice()));
-                file_log("effective price: %s (seller_got / buyer_got)\n", xToString(xEffectivePrice));
+                file_log("seller    price: %s [%d / %d], left: %d (unit)\n", xToString(pold->unitPrice()), pold->getAmountDesiredOriginal(), pold->getAmountForSale(), pold->getAmountRemaining());
+                file_log("buyer     price: %s [%d / %d], left: %d (inverse)\n", xToString(pnew->inversePrice()), pnew->getAmountForSale(), pnew->getAmountDesiredOriginal(), pnew->getAmountRemaining());
+                file_log("effective price: %s [%d / %d] (seller_got / buyer_got)\n", xToString(xEffectivePrice), seller_amountGot, buyer_amountGot);
             }
 
             if (xEffectivePrice > pnew->inversePrice()) {
@@ -277,7 +280,7 @@ XDOUBLE CMPMetaDEx::unitPrice() const
 {
     XDOUBLE effective_price = 0;
     if (amount_forsale) effective_price = (XDOUBLE) amount_desired / (XDOUBLE) amount_forsale;
-    return (effective_price);
+    return effective_price;
 }
 
 XDOUBLE CMPMetaDEx::inversePrice() const

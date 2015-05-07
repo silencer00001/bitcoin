@@ -88,28 +88,19 @@ static inline int64_t xToInt64(XDOUBLE value, bool fRoundUp = true)
     return value_int;
 }
 
-static void PriceCheck(const std::string& label, XDOUBLE left, XDOUBLE right)
-{
-    const bool bOK = (left == right);
-
-    file_log("PRICE CHECK %s: buyer = %s , inserted = %s : %s\n", label,
-        xToString(left), xToString(right), bOK ? "good" : "PROBLEM!");
-}
-
 // find the best match on the market
 // NOTE: sometimes I refer to the older order as seller & the newer order as buyer, in this trade
 // INPUT: property, desprop, desprice = of the new order being inserted; the new object being processed
 // RETURN: 
-static MatchReturnType x_Trade(CMPMetaDEx* const newo)
+static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 {
-    assert(newo != NULL);
-    const uint32_t prop = newo->getProperty();
-    const uint32_t desprop = newo->getDesProperty();
+    const uint32_t prop = pnew->getProperty();
+    const uint32_t desprop = pnew->getDesProperty();
     MatchReturnType NewReturn = NOTHING;
     bool bBuyerSatisfied = false;
 
     if (msc_debug_metadex1) file_log("%s(%s: prop=%u, desprop=%u, desprice= %s);newo: %s\n",
-        __FUNCTION__, newo->getAddr(), prop, desprop, xToString(newo->inversePrice()), newo->ToString());
+        __FUNCTION__, pnew->getAddr(), prop, desprop, xToString(pnew->inversePrice()), pnew->ToString());
 
     md_PricesMap* const prices = get_Prices(desprop);
 
@@ -124,119 +115,123 @@ static MatchReturnType x_Trade(CMPMetaDEx* const newo)
         const XDOUBLE sellers_price = my_it->first;
 
         if (msc_debug_metadex2) file_log("comparing prices: desprice %s needs to be GREATER THAN OR EQUAL TO %s\n",
-            xToString(newo->inversePrice()), xToString(sellers_price));
+            xToString(pnew->inversePrice()), xToString(sellers_price));
 
         // Is the desired price check satisfied? The buyer's inverse price must be larger than that of the seller.
-        if (newo->inversePrice() < sellers_price) continue;
+        if (pnew->inversePrice() < sellers_price) continue;
 
         md_Set* const indexes = &(my_it->second);
 
         // at good (single) price level and property iterate over offers looking at all parameters to find the match
         md_Set::iterator iitt;
         for (iitt = indexes->begin(); iitt != indexes->end();) { // specific price, check all properties
-            const CMPMetaDEx* const p_older = &(*iitt);
-            assert(p_older->unitPrice() == sellers_price);
+            const CMPMetaDEx* const pold = &(*iitt);
+            assert(pold->unitPrice() == sellers_price);
 
             if (msc_debug_metadex1) file_log("Looking at existing: %s (its prop= %u, its des prop= %u) = %s\n",
-                xToString(sellers_price), p_older->getProperty(), p_older->getDesProperty(), p_older->ToString());
+                xToString(sellers_price), pold->getProperty(), pold->getDesProperty(), pold->ToString());
 
             // is the desired property correct?
-            if (p_older->getDesProperty() != prop) {
+            if (pold->getDesProperty() != prop) {
                 ++iitt;
                 continue;
             }
 
-            // ensure correct and sane order matching
-            assert(0 < p_older->getAmountRemaining());
-            assert(0 < newo->getAmountRemaining());
-            assert(p_older->getDesProperty() == newo->getProperty());
-            assert(newo->getDesProperty() == p_older->getProperty());
-            assert(p_older->unitPrice() <= newo->inversePrice());
-            assert(newo->unitPrice() <= p_older->inversePrice());
-
-            if (msc_debug_metadex1) file_log("MATCH FOUND, Trade: %s = %s\n", xToString(sellers_price), p_older->ToString());
+            if (msc_debug_metadex1) file_log("MATCH FOUND, Trade: %s = %s\n", xToString(sellers_price), pold->ToString());
 
             // All Matched ! Trade now.
             // p_older is the old order pointer
             // newo is the new order pointer
             // the price in the older order is used
-            const int64_t seller_amountForSale = p_older->getAmountRemaining();
-            const int64_t seller_amountWanted = p_older->getAmountDesired();
-            const int64_t buyer_amountOffered = newo->getAmountRemaining();
+            const int64_t seller_amountForSale = pold->getAmountRemaining();
+            const int64_t seller_amountWanted = pold->getAmountDesired();
+            const int64_t buyer_amountOffered = pnew->getAmountRemaining();
 
             if (msc_debug_metadex1) file_log("$$ trading using price: %s; seller: forsale= %ld, wanted= %ld, buyer amount offered= %ld\n",
                 xToString(sellers_price), seller_amountForSale, seller_amountWanted, buyer_amountOffered);
-            if (msc_debug_metadex1) file_log("$$ old: %s\n", p_older->ToString());
-            if (msc_debug_metadex1) file_log("$$ new: %s\n", newo->ToString());
+            if (msc_debug_metadex1) file_log("$$ old: %s\n", pold->ToString());
+            if (msc_debug_metadex1) file_log("$$ new: %s\n", pnew->ToString());
 
             ///////////////////////////
+
+            // preconditions
+            assert(0 < pold->getAmountRemaining());
+            assert(0 < pnew->getAmountRemaining());
+            assert(pnew->getProperty() != pnew->getDesProperty());
+            assert(pnew->getProperty() == pold->getDesProperty());
+            assert(pold->getProperty() == pnew->getDesProperty());
+            assert(pold->unitPrice() <= pnew->inversePrice());
+            assert(pnew->unitPrice() <= pold->inversePrice());
+
+            ///////////////////////////
+
             int64_t seller_amountGot = seller_amountWanted;
 
             if (buyer_amountOffered < seller_amountWanted) {
                 seller_amountGot = buyer_amountOffered;
             }
 
-            const int64_t buyer_amountStillForSale = buyer_amountOffered - seller_amountGot;
-
             XDOUBLE x_buyer_got = (XDOUBLE) seller_amountGot / sellers_price;
             int64_t buyer_amountGot = xToInt64(x_buyer_got);
 
-            if (buyer_amountGot > p_older->getAmountRemaining()) {
+            if (buyer_amountGot > pold->getAmountRemaining()) {
                 if (msc_debug_metadex1) file_log(
                     "-- adjusting amounts to trade: buyer should get %d, but seller"
                     "has only %d\n", buyer_amountGot, seller_amountForSale);
-                buyer_amountGot = p_older->getAmountRemaining();
+                buyer_amountGot = pold->getAmountRemaining();
             }
 
-            const int64_t seller_amountLeft = p_older->getAmountRemaining() - buyer_amountGot;
+            const int64_t buyer_amountStillForSale = buyer_amountOffered - seller_amountGot;
+            const int64_t seller_amountLeft = pold->getAmountRemaining() - buyer_amountGot;
 
-            if (msc_debug_metadex1) file_log("$$ buyer_got= %ld, seller_got= %ld, seller_left_for_sale= %ld, buyer_still_for_sale= %ld\n",
+            if (msc_debug_metadex1) file_log("$$ buyer_got= %d, seller_got= %d, seller_left_for_sale= %d, buyer_still_for_sale= %d\n",
                 buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountStillForSale);
 
             const XDOUBLE xEffectivePrice = XDOUBLE(seller_amountGot) / XDOUBLE(buyer_amountGot);
 
             if (msc_debug_metadex1) {
-                file_log("seller    price: %s (unit)\n", xToString(p_older->unitPrice()));
-                file_log("buyer     price: %s (inverse)\n", xToString(newo->inversePrice()));
+                file_log("seller    price: %s (unit)\n", xToString(pold->unitPrice()));
+                file_log("buyer     price: %s (inverse)\n", xToString(pnew->inversePrice()));
                 file_log("effective price: %s (seller_got / buyer_got)\n", xToString(xEffectivePrice));
             }
 
-            if (xEffectivePrice > newo->inversePrice()) {
+            if (xEffectivePrice > pnew->inversePrice()) {
                 if (msc_debug_metadex1) file_log(
                     "-- stopping trade execution, because new price is more than "
-                    "the buyer is willing to buy for\n");
+                    "the buyer is willing to pay for\n");
                 ++iitt;
                 continue;
             }
+
             ///////////////////////////
 
-            // ensure correct and sane trade execution
-            assert(xEffectivePrice >= p_older->unitPrice());
-            assert(xEffectivePrice <= newo->inversePrice());
+            // postconditions
+            assert(xEffectivePrice >= pold->unitPrice());
+            assert(xEffectivePrice <= pnew->inversePrice());
             assert(0 <= seller_amountLeft);
             assert(0 <= buyer_amountStillForSale);
             assert(seller_amountForSale == seller_amountLeft + buyer_amountGot);
             assert(buyer_amountOffered == buyer_amountStillForSale + seller_amountGot);
 
+            ///////////////////////////
+
             // transfer the payment property from buyer to seller
-            assert(update_tally_map(newo->getAddr(), newo->getProperty(), -seller_amountGot, BALANCE));
-            assert(update_tally_map(p_older->getAddr(), p_older->getDesProperty(), seller_amountGot, BALANCE));
+            assert(update_tally_map(pnew->getAddr(), pnew->getProperty(), -seller_amountGot, BALANCE));
+            assert(update_tally_map(pold->getAddr(), pold->getDesProperty(), seller_amountGot, BALANCE));
 
             // transfer the market (the one being sold) property from seller to buyer
-            assert(update_tally_map(p_older->getAddr(), p_older->getProperty(), -buyer_amountGot, METADEX_RESERVE));
-            assert(update_tally_map(newo->getAddr(), newo->getDesProperty(), buyer_amountGot, BALANCE));
+            assert(update_tally_map(pold->getAddr(), pold->getProperty(), -buyer_amountGot, METADEX_RESERVE));
+            assert(update_tally_map(pnew->getAddr(), pnew->getDesProperty(), buyer_amountGot, BALANCE));
 
             NewReturn = TRADED;
 
-            CMPMetaDEx seller_replacement = *p_older;
+            CMPMetaDEx seller_replacement = *pold; // < can be moved into last if block
             seller_replacement.setAmountRemaining(seller_amountLeft, "seller_replacement");
 
-            newo->setAmountRemaining(buyer_amountStillForSale, "buyer");
+            pnew->setAmountRemaining(buyer_amountStillForSale, "buyer");
 
             if (0 < buyer_amountStillForSale) {
                 NewReturn = TRADED_MOREINBUYER;
-
-                PriceCheck(getTradeReturnType(NewReturn), newo->unitPrice(), newo->unitPrice());
             } else {
                 bBuyerSatisfied = true;
             }
@@ -245,27 +240,28 @@ static MatchReturnType x_Trade(CMPMetaDEx* const newo)
             {
                 NewReturn = TRADED_MOREINSELLER;
                 bBuyerSatisfied = true;
-
-                PriceCheck(getTradeReturnType(NewReturn), p_older->unitPrice(), seller_replacement.unitPrice());
             }
 
             if (msc_debug_metadex1) file_log("==== TRADED !!! %u=%s\n", NewReturn, getTradeReturnType(NewReturn));
 
             // record the trade in MPTradeList
-            t_tradelistdb->recordTrade(p_older->getHash(), newo->getHash(),
-                p_older->getAddr(), newo->getAddr(), p_older->getDesProperty(), newo->getDesProperty(), seller_amountGot, buyer_amountGot, newo->getBlock());
+            t_tradelistdb->recordTrade(pold->getHash(), pnew->getHash(), // < might just pass pold, pnew
+                pold->getAddr(), pnew->getAddr(), pold->getDesProperty(), pnew->getDesProperty(), seller_amountGot, buyer_amountGot, pnew->getBlock());
 
             if (msc_debug_metadex1) file_log("++ erased old: %s\n", iitt->ToString());
             // erase the old seller element
             indexes->erase(iitt++);
 
             if (bBuyerSatisfied) {
+                assert(buyer_amountStillForSale == 0);
                 // insert the updated one in place of the old
                 if (0 < seller_replacement.getAmountRemaining()) {
                     file_log("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
                     indexes->insert(seller_replacement);
                 }
                 break;
+            } else {
+                assert(seller_amountLeft == 0);
             }
         } // specific price, check all properties
 
@@ -280,10 +276,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* const newo)
 XDOUBLE CMPMetaDEx::unitPrice() const
 {
     XDOUBLE effective_price = 0;
-
-    // I am the seller
-    if (amount_forsale) effective_price = (XDOUBLE) amount_desired / (XDOUBLE) amount_forsale; // division by 0 check
-
+    if (amount_forsale) effective_price = (XDOUBLE) amount_desired / (XDOUBLE) amount_forsale;
     return (effective_price);
 }
 
@@ -297,7 +290,6 @@ XDOUBLE CMPMetaDEx::inversePrice() const
 int64_t CMPMetaDEx::getAmountDesired() const
 {
     XDOUBLE xStillDesired = (XDOUBLE) getAmountRemaining() * unitPrice();
-
     return xToInt64(xStillDesired);
 }
 

@@ -172,7 +172,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             }
 
             XDOUBLE x_buyer_got = (XDOUBLE) seller_amountGot / sellers_price;
-            int64_t buyer_amountGot = xToInt64(x_buyer_got);
+            int64_t buyer_amountGot = xToInt64(x_buyer_got, false);
 
             if (buyer_amountGot > pold->getAmountRemaining()) {
                 if (msc_debug_metadex1) file_log(
@@ -290,7 +290,7 @@ XDOUBLE CMPMetaDEx::inversePrice() const
 int64_t CMPMetaDEx::getAmountDesired() const
 {
     XDOUBLE xStillDesired = (XDOUBLE) getAmountRemaining() * unitPrice();
-    return xToInt64(xStillDesired);
+    return xToInt64(xStillDesired, true);
 }
 
 uint64_t CMPMetaDEx::getBlockTime() const

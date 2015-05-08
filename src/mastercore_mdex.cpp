@@ -221,12 +221,9 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             ///////////////////////////
 
-            bool fTooExpensive = false;
-
             // First determine how many representable (indivisible) tokens I can
             // purchase from Bob (using Bob's unit price)
-            rational_t rCouldBuy = rational_t(pnew->getAmountRemaining()) * pold->inversePrice();
-            file_log("rCouldBuy: %s [%s / %s]\n", xToString(rCouldBuy), xToString(rCouldBuy.numerator()), xToString(rCouldBuy.denominator()));
+            rational_t rCouldBuy = pnew->getAmountRemaining() * pold->inversePrice();
 
             // This implies rounding down, since rounding up is impossible (would
             // require more money than I have)
@@ -238,32 +235,22 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             } else {
                 nCouldBuy = pold->getAmountRemaining();
             }
-            file_log("nCouldBuy: %d\n", nCouldBuy);
 
             // If the amount I would have to pay to buy Bob's tokens at his price
             // is fractional, always round UP the amount I have to pay
-            rational_t rWouldPay = rational_t(nCouldBuy) * pold->unitPrice();
-            file_log("rWouldPay: %s\n", xToString(rWouldPay));
+            rational_t rWouldPay = nCouldBuy * pold->unitPrice();
 
             // This will always be better for Bob. Rounding in the other direction
             // will always be impossible (would violate Bob's required price)
             int64_t nWouldPay = xToInt64(rWouldPay, true);
-            file_log("nWouldPay: %d\n", nWouldPay);
 
             // If the resulting adjusted unit price is higher than my price, the
             // orders did not really match (no representable fill can be made)
             rational_t xResultingPrice(nWouldPay, nCouldBuy);
-            file_log("xResultingPrice: %s\n", xToString(xResultingPrice));
 
             if (xResultingPrice > pnew->inversePrice()) {
-                fTooExpensive = true;
-                if (msc_debug_metadex1) file_log(
-                    "-- stopping trade execution, because new price is now "
-                    "too expensive\n");
                 ++iitt;
                 continue;
-            } else {
-                file_log("SUCCESS !\n");
             }
 
             const int64_t buyer_amountGot = nCouldBuy;
@@ -332,7 +319,6 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
                 continue;
             }
 */
-            assert(!fTooExpensive);
 
             ///////////////////////////
 

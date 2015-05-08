@@ -238,15 +238,15 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
                     "has only %d\n", buyer_amountGot, seller_amountForSale);
                 buyer_amountGot = pold->getAmountRemaining();
             }
-/*
+
             if (buyer_amountGot == 0) {
                 if (msc_debug_metadex1) file_log(
-                    "-- stopping trade execution, because buyer has not enough tokens "
-                    "to satisfy the offer\n");
+                    "-- stopping trade execution, because buyer has not even enough "
+                    "tokens to purchase 1 unit\n");
                 ++iitt;
                 continue;
             }
-*/
+
             const int64_t buyer_amountStillForSale = buyer_amountOffered - seller_amountGot;
             const int64_t seller_amountLeft = pold->getAmountRemaining() - buyer_amountGot;
 
@@ -269,15 +269,17 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
                 ++iitt;
                 continue;
             }
-/*
+
             if (xEffectivePrice < pold->unitPrice()) {
+                assert(false); // < trap! should not be reached!
+
                 if (msc_debug_metadex1) file_log(
                     "-- stopping trade execution, because new price is more than "
                     "the seller is willing to pay for\n");
                 ++iitt;
                 continue;
             }
-*/
+
             ///////////////////////////
 
             ShowPostconditions(
@@ -357,30 +359,40 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 rational_t CMPMetaDEx::unitPrice() const
 {
     // XDOUBLE effective_price = 0;
-    rational_t effective_price = 0;
+    // rational_t effective_price = 0;
     // if (amount_forsale) effective_price = (XDOUBLE) amount_desired / (XDOUBLE) amount_forsale;
-    if (amount_forsale) effective_price = rational_t(amount_desired, amount_forsale);
-    return effective_price;
+
+    // rational_t effective_price(int128_t(0));
+    // if (amount_forsale) effective_price = rational_t(amount_desired, amount_forsale);
+    // return effective_price;
+
+    assert(amount_forsale > 0);
+    return rational_t(amount_desired, amount_forsale);
 }
 
 rational_t CMPMetaDEx::inversePrice() const
 {
     // XDOUBLE inverse_price = 0;
-    rational_t inverse_price = 0;
+    // rational_t inverse_price = 0;
     // if (amount_desired) inverse_price = (XDOUBLE) amount_forsale / (XDOUBLE) amount_desired;
-    if (amount_desired) inverse_price = rational_t(amount_forsale, amount_desired);
-    return inverse_price;
+
+    // rational_t inverse_price(int128_t(0));
+    // if (amount_desired) inverse_price = rational_t(amount_forsale, amount_desired);
+    // return inverse_price;
+
+    assert(amount_desired > 0);
+    return rational_t(amount_forsale, amount_desired);
 }
 
 int64_t CMPMetaDEx::getAmountDesired() const
 {
     // XDOUBLE xStillDesired = (XDOUBLE) getAmountRemaining() * unitPrice();
-    rational_t xStillDesired(getAmountRemaining());
-    xStillDesired *= unitPrice();
+    rational_t xStillDesired = getAmountRemaining() * unitPrice();
 
     file_log("getAmountDesired(): getAmountRemaining() * unitPrice()\n");
     file_log("getAmountDesired(): -> %d * %s\n", getAmountRemaining(), xToString(unitPrice()));
     file_log("getAmountDesired(): -> %s\n", xToString(xStillDesired));
+
     return xToInt64(xStillDesired, true);
 }
 

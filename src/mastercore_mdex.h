@@ -5,6 +5,7 @@
 
 #include "uint256.h"
 
+#include <boost/lexical_cast.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/rational.hpp>
@@ -21,7 +22,7 @@
 using boost::multiprecision::int128_t;
 
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
-typedef boost::rational<int64_t> rational_t;
+typedef boost::rational<int128_t> rational_t;
 
 #define DISPLAY_PRECISION_LEN  50
 #define INTERNAL_PRECISION_LEN 50
@@ -46,24 +47,53 @@ inline int64_t xToInt64(const dec_float& value, bool fRoundUp = true)
     return value_int;
 }
 
+inline std::string xToString(const int128_t& value)
+{
+    if (value <= INT64_MAX) {
+        return strprintf("%d", value.convert_to<int64_t>());
+    } else {
+        return strprintf("%s [OVERFLOW!]", boost::lexical_cast<std::string>(value));
+    }
+}
+
 inline std::string xToString(const rational_t& value)
 {
-    dec_float x = dec_float(value.numerator()) / dec_float(value.denominator());
+    /*
+    dec_float x = dec_float(num) / dec_float(denom);
     return xToString(x);
+    */
+    if (value.numerator() <= INT64_MAX && value.denominator() <= INT64_MAX) {
+        int64_t num = value.numerator().convert_to<int64_t>();
+        int64_t denom = value.denominator().convert_to<int64_t>();
+        dec_float x = dec_float(num) / dec_float(denom);
+        return xToString(x);
+    } else {
+        file_log("OVERFLOW:\n%s\n", strprintf("%s / %s", boost::lexical_cast<std::string>(value.numerator()), boost::lexical_cast<std::string>(value.denominator())));
+        return strprintf("%s / %s", boost::lexical_cast<std::string>(value.numerator()), boost::lexical_cast<std::string>(value.denominator()));
+    }
 }
+
 
 inline int64_t xToInt64(const rational_t& value, bool fRoundUp = true)
 {
     // for integer rounding up: ceil(num / denom) => 1 + (num - 1) / denom
+    int128_t result(0);
+
     if (!fRoundUp) {
-        file_log("xToInt64(%s, false) -> %d / %d\n", xToString(value), value.numerator(), value.denominator());
-        file_log("xToInt64(%s, false) -> %d\n", xToString(value), (value.numerator() / value.denominator()));
-        return value.numerator() / value.denominator();
+        file_log("xToInt64(%s, false) -> %d / %d\n", xToString(value), xToString(value.numerator()), xToString(value.denominator()));
+        file_log("xToInt64(%s, false) -> %d\n", xToString(value), xToString(value.numerator() / value.denominator()));
+
+        result = value.numerator() / value.denominator();
     } else {
-        file_log("xToInt64(%s, true) -> 1 + (%d - 1) / %d\n", xToString(value), value.numerator(), value.denominator());
-        file_log("xToInt64(%s, true) -> %d\n", xToString(value), (1 + (value.numerator() - 1) / value.denominator()));
-        return 1 + (value.numerator() - 1) / value.denominator();
+        file_log("xToInt64(%s, true) -> 1 + (%d - 1) / %d\n", xToString(value), xToString(value.numerator()), xToString(value.denominator()));
+        file_log("xToInt64(%s, true) -> %d\n", xToString(value), xToString(1 + (value.numerator() - 1) / value.denominator()));
+
+        result = int128_t(1) + (value.numerator() - int128_t(1)) / value.denominator();
     }
+
+    assert(result <= INT64_MAX);
+
+    return result.convert_to<int64_t>();
 }
 
 /** A trade on the distributed exchange.

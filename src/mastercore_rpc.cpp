@@ -1334,7 +1334,8 @@ int populateRPCTransactionObject(const uint256& txid, Object *txobj, std::string
                                      mdex_action = temp_metadexoffer.getAction();
                                      // unit price display adjustment based on divisibility and always showing prices in MSC/TMSC
                                      // XDOUBLE tempUnitPrice = 0;
-                                     rational_t tempUnitPrice = 0;
+                                     // rational_t tempUnitPrice = 0;
+                                     rational_t tempUnitPrice(int128_t(0));
                                      if ((propertyId == OMNI_PROPERTY_MSC) || (propertyId == OMNI_PROPERTY_TMSC)) {
                                          tempUnitPrice = temp_metadexoffer.inversePrice();
                                          if (!mdex_propertyWanted_Div) tempUnitPrice = tempUnitPrice/COIN;

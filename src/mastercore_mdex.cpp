@@ -257,11 +257,27 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             if (xResultingPrice > pnew->inversePrice()) {
                 fTooExpensive = true;
-                file_log("TOO EXPENSIVE\n");
+                if (msc_debug_metadex1) file_log(
+                    "-- stopping trade execution, because new price is now "
+                    "too expensive\n");
+                ++iitt;
+                continue;
             } else {
                 file_log("SUCCESS !\n");
             }
 
+            const int64_t buyer_amountGot = nCouldBuy;
+            const int64_t seller_amountGot = nWouldPay;
+
+            const int64_t buyer_amountStillForSale = pnew->getAmountRemaining() - seller_amountGot;
+            const int64_t seller_amountLeft = pold->getAmountRemaining() - buyer_amountGot;
+
+            const rational_t xEffectivePrice = xResultingPrice;
+
+            if (msc_debug_metadex1) file_log("$$ buyer_got= %d, seller_got= %d, seller_left_for_sale= %d, buyer_still_for_sale= %d\n",
+                buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountStillForSale);
+
+/*
             file_log("------------------------------------------------------\n");
 
             ///////////////////////////////////////////////////////////////////////
@@ -315,7 +331,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
                 ++iitt;
                 continue;
             }
-
+*/
             assert(!fTooExpensive);
 
             ///////////////////////////
@@ -334,8 +350,8 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             assert(seller_amountForSale == seller_amountLeft + buyer_amountGot);
             assert(buyer_amountOffered == buyer_amountStillForSale + seller_amountGot);
 
-            assert(nCouldBuy == buyer_amountGot);
-            assert(nWouldPay == seller_amountGot);
+            // assert(nCouldBuy == buyer_amountGot);
+            // assert(nWouldPay == seller_amountGot);
 
             ///////////////////////////
 

@@ -69,6 +69,7 @@ const std::string getTradeReturnType(MatchReturnType ret)
     }
 }
 
+// TODO: remove it, it's only debug output
 static std::string toString(bool value)
 {
     if (value) {
@@ -78,6 +79,7 @@ static std::string toString(bool value)
     }
 }
 
+// TODO: remove it, it's only debug output
 static void ShowPreconditions(const CMPMetaDEx& pold, const CMPMetaDEx& pnew)
 {
     file_log("---------------------------\n");
@@ -107,13 +109,13 @@ static void ShowPreconditions(const CMPMetaDEx& pold, const CMPMetaDEx& pnew)
     file_log("---------------------------\n");
 }
 
+// TODO: remove it, it's only debug output
 static void ShowPostconditions(
         int64_t seller_amountLeft, int64_t buyer_amountLeft,
         int64_t seller_amountOffered, int64_t buyer_amountOffered,
         int64_t buyer_amountGot, int64_t seller_amountGot,
         rational_t xEffectivePrice,
         const CMPMetaDEx& pold, const CMPMetaDEx& pnew)
-
 {
     file_log("---------------------------\n");
 
@@ -195,9 +197,6 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             if (msc_debug_metadex1) file_log("MATCH FOUND, Trade: %s = %s\n", xToString(sellers_price), pold->ToString());
 
             // All Matched ! Trade now.
-            // p_older is the old order pointer
-            // newo is the new order pointer
-            // the price in the older order is used
             const int64_t seller_amountForSale = pold->getAmountRemaining();
             const int64_t seller_amountWanted = pold->getAmountDesired();
             const int64_t buyer_amountOffered = pnew->getAmountRemaining();
@@ -266,16 +265,6 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
                 if (msc_debug_metadex1) file_log(
                     "-- stopping trade execution, because new price is more than "
                     "the buyer is willing to pay for\n");
-                ++iitt;
-                continue;
-            }
-
-            if (xEffectivePrice < pold->unitPrice()) {
-                assert(false); // < trap! should not be reached!
-
-                if (msc_debug_metadex1) file_log(
-                    "-- stopping trade execution, because new price is more than "
-                    "the seller is willing to pay for\n");
                 ++iitt;
                 continue;
             }

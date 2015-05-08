@@ -225,9 +225,13 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             // purchase from Bob (using Bob's unit price)
             rational_t rCouldBuy = pnew->getAmountRemaining() * pold->inversePrice();
 
+            file_log("rCouldBuy: %s\n", xToString(rCouldBuy));
+
             // This implies rounding down, since rounding up is impossible (would
             // require more money than I have)
             int128_t iCouldBuy = xToInt128(rCouldBuy, false);
+
+            file_log("iCouldBuy: %s\n", xToString(iCouldBuy));
 
             int64_t nCouldBuy = 0;
             if (iCouldBuy < int128_t(pold->getAmountRemaining())) {
@@ -236,16 +240,29 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
                 nCouldBuy = pold->getAmountRemaining();
             }
 
+            file_log("nCouldBuy: %d\n", nCouldBuy);
+
+            if (nCouldBuy == 0) {
+                file_log("-- buyer has not enough for even one unit!\n");
+                ++iitt;
+                continue;
+            }
+
             // If the amount I would have to pay to buy Bob's tokens at his price
             // is fractional, always round UP the amount I have to pay
             rational_t rWouldPay = nCouldBuy * pold->unitPrice();
+
+            file_log("rWouldPay: %s\n", xToString(rWouldPay));
 
             // This will always be better for Bob. Rounding in the other direction
             // will always be impossible (would violate Bob's required price)
             int64_t nWouldPay = xToInt64(rWouldPay, true);
 
+            file_log("nWouldPay: %d\n", nWouldPay);
+
             // If the resulting adjusted unit price is higher than my price, the
             // orders did not really match (no representable fill can be made)
+            file_log("constructing price: %d / %d\n", nWouldPay, nCouldBuy);
             rational_t xResultingPrice(nWouldPay, nCouldBuy);
 
             if (xResultingPrice > pnew->inversePrice()) {
@@ -358,14 +375,14 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             if (0 < buyer_amountStillForSale) {
                 NewReturn = TRADED_MOREINBUYER;
-            } else {
+            }
+
+            if (0 == buyer_amountStillForSale) {
                 bBuyerSatisfied = true;
             }
 
-            if (0 < seller_amountLeft) // done with all loops, update the seller, buyer is fully satisfied
-            {
+            if (0 < seller_amountLeft) {
                 NewReturn = TRADED_MOREINSELLER;
-                bBuyerSatisfied = true;
             }
 
             if (msc_debug_metadex1) file_log("==== TRADED !!! %u=%s\n", NewReturn, getTradeReturnType(NewReturn));
@@ -378,16 +395,15 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             // erase the old seller element
             indexes->erase(iitt++);
 
+            // insert the updated one in place of the old
+            if (0 < seller_replacement.getAmountRemaining()) {
+                file_log("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
+                indexes->insert(seller_replacement);
+            }
+
             if (bBuyerSatisfied) {
                 assert(buyer_amountStillForSale == 0);
-                // insert the updated one in place of the old
-                if (0 < seller_replacement.getAmountRemaining()) {
-                    file_log("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
-                    indexes->insert(seller_replacement);
-                }
                 break;
-            } else {
-                assert(seller_amountLeft == 0);
             }
         } // specific price, check all properties
 

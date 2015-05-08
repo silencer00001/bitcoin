@@ -1,9 +1,13 @@
 #ifndef MASTERCORE_MDEX_H
 #define MASTERCORE_MDEX_H
 
+#include "mastercore_log.h"
+
 #include "uint256.h"
 
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/rational.hpp>
 
 #include <openssl/sha.h>
 
@@ -14,10 +18,53 @@
 #include <set>
 #include <string>
 
-typedef boost::multiprecision::cpp_dec_float_100 XDOUBLE;
+using boost::multiprecision::int128_t;
+
+typedef boost::multiprecision::cpp_dec_float_100 dec_float;
+typedef boost::rational<int64_t> rational_t;
 
 #define DISPLAY_PRECISION_LEN  50
 #define INTERNAL_PRECISION_LEN 50
+
+inline std::string xToString(const dec_float& value)
+{
+    return value.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed);
+}
+
+inline int64_t xToInt64(const dec_float& value, bool fRoundUp = true)
+{
+    std::string str_value = value.str(INTERNAL_PRECISION_LEN, std::ios_base::fixed);
+    std::string str_value_int_part = str_value.substr(0, str_value.find_first_of("."));
+    int64_t value_int = boost::lexical_cast<int64_t>(str_value_int_part);
+
+    if (fRoundUp) { // < temporary, all this to be replaced by boost::rational
+        if (value - value_int > 0) {
+            value_int++;
+        }
+    }
+
+    return value_int;
+}
+
+inline std::string xToString(const rational_t& value)
+{
+    dec_float x = dec_float(value.numerator()) / dec_float(value.denominator());
+    return xToString(x);
+}
+
+inline int64_t xToInt64(const rational_t& value, bool fRoundUp = true)
+{
+    // for integer rounding up: ceil(num / denom) => 1 + (num - 1) / denom
+    if (!fRoundUp) {
+        file_log("xToInt64(%s, false) -> %d / %d\n", xToString(value), value.numerator(), value.denominator());
+        file_log("xToInt64(%s, false) -> %d\n", xToString(value), (value.numerator() / value.denominator()));
+        return value.numerator() / value.denominator();
+    } else {
+        file_log("xToInt64(%s, true) -> 1 + (%d - 1) / %d\n", xToString(value), value.numerator(), value.denominator());
+        file_log("xToInt64(%s, true) -> %d\n", xToString(value), (1 + (value.numerator() - 1) / value.denominator()));
+        return 1 + (value.numerator() - 1) / value.denominator();
+    }
+}
 
 /** A trade on the distributed exchange.
  */
@@ -78,8 +125,8 @@ public:
 
     std::string ToString() const;
 
-    XDOUBLE unitPrice() const;
-    XDOUBLE inversePrice() const;
+    rational_t unitPrice() const;
+    rational_t inversePrice() const;
 
     void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
 };
@@ -95,7 +142,7 @@ struct MetaDEx_compare
 //! Set of objects sorted by block+idx
 typedef std::set<CMPMetaDEx, MetaDEx_compare> md_Set; 
 //! Map of prices; there is a set of sorted objects for each price
-typedef std::map<XDOUBLE, md_Set> md_PricesMap;
+typedef std::map<rational_t, md_Set> md_PricesMap;
 //! Map of properties; there is a map of prices for each property
 typedef std::map<uint32_t, md_PricesMap> md_PropertiesMap;
 
@@ -103,7 +150,7 @@ extern md_PropertiesMap metadex;
 
 // TODO: explore a property-pair, instead of a single property as map's key........
 md_PricesMap* get_Prices(uint32_t prop);
-md_Set* get_Indexes(md_PricesMap* p, XDOUBLE price);
+md_Set* get_Indexes(md_PricesMap* p, rational_t price);
 // ---------------
 
 int MetaDEx_ADD(const std::string& sender_addr, uint32_t, int64_t, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx);

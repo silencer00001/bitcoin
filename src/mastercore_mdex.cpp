@@ -12,6 +12,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include <boost/rational.hpp>
 
 #include <openssl/sha.h>
 
@@ -36,7 +37,7 @@ md_PricesMap* mastercore::get_Prices(uint32_t prop)
     return (md_PricesMap*) NULL;
 }
 
-md_Set* mastercore::get_Indexes(md_PricesMap* p, XDOUBLE price)
+md_Set* mastercore::get_Indexes(md_PricesMap* p, rational_t price)
 {
     md_PricesMap::iterator it = p->find(price);
 
@@ -68,24 +69,74 @@ const std::string getTradeReturnType(MatchReturnType ret)
     }
 }
 
-static inline std::string xToString(XDOUBLE value)
+static std::string toString(bool value)
 {
-    return value.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed);
+    if (value) {
+        return "TRUE";
+    } else {
+        return "FALSE";
+    }
 }
 
-static inline int64_t xToInt64(XDOUBLE value, bool fRoundUp = true)
+static void ShowPreconditions(const CMPMetaDEx& pold, const CMPMetaDEx& pnew)
 {
-    std::string str_value = value.str(INTERNAL_PRECISION_LEN, std::ios_base::fixed);
-    std::string str_value_int_part = str_value.substr(0, str_value.find_first_of("."));
-    int64_t value_int = boost::lexical_cast<int64_t>(str_value_int_part);
+    file_log("---------------------------\n");
 
-    if (fRoundUp) { // < temporary, all this to be replaced by boost::rational 
-        if (value - value_int > 0) {
-            value_int++;
-        }
-    }
+    bool f1 = 0 < pold.getAmountRemaining();
+    file_log("0 < old->remaining(): %s [0 < %d]\n", toString(f1), pold.getAmountRemaining());
 
-    return value_int;
+    bool f2 = 0 < pnew.getAmountRemaining();
+    file_log("0 < new->remaining(): %s [0 < %d]\n", toString(f2), pnew.getAmountRemaining());
+
+    bool f3 = pnew.getProperty() != pnew.getDesProperty();
+    file_log("new.property() != new.propertyDesired(): %s [%d != %d]\n", toString(f3), pnew.getProperty(), pnew.getDesProperty());
+
+    bool f4 = pnew.getProperty() == pold.getDesProperty();
+    file_log("new.property() == old.propertyDesired(): %s [%d == %d]\n", toString(f4), pnew.getProperty(), pold.getDesProperty());
+
+    bool f5 = pold.getProperty() == pnew.getDesProperty();
+    file_log("old.property() == new.propertyDesired(): %s [%d == %d]\n", toString(f5), pold.getProperty(), pnew.getDesProperty());
+
+    bool f6 = pold.unitPrice() <= pnew.inversePrice();
+    file_log("old.unitPrice() <= new.inversePrice(): %s [%s <= %s]\n", toString(f6), xToString(pold.unitPrice()), xToString(pnew.unitPrice()));
+
+    bool f7 = pnew.unitPrice() <= pold.inversePrice();
+    file_log("new.unitPrice() <= old.inversePrice(): %s [%s <= %s]\n", toString(f7), xToString(pnew.unitPrice()), xToString(pold.inversePrice()));
+
+    file_log("PRECONDITIONS PASSED: %s\n", toString(f1 && f2 && f3 && f4 && f5 && f6 && f7));
+    file_log("---------------------------\n");
+}
+
+static void ShowPostconditions(
+        int64_t seller_amountLeft, int64_t buyer_amountLeft,
+        int64_t seller_amountOffered, int64_t buyer_amountOffered,
+        int64_t buyer_amountGot, int64_t seller_amountGot,
+        rational_t xEffectivePrice,
+        const CMPMetaDEx& pold, const CMPMetaDEx& pnew)
+
+{
+    file_log("---------------------------\n");
+
+    bool f1 = xEffectivePrice >= pold.unitPrice();
+    file_log("xEffectivePrice >= pold.unitPrice(): %s [%s >= %s]\n", toString(f1), xToString(xEffectivePrice), xToString(pold.unitPrice()));
+
+    bool f2 = xEffectivePrice <= pnew.inversePrice();
+    file_log("xEffectivePrice <= pnew.inversePrice(): %s [%s >= %s]\n", toString(f2), xToString(xEffectivePrice), xToString(pnew.inversePrice()));
+
+    bool f3 = 0 <= seller_amountLeft;
+    file_log("0 <= seller_amountLeft: %s [0 <= %d]\n", toString(f3), seller_amountLeft);
+
+    bool f4 = 0 <= buyer_amountLeft;
+    file_log("0 <= buyer_amountLeft: %s [0 <= %d]\n", toString(f4), buyer_amountLeft);
+
+    bool f5 = seller_amountOffered == seller_amountLeft + buyer_amountGot;
+    file_log("seller_amountOffered == seller_amountLeft + buyer_amountGot: %s [%d == %d + %d]\n", toString(f5), seller_amountOffered, seller_amountLeft, buyer_amountGot);
+
+    bool f6 = buyer_amountOffered == buyer_amountLeft + seller_amountGot;
+    file_log("buyer_amountOffered == buyer_amountLeft + seller_amountGot: %s [%d == %d + %d]\n", toString(f6), buyer_amountOffered, buyer_amountLeft, seller_amountGot);
+
+    file_log("POSTCONDITIONS PASSED: %s\n", toString(f1 && f2 && f3 && f4 && f5 && f6));
+    file_log("---------------------------\n");
 }
 
 // find the best match on the market
@@ -112,7 +163,8 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
     // within the desired property map (given one property) iterate over the items looking at prices
     for (md_PricesMap::iterator my_it = prices->begin(); my_it != prices->end(); ++my_it) { // check all prices
-        const XDOUBLE sellers_price = my_it->first;
+        // const XDOUBLE sellers_price = my_it->first;
+        const rational_t sellers_price = my_it->first;
 
         if (msc_debug_metadex2) file_log("comparing prices: desprice %s needs to be GREATER THAN OR EQUAL TO %s\n",
             xToString(pnew->inversePrice()), xToString(sellers_price));
@@ -157,6 +209,8 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             ///////////////////////////
 
+            ShowPreconditions(*pold, *pnew);
+
             // preconditions
             assert(0 < pold->getAmountRemaining());
             assert(0 < pnew->getAmountRemaining());
@@ -174,23 +228,33 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
                 seller_amountGot = buyer_amountOffered;
             }
 
-            XDOUBLE x_buyer_got = (XDOUBLE) seller_amountGot / sellers_price;
+            // XDOUBLE x_buyer_got = (XDOUBLE) seller_amountGot / sellers_price;
+            rational_t x_buyer_got = rational_t(seller_amountGot) / sellers_price;
             int64_t buyer_amountGot = xToInt64(x_buyer_got, false);
 
             if (buyer_amountGot > pold->getAmountRemaining()) {
                 if (msc_debug_metadex1) file_log(
-                    "-- adjusting amounts to trade: buyer should get %d, but seller"
+                    "-- adjusting amounts to trade: buyer should get %d, but seller "
                     "has only %d\n", buyer_amountGot, seller_amountForSale);
                 buyer_amountGot = pold->getAmountRemaining();
             }
-
+/*
+            if (buyer_amountGot == 0) {
+                if (msc_debug_metadex1) file_log(
+                    "-- stopping trade execution, because buyer has not enough tokens "
+                    "to satisfy the offer\n");
+                ++iitt;
+                continue;
+            }
+*/
             const int64_t buyer_amountStillForSale = buyer_amountOffered - seller_amountGot;
             const int64_t seller_amountLeft = pold->getAmountRemaining() - buyer_amountGot;
 
             if (msc_debug_metadex1) file_log("$$ buyer_got= %d, seller_got= %d, seller_left_for_sale= %d, buyer_still_for_sale= %d\n",
                 buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountStillForSale);
 
-            const XDOUBLE xEffectivePrice = XDOUBLE(seller_amountGot) / XDOUBLE(buyer_amountGot);
+            // const XDOUBLE xEffectivePrice = XDOUBLE(seller_amountGot) / XDOUBLE(buyer_amountGot);
+            const rational_t xEffectivePrice(seller_amountGot, buyer_amountGot);
 
             if (msc_debug_metadex1) {
                 file_log("seller    price: %s [%d / %d], left: %d (unit)\n", xToString(pold->unitPrice()), pold->getAmountDesiredOriginal(), pold->getAmountForSale(), pold->getAmountRemaining());
@@ -205,8 +269,22 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
                 ++iitt;
                 continue;
             }
-
+/*
+            if (xEffectivePrice < pold->unitPrice()) {
+                if (msc_debug_metadex1) file_log(
+                    "-- stopping trade execution, because new price is more than "
+                    "the seller is willing to pay for\n");
+                ++iitt;
+                continue;
+            }
+*/
             ///////////////////////////
+
+            ShowPostconditions(
+                    seller_amountLeft, buyer_amountStillForSale,
+                    seller_amountForSale, buyer_amountOffered,
+                    buyer_amountGot, seller_amountGot,
+                    xEffectivePrice, *pold, *pnew);
 
             // postconditions
             assert(xEffectivePrice >= pold->unitPrice());
@@ -276,23 +354,33 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
     return NewReturn;
 }
 
-XDOUBLE CMPMetaDEx::unitPrice() const
+rational_t CMPMetaDEx::unitPrice() const
 {
-    XDOUBLE effective_price = 0;
-    if (amount_forsale) effective_price = (XDOUBLE) amount_desired / (XDOUBLE) amount_forsale;
+    // XDOUBLE effective_price = 0;
+    rational_t effective_price = 0;
+    // if (amount_forsale) effective_price = (XDOUBLE) amount_desired / (XDOUBLE) amount_forsale;
+    if (amount_forsale) effective_price = rational_t(amount_desired, amount_forsale);
     return effective_price;
 }
 
-XDOUBLE CMPMetaDEx::inversePrice() const
+rational_t CMPMetaDEx::inversePrice() const
 {
-    XDOUBLE inverse_price = 0;
-    if (amount_desired) inverse_price = (XDOUBLE) amount_forsale / (XDOUBLE) amount_desired;
+    // XDOUBLE inverse_price = 0;
+    rational_t inverse_price = 0;
+    // if (amount_desired) inverse_price = (XDOUBLE) amount_forsale / (XDOUBLE) amount_desired;
+    if (amount_desired) inverse_price = rational_t(amount_forsale, amount_desired);
     return inverse_price;
 }
 
 int64_t CMPMetaDEx::getAmountDesired() const
 {
-    XDOUBLE xStillDesired = (XDOUBLE) getAmountRemaining() * unitPrice();
+    // XDOUBLE xStillDesired = (XDOUBLE) getAmountRemaining() * unitPrice();
+    rational_t xStillDesired(getAmountRemaining());
+    xStillDesired *= unitPrice();
+
+    file_log("getAmountDesired(): getAmountRemaining() * unitPrice()\n");
+    file_log("getAmountDesired(): -> %d * %s\n", getAmountRemaining(), xToString(unitPrice()));
+    file_log("getAmountDesired(): -> %s\n", xToString(xStillDesired));
     return xToInt64(xStillDesired, true);
 }
 
@@ -452,7 +540,8 @@ int mastercore::MetaDEx_CANCEL_AT_PRICE(const uint256& txid, unsigned int block,
 
     // within the desired property map (given one property) iterate over the items
     for (md_PricesMap::iterator my_it = prices->begin(); my_it != prices->end(); ++my_it) {
-        XDOUBLE sellers_price = my_it->first;
+        // XDOUBLE sellers_price = my_it->first;
+        rational_t sellers_price = my_it->first;
 
         if (mdex.unitPrice() != sellers_price) continue;
 
@@ -561,7 +650,8 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
         md_PricesMap& prices = my_it->second;
 
         for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-            XDOUBLE price = it->first;
+            // XDOUBLE price = it->first;
+            rational_t price = it->first;
             md_Set& indexes = it->second;
 
             file_log("  # Price Level: %s\n", xToString(price));
@@ -606,7 +696,8 @@ void mastercore::MetaDEx_debug_print(bool bShowPriceLevel, bool bDisplay)
         md_PricesMap& prices = my_it->second;
 
         for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-            XDOUBLE price = it->first;
+            // XDOUBLE price = it->first;
+            rational_t price = it->first;
             md_Set& indexes = it->second;
 
             if (bShowPriceLevel) file_log("  # Price Level: %s\n", xToString(price));

@@ -47,9 +47,19 @@ inline int64_t xToInt64(const dec_float& value, bool fRoundUp = true)
     return value_int;
 }
 
+inline bool rangeInt64(const int128_t& value)
+{
+    return (INT64_MIN <= value && value <= INT64_MAX);
+}
+
+inline bool rangeInt64(const rational_t& value)
+{
+    return (rangeInt64(value.numerator()) && rangeInt64(value.denominator()));
+}
+
 inline std::string xToString(const int128_t& value)
 {
-    if (value <= INT64_MAX) {
+    if (rangeInt64(value)) {
         return strprintf("%d", value.convert_to<int64_t>());
     } else {
         return strprintf("%s [OVERFLOW!]", boost::lexical_cast<std::string>(value));
@@ -58,11 +68,7 @@ inline std::string xToString(const int128_t& value)
 
 inline std::string xToString(const rational_t& value)
 {
-    /*
-    dec_float x = dec_float(num) / dec_float(denom);
-    return xToString(x);
-    */
-    if (value.numerator() <= INT64_MAX && value.denominator() <= INT64_MAX) {
+    if (rangeInt64(value)) {
         int64_t num = value.numerator().convert_to<int64_t>();
         int64_t denom = value.denominator().convert_to<int64_t>();
         dec_float x = dec_float(num) / dec_float(denom);
@@ -73,25 +79,36 @@ inline std::string xToString(const rational_t& value)
     }
 }
 
-
-inline int64_t xToInt64(const rational_t& value, bool fRoundUp = true)
+inline int128_t xToInt128(const rational_t& value, bool fRoundUp = true)
 {
     // for integer rounding up: ceil(num / denom) => 1 + (num - 1) / denom
+
+    file_log("xToInt128(%d): %s [%s / %s]\n",
+            (int)fRoundUp,
+            xToString(value),
+            xToString(value.numerator()),
+            xToString(value.denominator()));
+
     int128_t result(0);
 
     if (!fRoundUp) {
-        file_log("xToInt64(%s, false) -> %d / %d\n", xToString(value), xToString(value.numerator()), xToString(value.denominator()));
-        file_log("xToInt64(%s, false) -> %d\n", xToString(value), xToString(value.numerator() / value.denominator()));
-
         result = value.numerator() / value.denominator();
     } else {
-        file_log("xToInt64(%s, true) -> 1 + (%d - 1) / %d\n", xToString(value), xToString(value.numerator()), xToString(value.denominator()));
-        file_log("xToInt64(%s, true) -> %d\n", xToString(value), xToString(1 + (value.numerator() - 1) / value.denominator()));
-
         result = int128_t(1) + (value.numerator() - int128_t(1)) / value.denominator();
     }
 
-    assert(result <= INT64_MAX);
+    file_log("xToInt128(%d): %s\n", (int)fRoundUp, xToString(result));
+
+    return result;
+}
+
+inline int64_t xToInt64(const rational_t& value, bool fRoundUp = true)
+{
+    file_log("xToInt64 --->\n");
+    int128_t result = xToInt128(value, fRoundUp);
+    file_log("xToInt64 <---\n");
+
+    assert(rangeInt64(result));
 
     return result.convert_to<int64_t>();
 }

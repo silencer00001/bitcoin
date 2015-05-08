@@ -100,7 +100,7 @@ static void ShowPreconditions(const CMPMetaDEx& pold, const CMPMetaDEx& pnew)
     file_log("old.property() == new.propertyDesired(): %s [%d == %d]\n", toString(f5), pold.getProperty(), pnew.getDesProperty());
 
     bool f6 = pold.unitPrice() <= pnew.inversePrice();
-    file_log("old.unitPrice() <= new.inversePrice(): %s [%s <= %s]\n", toString(f6), xToString(pold.unitPrice()), xToString(pnew.unitPrice()));
+    file_log("old.unitPrice() <= new.inversePrice(): %s [%s <= %s]\n", toString(f6), xToString(pold.unitPrice()), xToString(pnew.inversePrice()));
 
     bool f7 = pnew.unitPrice() <= pold.inversePrice();
     file_log("new.unitPrice() <= old.inversePrice(): %s [%s <= %s]\n", toString(f7), xToString(pnew.unitPrice()), xToString(pold.inversePrice()));
@@ -221,6 +221,51 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             ///////////////////////////
 
+            bool fTooExpensive = false;
+
+            // First determine how many representable (indivisible) tokens I can
+            // purchase from Bob (using Bob's unit price)
+            rational_t rCouldBuy = rational_t(pnew->getAmountRemaining()) * pold->inversePrice();
+            file_log("rCouldBuy: %s [%s / %s]\n", xToString(rCouldBuy), xToString(rCouldBuy.numerator()), xToString(rCouldBuy.denominator()));
+
+            // This implies rounding down, since rounding up is impossible (would
+            // require more money than I have)
+            int128_t iCouldBuy = xToInt128(rCouldBuy, false);
+
+            int64_t nCouldBuy = 0;
+            if (iCouldBuy < int128_t(pold->getAmountRemaining())) {
+                nCouldBuy = iCouldBuy.convert_to<int64_t>();
+            } else {
+                nCouldBuy = pold->getAmountRemaining();
+            }
+            file_log("nCouldBuy: %d\n", nCouldBuy);
+
+            // If the amount I would have to pay to buy Bob's tokens at his price
+            // is fractional, always round UP the amount I have to pay
+            rational_t rWouldPay = rational_t(nCouldBuy) * pold->unitPrice();
+            file_log("rWouldPay: %s\n", xToString(rWouldPay));
+
+            // This will always be better for Bob. Rounding in the other direction
+            // will always be impossible (would violate Bob's required price)
+            int64_t nWouldPay = xToInt64(rWouldPay, true);
+            file_log("nWouldPay: %d\n", nWouldPay);
+
+            // If the resulting adjusted unit price is higher than my price, the
+            // orders did not really match (no representable fill can be made)
+            rational_t xResultingPrice(nWouldPay, nCouldBuy);
+            file_log("xResultingPrice: %s\n", xToString(xResultingPrice));
+
+            if (xResultingPrice > pnew->inversePrice()) {
+                fTooExpensive = true;
+                file_log("TOO EXPENSIVE\n");
+            } else {
+                file_log("SUCCESS !\n");
+            }
+
+            file_log("------------------------------------------------------\n");
+
+            ///////////////////////////////////////////////////////////////////////
+
             int64_t seller_amountGot = seller_amountWanted;
 
             if (buyer_amountOffered < seller_amountWanted) {
@@ -239,6 +284,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             }
 
             if (buyer_amountGot == 0) {
+                assert(fTooExpensive);
                 if (msc_debug_metadex1) file_log(
                     "-- stopping trade execution, because buyer has not even enough "
                     "tokens to purchase 1 unit\n");
@@ -262,12 +308,15 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             }
 
             if (xEffectivePrice > pnew->inversePrice()) {
+                assert(fTooExpensive);
                 if (msc_debug_metadex1) file_log(
                     "-- stopping trade execution, because new price is more than "
                     "the buyer is willing to pay for\n");
                 ++iitt;
                 continue;
             }
+
+            assert(!fTooExpensive);
 
             ///////////////////////////
 
@@ -284,6 +333,9 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             assert(0 <= buyer_amountStillForSale);
             assert(seller_amountForSale == seller_amountLeft + buyer_amountGot);
             assert(buyer_amountOffered == buyer_amountStillForSale + seller_amountGot);
+
+            assert(nCouldBuy == buyer_amountGot);
+            assert(nWouldPay == seller_amountGot);
 
             ///////////////////////////
 
@@ -347,35 +399,20 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
 rational_t CMPMetaDEx::unitPrice() const
 {
-    // XDOUBLE effective_price = 0;
-    // rational_t effective_price = 0;
-    // if (amount_forsale) effective_price = (XDOUBLE) amount_desired / (XDOUBLE) amount_forsale;
-
-    // rational_t effective_price(int128_t(0));
-    // if (amount_forsale) effective_price = rational_t(amount_desired, amount_forsale);
-    // return effective_price;
-
-    assert(amount_forsale > 0);
-    return rational_t(amount_desired, amount_forsale);
+    rational_t effective_price(int128_t(0));
+    if (amount_forsale) effective_price = rational_t(amount_desired, amount_forsale);
+    return effective_price;
 }
 
 rational_t CMPMetaDEx::inversePrice() const
 {
-    // XDOUBLE inverse_price = 0;
-    // rational_t inverse_price = 0;
-    // if (amount_desired) inverse_price = (XDOUBLE) amount_forsale / (XDOUBLE) amount_desired;
-
-    // rational_t inverse_price(int128_t(0));
-    // if (amount_desired) inverse_price = rational_t(amount_forsale, amount_desired);
-    // return inverse_price;
-
-    assert(amount_desired > 0);
-    return rational_t(amount_forsale, amount_desired);
+    rational_t inverse_price(int128_t(0));
+    if (amount_desired) inverse_price = rational_t(amount_forsale, amount_desired);
+    return inverse_price;
 }
 
 int64_t CMPMetaDEx::getAmountDesired() const
 {
-    // XDOUBLE xStillDesired = (XDOUBLE) getAmountRemaining() * unitPrice();
     rational_t xStillDesired = getAmountRemaining() * unitPrice();
 
     file_log("getAmountDesired(): getAmountRemaining() * unitPrice()\n");

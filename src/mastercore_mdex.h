@@ -15,6 +15,7 @@
 #include <stdint.h>
 
 #include <fstream>
+#include <limits>
 #include <map>
 #include <set>
 #include <string>
@@ -29,7 +30,7 @@ typedef boost::rational<int128_t> rational_t;
 
 inline bool rangeInt64(const int128_t& value)
 {
-    return (INT64_MIN <= value && value <= INT64_MAX);
+    return (std::numeric_limits<int64_t>::min() <= value && value <= std::numeric_limits<int64_t>::max());
 }
 
 inline bool rangeInt64(const rational_t& value)

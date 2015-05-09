@@ -165,7 +165,6 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
     // within the desired property map (given one property) iterate over the items looking at prices
     for (md_PricesMap::iterator my_it = prices->begin(); my_it != prices->end(); ++my_it) { // check all prices
-        // const XDOUBLE sellers_price = my_it->first;
         const rational_t sellers_price = my_it->first;
 
         if (msc_debug_metadex2) file_log("comparing prices: desprice %s needs to be GREATER THAN OR EQUAL TO %s\n",
@@ -263,84 +262,25 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             // If the resulting adjusted unit price is higher than my price, the
             // orders did not really match (no representable fill can be made)
             file_log("constructing price: %d / %d\n", nWouldPay, nCouldBuy);
-            rational_t xResultingPrice(nWouldPay, nCouldBuy);
+            const rational_t xEffectivePrice(nWouldPay, nCouldBuy);
 
-            if (xResultingPrice > pnew->inversePrice()) {
+            if (xEffectivePrice > pnew->inversePrice()) {
                 ++iitt;
                 continue;
             }
 
             const int64_t buyer_amountGot = nCouldBuy;
             const int64_t seller_amountGot = nWouldPay;
-
-            const int64_t buyer_amountStillForSale = pnew->getAmountRemaining() - seller_amountGot;
-            const int64_t seller_amountLeft = pold->getAmountRemaining() - buyer_amountGot;
-
-            const rational_t xEffectivePrice = xResultingPrice;
-
-            if (msc_debug_metadex1) file_log("$$ buyer_got= %d, seller_got= %d, seller_left_for_sale= %d, buyer_still_for_sale= %d\n",
-                buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountStillForSale);
-
-/*
-            file_log("------------------------------------------------------\n");
-
-            ///////////////////////////////////////////////////////////////////////
-
-            int64_t seller_amountGot = seller_amountWanted;
-
-            if (buyer_amountOffered < seller_amountWanted) {
-                seller_amountGot = buyer_amountOffered;
-            }
-
-            // XDOUBLE x_buyer_got = (XDOUBLE) seller_amountGot / sellers_price;
-            rational_t x_buyer_got = rational_t(seller_amountGot) / sellers_price;
-            int64_t buyer_amountGot = xToInt64(x_buyer_got, false);
-
-            if (buyer_amountGot > pold->getAmountRemaining()) {
-                if (msc_debug_metadex1) file_log(
-                    "-- adjusting amounts to trade: buyer should get %d, but seller "
-                    "has only %d\n", buyer_amountGot, seller_amountForSale);
-                buyer_amountGot = pold->getAmountRemaining();
-            }
-
-            if (buyer_amountGot == 0) {
-                assert(fTooExpensive);
-                if (msc_debug_metadex1) file_log(
-                    "-- stopping trade execution, because buyer has not even enough "
-                    "tokens to purchase 1 unit\n");
-                ++iitt;
-                continue;
-            }
-
-            const int64_t buyer_amountStillForSale = buyer_amountOffered - seller_amountGot;
+            const int64_t buyer_amountLeft = pnew->getAmountRemaining() - seller_amountGot;
             const int64_t seller_amountLeft = pold->getAmountRemaining() - buyer_amountGot;
 
             if (msc_debug_metadex1) file_log("$$ buyer_got= %d, seller_got= %d, seller_left_for_sale= %d, buyer_still_for_sale= %d\n",
-                buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountStillForSale);
-
-            // const XDOUBLE xEffectivePrice = XDOUBLE(seller_amountGot) / XDOUBLE(buyer_amountGot);
-            const rational_t xEffectivePrice(seller_amountGot, buyer_amountGot);
-
-            if (msc_debug_metadex1) {
-                file_log("seller    price: %s [%d / %d], left: %d (unit)\n", xToString(pold->unitPrice()), pold->getAmountDesiredOriginal(), pold->getAmountForSale(), pold->getAmountRemaining());
-                file_log("buyer     price: %s [%d / %d], left: %d (inverse)\n", xToString(pnew->inversePrice()), pnew->getAmountForSale(), pnew->getAmountDesiredOriginal(), pnew->getAmountRemaining());
-                file_log("effective price: %s [%d / %d] (seller_got / buyer_got)\n", xToString(xEffectivePrice), seller_amountGot, buyer_amountGot);
-            }
-
-            if (xEffectivePrice > pnew->inversePrice()) {
-                assert(fTooExpensive);
-                if (msc_debug_metadex1) file_log(
-                    "-- stopping trade execution, because new price is more than "
-                    "the buyer is willing to pay for\n");
-                ++iitt;
-                continue;
-            }
-*/
+                buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountLeft);
 
             ///////////////////////////
 
             ShowPostconditions(
-                    seller_amountLeft, buyer_amountStillForSale,
+                    seller_amountLeft, buyer_amountLeft,
                     seller_amountForSale, buyer_amountOffered,
                     buyer_amountGot, seller_amountGot,
                     xEffectivePrice, *pold, *pnew);
@@ -349,12 +289,9 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             assert(xEffectivePrice >= pold->unitPrice());
             assert(xEffectivePrice <= pnew->inversePrice());
             assert(0 <= seller_amountLeft);
-            assert(0 <= buyer_amountStillForSale);
+            assert(0 <= buyer_amountLeft);
             assert(seller_amountForSale == seller_amountLeft + buyer_amountGot);
-            assert(buyer_amountOffered == buyer_amountStillForSale + seller_amountGot);
-
-            // assert(nCouldBuy == buyer_amountGot);
-            // assert(nWouldPay == seller_amountGot);
+            assert(buyer_amountOffered == buyer_amountLeft + seller_amountGot);
 
             ///////////////////////////
 
@@ -371,13 +308,13 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             CMPMetaDEx seller_replacement = *pold; // < can be moved into last if block
             seller_replacement.setAmountRemaining(seller_amountLeft, "seller_replacement");
 
-            pnew->setAmountRemaining(buyer_amountStillForSale, "buyer");
+            pnew->setAmountRemaining(buyer_amountLeft, "buyer");
 
-            if (0 < buyer_amountStillForSale) {
+            if (0 < buyer_amountLeft) {
                 NewReturn = TRADED_MOREINBUYER;
             }
 
-            if (0 == buyer_amountStillForSale) {
+            if (0 == buyer_amountLeft) {
                 bBuyerSatisfied = true;
             }
 
@@ -402,7 +339,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             }
 
             if (bBuyerSatisfied) {
-                assert(buyer_amountStillForSale == 0);
+                assert(buyer_amountLeft == 0);
                 break;
             }
         } // specific price, check all properties
@@ -763,11 +700,6 @@ void mastercore::MetaDEx_debug_print(bool bShowPriceLevel, bool bDisplay)
 
                 if (bDisplay) PrintToConsole("%s= %s\n", xToString(price), obj.ToString());
                 else file_log("%s= %s\n", xToString(price), obj.ToString());
-
-                // extra checks: price or either of the amounts is 0
-                //        assert((XDOUBLE)0 != obj.effectivePrice());
-                //        assert(obj.getAmountForSale());
-                //        assert(obj.getAmountDesired());
             }
         }
     }

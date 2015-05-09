@@ -27,26 +27,6 @@ typedef boost::rational<int128_t> rational_t;
 #define DISPLAY_PRECISION_LEN  50
 #define INTERNAL_PRECISION_LEN 50
 
-inline std::string xToString(const dec_float& value)
-{
-    return value.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed);
-}
-
-inline int64_t xToInt64(const dec_float& value, bool fRoundUp = true)
-{
-    std::string str_value = value.str(INTERNAL_PRECISION_LEN, std::ios_base::fixed);
-    std::string str_value_int_part = str_value.substr(0, str_value.find_first_of("."));
-    int64_t value_int = boost::lexical_cast<int64_t>(str_value_int_part);
-
-    if (fRoundUp) { // < temporary, all this to be replaced by boost::rational
-        if (value - value_int > 0) {
-            value_int++;
-        }
-    }
-
-    return value_int;
-}
-
 inline bool rangeInt64(const int128_t& value)
 {
     return (INT64_MIN <= value && value <= INT64_MAX);
@@ -57,13 +37,14 @@ inline bool rangeInt64(const rational_t& value)
     return (rangeInt64(value.numerator()) && rangeInt64(value.denominator()));
 }
 
+inline std::string xToString(const dec_float& value)
+{
+    return value.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed);
+}
+
 inline std::string xToString(const int128_t& value)
 {
-    if (rangeInt64(value)) {
-        return strprintf("%d", value.convert_to<int64_t>());
-    } else {
-        return strprintf("%s [OVERFLOW!]", boost::lexical_cast<std::string>(value));
-    }
+    return strprintf("%s", boost::lexical_cast<std::string>(value));
 }
 
 inline std::string xToString(const rational_t& value)
@@ -74,8 +55,7 @@ inline std::string xToString(const rational_t& value)
         dec_float x = dec_float(num) / dec_float(denom);
         return xToString(x);
     } else {
-        file_log("OVERFLOW:\n%s\n", strprintf("%s / %s", boost::lexical_cast<std::string>(value.numerator()), boost::lexical_cast<std::string>(value.denominator())));
-        return strprintf("%s / %s", boost::lexical_cast<std::string>(value.numerator()), boost::lexical_cast<std::string>(value.denominator()));
+        return strprintf("%s / %s", xToString(value.numerator()), xToString(value.denominator()));
     }
 }
 

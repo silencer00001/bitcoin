@@ -26,7 +26,6 @@ typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::rational<int128_t> rational_t;
 
 #define DISPLAY_PRECISION_LEN  50
-#define INTERNAL_PRECISION_LEN 50
 
 inline bool rangeInt64(const int128_t& value)
 {

@@ -145,12 +145,12 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             ///////////////////////////
 
-            // First determine how many representable (indivisible) tokens I can
-            // purchase from Bob (using Bob's unit price)
+            // First determine how many representable (indivisible) tokens Alice can
+            // purchase from Bob, using Bob's unit price
             rational_t rCouldBuy = pnew->getAmountRemaining() * pold->inversePrice();
 
-            // This implies rounding down, since rounding up is impossible (would
-            // require more money than I have)
+            // This implies rounding down, since rounding up is impossible, and would
+            // require more tokens than Alice has
             int128_t iCouldBuy = xToInt128(rCouldBuy, false);
 
             int64_t nCouldBuy = 0;
@@ -168,16 +168,16 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
                 continue;
             }
 
-            // If the amount I would have to pay to buy Bob's tokens at his price
-            // is fractional, always round UP the amount I have to pay
+            // If the amount Alice would have to pay to buy Bob's tokens at his price
+            // is fractional, always round UP the amount Alice has to pay
             rational_t rWouldPay = nCouldBuy * pold->unitPrice();
 
             // This will always be better for Bob. Rounding in the other direction
-            // will always be impossible (would violate Bob's required price)
+            // will always be impossible, because ot would violate Bob's accepted price
             int64_t nWouldPay = xToInt64(rWouldPay, true);
 
-            // If the resulting adjusted unit price is higher than my price, the
-            // orders did not really match (no representable fill can be made)
+            // If the resulting adjusted unit price is higher than Alice' price, the
+            // orders shall not execute, and no representable fill is made
             const rational_t xEffectivePrice(nWouldPay, nCouldBuy);
 
             if (xEffectivePrice > pnew->inversePrice()) {

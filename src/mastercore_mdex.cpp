@@ -100,7 +100,6 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
         // Is the desired price check satisfied? The buyer's inverse price must be larger than that of the seller.
         if (pnew->inversePrice() < sellers_price) {
-            file_log("SKIP: %s < %s\n", xToString(pnew->inversePrice()), xToString(sellers_price));
             continue;
         }
 

@@ -76,14 +76,14 @@ const std::string getTradeReturnType(MatchReturnType ret)
 static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 {
     const uint32_t prop = pnew->getProperty();
-    const uint32_t desprop = pnew->getDesProperty();
+    const uint32_t propertyDesired = pnew->getDesProperty();
     MatchReturnType NewReturn = NOTHING;
     bool bBuyerSatisfied = false;
 
     if (msc_debug_metadex1) file_log("%s(%s: prop=%u, desprop=%u, desprice= %s);newo: %s\n",
-        __FUNCTION__, pnew->getAddr(), prop, desprop, xToString(pnew->inversePrice()), pnew->ToString());
+        __FUNCTION__, pnew->getAddr(), prop, propertyDesired, xToString(pnew->inversePrice()), pnew->ToString());
 
-    md_PricesMap* const ppriceMap = get_Prices(desprop);
+    md_PricesMap* const ppriceMap = get_Prices(propertyDesired);
 
     // nothing for the desired property exists in the market, sorry!
     if (!ppriceMap) {

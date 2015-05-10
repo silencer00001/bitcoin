@@ -93,13 +93,13 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
     // within the desired property map (given one property) iterate over the items looking at prices
     for (md_PricesMap::iterator priceIt = ppriceMap->begin(); priceIt != ppriceMap->end(); ++priceIt) { // check all prices
-        const rational_t sellers_price = priceIt->first;
+        const rational_t sellersPrice = priceIt->first;
 
         if (msc_debug_metadex2) file_log("comparing prices: desprice %s needs to be GREATER THAN OR EQUAL TO %s\n",
-            xToString(pnew->inversePrice()), xToString(sellers_price));
+            xToString(pnew->inversePrice()), xToString(sellersPrice));
 
         // Is the desired price check satisfied? The buyer's inverse price must be larger than that of the seller.
-        if (pnew->inversePrice() < sellers_price) {
+        if (pnew->inversePrice() < sellersPrice) {
             continue;
         }
 
@@ -109,10 +109,10 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
         md_Set::iterator offerIt = pofferSet->begin();
         while (offerIt != pofferSet->end()) { // specific price, check all properties
             const CMPMetaDEx* const pold = &(*offerIt);
-            assert(pold->unitPrice() == sellers_price);
+            assert(pold->unitPrice() == sellersPrice);
 
             if (msc_debug_metadex1) file_log("Looking at existing: %s (its prop= %u, its des prop= %u) = %s\n",
-                xToString(sellers_price), pold->getProperty(), pold->getDesProperty(), pold->ToString());
+                xToString(sellersPrice), pold->getProperty(), pold->getDesProperty(), pold->ToString());
 
             // is the desired property correct?
             if (pold->getDesProperty() != propertyForSale) {
@@ -120,7 +120,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
                 continue;
             }
 
-            if (msc_debug_metadex1) file_log("MATCH FOUND, Trade: %s = %s\n", xToString(sellers_price), pold->ToString());
+            if (msc_debug_metadex1) file_log("MATCH FOUND, Trade: %s = %s\n", xToString(sellersPrice), pold->ToString());
 
             // All Matched ! Trade now.
             const int64_t seller_amountForSale = pold->getAmountRemaining();
@@ -128,7 +128,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             const int64_t buyer_amountOffered = pnew->getAmountRemaining();
 
             if (msc_debug_metadex1) file_log("$$ trading using price: %s; seller: forsale= %ld, wanted= %ld, buyer amount offered= %ld\n",
-                xToString(sellers_price), seller_amountForSale, seller_amountWanted, buyer_amountOffered);
+                xToString(sellersPrice), seller_amountForSale, seller_amountWanted, buyer_amountOffered);
             if (msc_debug_metadex1) file_log("$$ old: %s\n", pold->ToString());
             if (msc_debug_metadex1) file_log("$$ new: %s\n", pnew->ToString());
 

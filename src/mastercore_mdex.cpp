@@ -83,16 +83,16 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
     if (msc_debug_metadex1) file_log("%s(%s: prop=%u, desprop=%u, desprice= %s);newo: %s\n",
         __FUNCTION__, pnew->getAddr(), prop, desprop, xToString(pnew->inversePrice()), pnew->ToString());
 
-    md_PricesMap* const prices = get_Prices(desprop);
+    md_PricesMap* const ppriceMap = get_Prices(desprop);
 
     // nothing for the desired property exists in the market, sorry!
-    if (!prices) {
+    if (!ppriceMap) {
         file_log("%s()=%u:%s NOT FOUND ON THE MARKET\n", __FUNCTION__, NewReturn, getTradeReturnType(NewReturn));
         return NewReturn;
     }
 
     // within the desired property map (given one property) iterate over the items looking at prices
-    for (md_PricesMap::iterator my_it = prices->begin(); my_it != prices->end(); ++my_it) { // check all prices
+    for (md_PricesMap::iterator my_it = ppriceMap->begin(); my_it != ppriceMap->end(); ++my_it) { // check all prices
         const rational_t sellers_price = my_it->first;
 
         if (msc_debug_metadex2) file_log("comparing prices: desprice %s needs to be GREATER THAN OR EQUAL TO %s\n",
@@ -103,11 +103,11 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             continue;
         }
 
-        md_Set* const indexes = &(my_it->second);
+        md_Set* const pofferSet = &(my_it->second);
 
         // at good (single) price level and property iterate over offers looking at all parameters to find the match
         md_Set::iterator iitt;
-        for (iitt = indexes->begin(); iitt != indexes->end();) { // specific price, check all properties
+        for (iitt = pofferSet->begin(); iitt != pofferSet->end();) { // specific price, check all properties
             const CMPMetaDEx* const pold = &(*iitt);
             assert(pold->unitPrice() == sellers_price);
 
@@ -241,12 +241,12 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             if (msc_debug_metadex1) file_log("++ erased old: %s\n", iitt->ToString());
             // erase the old seller element
-            indexes->erase(iitt++);
+            pofferSet->erase(iitt++);
 
             // insert the updated one in place of the old
             if (0 < seller_replacement.getAmountRemaining()) {
                 file_log("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
-                indexes->insert(seller_replacement);
+                pofferSet->insert(seller_replacement);
             }
 
             if (bBuyerSatisfied) {

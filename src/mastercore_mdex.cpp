@@ -182,7 +182,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             if (xEffectivePrice > pnew->inversePrice()) {
                 if (msc_debug_metadex1) {
-                    file_log("-- effective price is too expensive: %s\n" xToString(xEffectivePrice));
+                    file_log("-- effective price is too expensive: %s\n", xToString(xEffectivePrice));
                 }
                 ++iitt;
                 continue;

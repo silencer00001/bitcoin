@@ -106,8 +106,8 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
         md_Set* const pofferSet = &(my_it->second);
 
         // at good (single) price level and property iterate over offers looking at all parameters to find the match
-        md_Set::iterator iitt;
-        for (iitt = pofferSet->begin(); iitt != pofferSet->end();) { // specific price, check all properties
+        md_Set::iterator iitt = pofferSet->begin();
+        while (iitt != pofferSet->end()) { // specific price, check all properties
             const CMPMetaDEx* const pold = &(*iitt);
             assert(pold->unitPrice() == sellers_price);
 

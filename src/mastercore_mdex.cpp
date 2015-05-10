@@ -442,7 +442,6 @@ int mastercore::MetaDEx_CANCEL_AT_PRICE(const uint256& txid, unsigned int block,
 
     // within the desired property map (given one property) iterate over the items
     for (md_PricesMap::iterator my_it = prices->begin(); my_it != prices->end(); ++my_it) {
-        // XDOUBLE sellers_price = my_it->first;
         rational_t sellers_price = my_it->first;
 
         if (mdex.unitPrice() != sellers_price) continue;
@@ -552,7 +551,6 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
         md_PricesMap& prices = my_it->second;
 
         for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-            // XDOUBLE price = it->first;
             rational_t price = it->first;
             md_Set& indexes = it->second;
 
@@ -598,7 +596,6 @@ void mastercore::MetaDEx_debug_print(bool bShowPriceLevel, bool bDisplay)
         md_PricesMap& prices = my_it->second;
 
         for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-            // XDOUBLE price = it->first;
             rational_t price = it->first;
             md_Set& indexes = it->second;
 

@@ -92,8 +92,8 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
     }
 
     // within the desired property map (given one property) iterate over the items looking at prices
-    for (md_PricesMap::iterator my_it = ppriceMap->begin(); my_it != ppriceMap->end(); ++my_it) { // check all prices
-        const rational_t sellers_price = my_it->first;
+    for (md_PricesMap::iterator priceIt = ppriceMap->begin(); priceIt != ppriceMap->end(); ++priceIt) { // check all prices
+        const rational_t sellers_price = priceIt->first;
 
         if (msc_debug_metadex2) file_log("comparing prices: desprice %s needs to be GREATER THAN OR EQUAL TO %s\n",
             xToString(pnew->inversePrice()), xToString(sellers_price));
@@ -103,7 +103,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             continue;
         }
 
-        md_Set* const pofferSet = &(my_it->second);
+        md_Set* const pofferSet = &(priceIt->second);
 
         // at good (single) price level and property iterate over offers looking at all parameters to find the match
         md_Set::iterator offerIt = pofferSet->begin();

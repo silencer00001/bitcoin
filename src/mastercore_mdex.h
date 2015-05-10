@@ -63,13 +63,6 @@ inline std::string xToString(const rational_t& value)
 inline int128_t xToInt128(const rational_t& value, bool fRoundUp = true)
 {
     // for integer rounding up: ceil(num / denom) => 1 + (num - 1) / denom
-
-    file_log("xToInt128(%d): %s [%s / %s]\n",
-            (int)fRoundUp,
-            xToString(value),
-            xToString(value.numerator()),
-            xToString(value.denominator()));
-
     int128_t result(0);
 
     if (!fRoundUp) {
@@ -78,16 +71,12 @@ inline int128_t xToInt128(const rational_t& value, bool fRoundUp = true)
         result = int128_t(1) + (value.numerator() - int128_t(1)) / value.denominator();
     }
 
-    file_log("xToInt128(%d): %s\n", (int)fRoundUp, xToString(result));
-
     return result;
 }
 
 inline int64_t xToInt64(const rational_t& value, bool fRoundUp = true)
 {
-    file_log("xToInt64 --->\n");
     int128_t result = xToInt128(value, fRoundUp);
-    file_log("xToInt64 <---\n");
 
     assert(rangeInt64(result));
 

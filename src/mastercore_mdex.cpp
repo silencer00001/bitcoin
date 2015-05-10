@@ -224,13 +224,9 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             // purchase from Bob (using Bob's unit price)
             rational_t rCouldBuy = pnew->getAmountRemaining() * pold->inversePrice();
 
-            file_log("rCouldBuy: %s\n", xToString(rCouldBuy));
-
             // This implies rounding down, since rounding up is impossible (would
             // require more money than I have)
             int128_t iCouldBuy = xToInt128(rCouldBuy, false);
-
-            file_log("iCouldBuy: %s\n", xToString(iCouldBuy));
 
             int64_t nCouldBuy = 0;
             if (iCouldBuy < int128_t(pold->getAmountRemaining())) {
@@ -239,10 +235,10 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
                 nCouldBuy = pold->getAmountRemaining();
             }
 
-            file_log("nCouldBuy: %d\n", nCouldBuy);
-
             if (nCouldBuy == 0) {
-                file_log("-- buyer has not enough for even one unit!\n");
+                if (msc_debug_metadex1) {
+                    file_log("-- buyer has not enough tokens for sale to purchase one unit!\n");
+                }
                 ++iitt;
                 continue;
             }
@@ -251,20 +247,18 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             // is fractional, always round UP the amount I have to pay
             rational_t rWouldPay = nCouldBuy * pold->unitPrice();
 
-            file_log("rWouldPay: %s\n", xToString(rWouldPay));
-
             // This will always be better for Bob. Rounding in the other direction
             // will always be impossible (would violate Bob's required price)
             int64_t nWouldPay = xToInt64(rWouldPay, true);
 
-            file_log("nWouldPay: %d\n", nWouldPay);
-
             // If the resulting adjusted unit price is higher than my price, the
             // orders did not really match (no representable fill can be made)
-            file_log("constructing price: %d / %d\n", nWouldPay, nCouldBuy);
             const rational_t xEffectivePrice(nWouldPay, nCouldBuy);
 
             if (xEffectivePrice > pnew->inversePrice()) {
+                if (msc_debug_metadex1) {
+                    file_log("-- effective price is too expensive: %s\n" xToString(xEffectivePrice));
+                }
                 ++iitt;
                 continue;
             }

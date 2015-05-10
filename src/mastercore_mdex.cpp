@@ -283,10 +283,6 @@ int64_t CMPMetaDEx::getAmountDesired() const
 {
     rational_t xStillDesired = getAmountRemaining() * unitPrice();
 
-    file_log("getAmountDesired(): getAmountRemaining() * unitPrice()\n");
-    file_log("getAmountDesired(): -> %d * %s\n", getAmountRemaining(), xToString(unitPrice()));
-    file_log("getAmountDesired(): -> %s\n", xToString(xStillDesired));
-
     return xToInt64(xStillDesired, true);
 }
 

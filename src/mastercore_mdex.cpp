@@ -69,78 +69,6 @@ const std::string getTradeReturnType(MatchReturnType ret)
     }
 }
 
-// TODO: remove it, it's only debug output
-static std::string toString(bool value)
-{
-    if (value) {
-        return "TRUE";
-    } else {
-        return "FALSE";
-    }
-}
-
-// TODO: remove it, it's only debug output
-static void ShowPreconditions(const CMPMetaDEx& pold, const CMPMetaDEx& pnew)
-{
-    file_log("---------------------------\n");
-
-    bool f1 = 0 < pold.getAmountRemaining();
-    file_log("0 < old->remaining(): %s [0 < %d]\n", toString(f1), pold.getAmountRemaining());
-
-    bool f2 = 0 < pnew.getAmountRemaining();
-    file_log("0 < new->remaining(): %s [0 < %d]\n", toString(f2), pnew.getAmountRemaining());
-
-    bool f3 = pnew.getProperty() != pnew.getDesProperty();
-    file_log("new.property() != new.propertyDesired(): %s [%d != %d]\n", toString(f3), pnew.getProperty(), pnew.getDesProperty());
-
-    bool f4 = pnew.getProperty() == pold.getDesProperty();
-    file_log("new.property() == old.propertyDesired(): %s [%d == %d]\n", toString(f4), pnew.getProperty(), pold.getDesProperty());
-
-    bool f5 = pold.getProperty() == pnew.getDesProperty();
-    file_log("old.property() == new.propertyDesired(): %s [%d == %d]\n", toString(f5), pold.getProperty(), pnew.getDesProperty());
-
-    bool f6 = pold.unitPrice() <= pnew.inversePrice();
-    file_log("old.unitPrice() <= new.inversePrice(): %s [%s <= %s]\n", toString(f6), xToString(pold.unitPrice()), xToString(pnew.inversePrice()));
-
-    bool f7 = pnew.unitPrice() <= pold.inversePrice();
-    file_log("new.unitPrice() <= old.inversePrice(): %s [%s <= %s]\n", toString(f7), xToString(pnew.unitPrice()), xToString(pold.inversePrice()));
-
-    file_log("PRECONDITIONS PASSED: %s\n", toString(f1 && f2 && f3 && f4 && f5 && f6 && f7));
-    file_log("---------------------------\n");
-}
-
-// TODO: remove it, it's only debug output
-static void ShowPostconditions(
-        int64_t seller_amountLeft, int64_t buyer_amountLeft,
-        int64_t seller_amountOffered, int64_t buyer_amountOffered,
-        int64_t buyer_amountGot, int64_t seller_amountGot,
-        rational_t xEffectivePrice,
-        const CMPMetaDEx& pold, const CMPMetaDEx& pnew)
-{
-    file_log("---------------------------\n");
-
-    bool f1 = xEffectivePrice >= pold.unitPrice();
-    file_log("xEffectivePrice >= pold.unitPrice(): %s [%s >= %s]\n", toString(f1), xToString(xEffectivePrice), xToString(pold.unitPrice()));
-
-    bool f2 = xEffectivePrice <= pnew.inversePrice();
-    file_log("xEffectivePrice <= pnew.inversePrice(): %s [%s >= %s]\n", toString(f2), xToString(xEffectivePrice), xToString(pnew.inversePrice()));
-
-    bool f3 = 0 <= seller_amountLeft;
-    file_log("0 <= seller_amountLeft: %s [0 <= %d]\n", toString(f3), seller_amountLeft);
-
-    bool f4 = 0 <= buyer_amountLeft;
-    file_log("0 <= buyer_amountLeft: %s [0 <= %d]\n", toString(f4), buyer_amountLeft);
-
-    bool f5 = seller_amountOffered == seller_amountLeft + buyer_amountGot;
-    file_log("seller_amountOffered == seller_amountLeft + buyer_amountGot: %s [%d == %d + %d]\n", toString(f5), seller_amountOffered, seller_amountLeft, buyer_amountGot);
-
-    bool f6 = buyer_amountOffered == buyer_amountLeft + seller_amountGot;
-    file_log("buyer_amountOffered == buyer_amountLeft + seller_amountGot: %s [%d == %d + %d]\n", toString(f6), buyer_amountOffered, buyer_amountLeft, seller_amountGot);
-
-    file_log("POSTCONDITIONS PASSED: %s\n", toString(f1 && f2 && f3 && f4 && f5 && f6));
-    file_log("---------------------------\n");
-}
-
 // find the best match on the market
 // NOTE: sometimes I refer to the older order as seller & the newer order as buyer, in this trade
 // INPUT: property, desprop, desprice = of the new order being inserted; the new object being processed
@@ -207,8 +135,6 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             ///////////////////////////
 
-            ShowPreconditions(*pold, *pnew);
-
             // preconditions
             assert(0 < pold->getAmountRemaining());
             assert(0 < pnew->getAmountRemaining());
@@ -272,12 +198,6 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
                 buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountLeft);
 
             ///////////////////////////
-
-            ShowPostconditions(
-                    seller_amountLeft, buyer_amountLeft,
-                    seller_amountForSale, buyer_amountOffered,
-                    buyer_amountGot, seller_amountGot,
-                    xEffectivePrice, *pold, *pnew);
 
             // postconditions
             assert(xEffectivePrice >= pold->unitPrice());

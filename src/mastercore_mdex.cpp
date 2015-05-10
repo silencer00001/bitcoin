@@ -161,9 +161,8 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             }
 
             if (nCouldBuy == 0) {
-                if (msc_debug_metadex1) {
-                    file_log("-- buyer has not enough tokens for sale to purchase one unit!\n");
-                }
+                if (msc_debug_metadex1) file_log(
+                        "-- buyer has not enough tokens for sale to purchase one unit!\n");
                 ++iitt;
                 continue;
             }
@@ -181,9 +180,8 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             const rational_t xEffectivePrice(nWouldPay, nCouldBuy);
 
             if (xEffectivePrice > pnew->inversePrice()) {
-                if (msc_debug_metadex1) {
-                    file_log("-- effective price is too expensive: %s\n", xToString(xEffectivePrice));
-                }
+                if (msc_debug_metadex1) file_log(
+                        "-- effective price is too expensive: %s\n", xToString(xEffectivePrice));
                 ++iitt;
                 continue;
             }

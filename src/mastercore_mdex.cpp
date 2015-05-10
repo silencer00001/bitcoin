@@ -106,9 +106,9 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
         md_Set* const pofferSet = &(my_it->second);
 
         // at good (single) price level and property iterate over offers looking at all parameters to find the match
-        md_Set::iterator iitt = pofferSet->begin();
-        while (iitt != pofferSet->end()) { // specific price, check all properties
-            const CMPMetaDEx* const pold = &(*iitt);
+        md_Set::iterator offerIt = pofferSet->begin();
+        while (offerIt != pofferSet->end()) { // specific price, check all properties
+            const CMPMetaDEx* const pold = &(*offerIt);
             assert(pold->unitPrice() == sellers_price);
 
             if (msc_debug_metadex1) file_log("Looking at existing: %s (its prop= %u, its des prop= %u) = %s\n",
@@ -116,7 +116,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             // is the desired property correct?
             if (pold->getDesProperty() != prop) {
-                ++iitt;
+                ++offerIt;
                 continue;
             }
 
@@ -163,7 +163,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             if (nCouldBuy == 0) {
                 if (msc_debug_metadex1) file_log(
                         "-- buyer has not enough tokens for sale to purchase one unit!\n");
-                ++iitt;
+                ++offerIt;
                 continue;
             }
 
@@ -182,7 +182,7 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             if (xEffectivePrice > pnew->inversePrice()) {
                 if (msc_debug_metadex1) file_log(
                         "-- effective price is too expensive: %s\n", xToString(xEffectivePrice));
-                ++iitt;
+                ++offerIt;
                 continue;
             }
 
@@ -239,9 +239,9 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             t_tradelistdb->recordTrade(pold->getHash(), pnew->getHash(), // < might just pass pold, pnew
                 pold->getAddr(), pnew->getAddr(), pold->getDesProperty(), pnew->getDesProperty(), seller_amountGot, buyer_amountGot, pnew->getBlock());
 
-            if (msc_debug_metadex1) file_log("++ erased old: %s\n", iitt->ToString());
+            if (msc_debug_metadex1) file_log("++ erased old: %s\n", offerIt->ToString());
             // erase the old seller element
-            pofferSet->erase(iitt++);
+            pofferSet->erase(offerIt++);
 
             // insert the updated one in place of the old
             if (0 < seller_replacement.getAmountRemaining()) {

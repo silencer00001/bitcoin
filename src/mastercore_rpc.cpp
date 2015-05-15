@@ -291,7 +291,7 @@ if (fHelp || params.size() < 2 || params.size() > 5)
         );
 
   std::string fromAddress = ParseAddress(params[0]);
-  std::string hexTransaction = (params[1].get_str());
+  std::vector<unsigned char> data = ParseHexV(params[1], "parameter 2");
   std::string toAddress = (params.size() > 2) ? ParseAddress(params[2]): "";
   std::string redeemAddress = (params.size() > 3) ? ParseAddress(params[3]): "";
 
@@ -303,7 +303,6 @@ if (fHelp || params.size() < 2 || params.size() > 5)
   //some sanity checking of the data supplied?
   uint256 newTX;
   string rawHex;
-  std::vector<unsigned char> data = ParseHex(hexTransaction);
   int result = ClassAgnosticWalletTXBuilder(fromAddress, toAddress, redeemAddress, referenceAmount, data, newTX, rawHex, autoCommit);
 
   // check error and return the txid (or raw hex depending on autocommit)
@@ -1572,8 +1571,7 @@ Value gettransaction_MP(const Array& params, bool fHelp)
             + HelpExampleRpc("gettransaction_MP", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
         );
 
-    uint256 hash;
-    hash.SetHex(params[0].get_str());
+    uint256 hash = ParseHashV(params[0], "parameter 1");
     Object txobj;
     // make a request to new RPC populator function to populate a transaction object
     int populateResult = populateRPCTransactionObject(hash, &txobj);
@@ -1821,8 +1819,7 @@ Value getsto_MP(const Array& params, bool fHelp)
             + HelpExampleRpc("getsto_MP", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
         );
 
-    uint256 hash;
-    hash.SetHex(params[0].get_str());
+    uint256 hash = ParseHashV(params[0], "parameter 1");
     std::string filterAddress;
     if (params.size() == 2) {
         filterAddress = ParseAddress(params[1]);
@@ -1898,8 +1895,7 @@ Value gettrade_MP(const Array& params, bool fHelp)
         );
 
     // Prepare a few vars
-    uint256 hash;
-    Object tradeobj;
+    uint256 hash = ParseHashV(params[0], "parameter 1");
     Object txobj;
     CMPMetaDEx temp_metadexoffer;
     CTransaction wtx;
@@ -1909,7 +1905,6 @@ Value gettrade_MP(const Array& params, bool fHelp)
     CMPTransaction mp_obj;
 
     // Obtain the transaction
-    hash.SetHex(params[0].get_str());
     if (!GetTransaction(hash, wtx, blockHash, true)) { return MP_TX_NOT_FOUND; }
 
     // Ensure it can be parsed OK

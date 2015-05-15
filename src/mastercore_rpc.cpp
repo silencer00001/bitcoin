@@ -255,15 +255,9 @@ Value getbalance_MP(const Array& params, bool fHelp)
         );
 
     std::string address = ParseAddress(params[0]);
-    int64_t tmpPropertyId = params[1].get_int64();
-    if ((1 > tmpPropertyId) || (4294967295 < tmpPropertyId)) // not safe to do conversion
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid property identifier");
 
-    unsigned int propertyId = int(tmpPropertyId);
     CMPSPInfo::Entry sp;
-    if (false == _my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-    }
+    uint32_t propertyId = ParsePropertyId(params[1], sp);
 
     Object balance_obj;
     BalanceToJSON(address, propertyId, balance_obj, isPropertyDivisible(propertyId));
@@ -337,15 +331,8 @@ Value getallbalancesforid_MP(const Array& params, bool fHelp)
             + HelpExampleRpc("getallbalancesforid_MP", "1")
         );
 
-    int64_t tmpPropertyId = params[0].get_int64();
-    if ((1 > tmpPropertyId) || (4294967295 < tmpPropertyId)) // not safe to do conversion
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid property identifier");
-
-    unsigned int propertyId = int(tmpPropertyId);
     CMPSPInfo::Entry sp;
-    if (false == _my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-    }
+    uint32_t propertyId = ParsePropertyId(params[0], sp);
 
     Array response;
     bool divisible = isPropertyDivisible(propertyId); // we want to check this BEFORE the loop
@@ -442,15 +429,8 @@ Value getproperty_MP(const Array& params, bool fHelp)
             + HelpExampleRpc("getproperty_MP", "3")
         );
 
-    int64_t tmpPropertyId = params[0].get_int64();
-    if ((1 > tmpPropertyId) || (4294967295 < tmpPropertyId)) // not safe to do conversion
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid property identifier");
-
-    unsigned int propertyId = int(tmpPropertyId);
     CMPSPInfo::Entry sp;
-    if (false == _my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-    }
+    uint32_t propertyId = ParsePropertyId(params[0], sp);
 
     int64_t nTotalTokens = getTotalTokens(propertyId);
     std::string strCreationHash = sp.txid.GetHex();
@@ -552,15 +532,8 @@ Value getcrowdsale_MP(const Array& params, bool fHelp)
             + HelpExampleRpc("getcrowdsale_MP", "3")
         );
 
-    int64_t tmpPropertyId = params[0].get_int64();
-    if ((1 > tmpPropertyId) || (4294967295 < tmpPropertyId)) // not safe to do conversion
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid property identifier");
-
-    unsigned int propertyId = int(tmpPropertyId);
     CMPSPInfo::Entry sp;
-    if (false == _my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-    }
+    uint32_t propertyId = ParsePropertyId(params[0], sp);
 
     bool showVerbose = false;
     if (params.size() > 1) showVerbose = params[1].get_bool();
@@ -775,15 +748,8 @@ Value getgrants_MP(const Array& params, bool fHelp)
             + HelpExampleRpc("getgrants_MP", "3")
         );
 
-    int64_t tmpPropertyId = params[0].get_int64();
-    if ((1 > tmpPropertyId) || (4294967295 < tmpPropertyId)) // not safe to do conversion
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid property identifier");
-
-    unsigned int propertyId = int(tmpPropertyId);
     CMPSPInfo::Entry sp;
-    if (false == _my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-    }
+    uint32_t propertyId = ParsePropertyId(params[0], sp);
 
     bool fixedIssuance = sp.fixed;
     bool manualIssuance = sp.manual;
@@ -794,8 +760,6 @@ Value getgrants_MP(const Array& params, bool fHelp)
 
     Object response;
 
-//    bool active = isCrowdsaleActive(propertyId);  // UNUSED WARNING
-//    bool divisible = sp.isDivisible(); // UNUSED WARNING
     string propertyName = sp.name;
     string issuer = sp.issuer;
     int64_t totalTokens = getTotalTokens(propertyId);
@@ -831,17 +795,6 @@ Value getgrants_MP(const Array& params, bool fHelp)
     return response;
 }
 
-int check_prop_valid(int64_t tmpPropId, string error, string exist_error ) {
-  CMPSPInfo::Entry sp;
-
-  if ((1 > tmpPropId) || (4294967295 < tmpPropId)) 
-    throw JSONRPCError(RPC_INVALID_PARAMETER, error);
-  if (false == _my_sps->getSP(tmpPropId, sp)) 
-    throw JSONRPCError(RPC_INVALID_PARAMETER, exist_error);
-
-  return tmpPropId;
-}
-
 Value getorderbook_MP(const Array& params, bool fHelp)
 {
    if (fHelp || params.size() < 1)
@@ -854,14 +807,14 @@ Value getorderbook_MP(const Array& params, bool fHelp)
             "2. property_id2         (int, optional) property owned to put up on sale\n"
         );
 
-  unsigned int propertyIdSaleFilter = 0, propertyIdWantFilter = 0;
+  uint32_t propertyIdSaleFilter = 0, propertyIdWantFilter = 0;
 
   bool filter_by_desired = (params.size() == 2) ? true : false;
 
-  propertyIdSaleFilter = check_prop_valid( params[0].get_int64() , "Invalid property identifier (Sale)", "Property identifier does not exist (Sale)"); 
+  propertyIdSaleFilter = ParsePropertyId(params[0]);
 
-  if ( filter_by_desired ) {
-    propertyIdWantFilter = check_prop_valid( params[1].get_int64() , "Invalid property identifier (Want)", "Property identifier does not exist (Want)"); 
+  if (filter_by_desired) {
+    propertyIdWantFilter = ParsePropertyId(params[1]);
   }
 
   //for each address
@@ -907,19 +860,19 @@ Value gettradessince_MP(const Array& params, bool fHelp)
             "3. property_id2            (int, optional) filter orders by property_id1 and property_id2\n"
         );
 
-  unsigned int propertyIdSaleFilter = 0, propertyIdWantFilter = 0;
+  uint32_t propertyIdSaleFilter = 0, propertyIdWantFilter = 0;
 
   uint64_t timestamp = (params.size() > 0) ? params[0].get_int64() : GetLatestBlockTime() - 1209600; //2 weeks 
 
-  bool filter_by_one = (params.size() > 1) ? true : false;
-  bool filter_by_both = (params.size() > 2) ? true : false;
+  bool filter_by_one = (params.size() > 1);
+  bool filter_by_both = (params.size() > 2);
 
-  if( filter_by_one ) {
-    propertyIdSaleFilter = check_prop_valid( params[1].get_int64() , "Invalid property identifier (Sale)", "Property identifier does not exist (Sale)"); 
+  if (filter_by_one) {
+    propertyIdSaleFilter = ParsePropertyId(params[1]);
   }
 
-  if ( filter_by_both ) {
-    propertyIdWantFilter = check_prop_valid( params[2].get_int64() , "Invalid property identifier (Want)", "Property identifier does not exist (Want)"); 
+  if (filter_by_both ) {
+    propertyIdWantFilter = ParsePropertyId(params[2]);
   }
   
   std::vector<CMPMetaDEx> vMetaDexObjects;
@@ -992,13 +945,13 @@ Value gettradehistory_MP(const Array& params, bool fHelp)
         );
 
   std::string address = ParseAddress(params[0]);
-  unsigned int number_trades = (params.size() == 2 ? (unsigned int) params[1].get_int64() : 512);
+  unsigned int number_trades = (params.size() > 1 ? (unsigned int) params[1].get_int64() : 512);
   unsigned int propertyIdFilter = 0;
 
-  bool filter_by_one = (params.size() == 3) ? true : false;
+  bool filter_by_one = (params.size() > 2);
 
-  if( filter_by_one ) {
-    propertyIdFilter = check_prop_valid( params[2].get_int64() , "Invalid property identifier (Sale)", "Property identifier does not exist (Sale)"); 
+  if (filter_by_one) {
+    propertyIdFilter = ParsePropertyId(params[2]);
   }
   
   std::vector<CMPMetaDEx> vMetaDexObjects;

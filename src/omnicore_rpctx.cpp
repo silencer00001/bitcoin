@@ -39,13 +39,6 @@ using std::vector;
 using namespace json_spirit;
 using namespace mastercore;
 
-uint32_t int64Touint32Safe(int64_t sourceValue)
-{
-    if ((0 > sourceValue) || (4294967295 < sourceValue)) return 0; // not safe to do conversion
-    unsigned int destValue = int(sourceValue);
-    return destValue;
-}
-
 // send_OMNI - simple send
 Value send_OMNI(const Array& params, bool fHelp)
 {
@@ -69,17 +62,19 @@ Value send_OMNI(const Array& params, bool fHelp)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
     std::string toAddress = ParseAddress(params[1]);
-    unsigned int propertyId = int64Touint32Safe(params[2].get_int64());
+
+    CMPSPInfo::Entry sp;
+    uint32_t propertyId = ParsePropertyId(params[2], sp);
+
     string strAmount = params[3].get_str();
     std::string redeemAddress = (params.size() > 4) ? ParseAddress(params[4]): "";
     std::string strReferenceAmount = (params.size() > 5) ? (params[5].get_str()): "0";
+
     const int64_t senderBalance = getMPbalance(fromAddress, propertyId, BALANCE);
     const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyId);
 
     // perform conversions
     int64_t amount = 0, referenceAmount = 0;
-    CMPSPInfo::Entry sp;
-    if (false == _my_sps->getSP(propertyId, sp)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
     amount = StrToInt64(strAmount, sp.isDivisible());
     referenceAmount = StrToInt64(strReferenceAmount, true);
 
@@ -134,7 +129,7 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
-    unsigned int propertyIdForSale = int64Touint32Safe(params[1].get_int64());
+    uint32_t propertyIdForSale = ParsePropertyId(params[1]);
     string strAmountForSale = params[2].get_str();
     string strAmountDesired = params[3].get_str();
     int64_t paymentWindow = params[4].get_int64();
@@ -208,7 +203,7 @@ Value senddexaccept_OMNI(const Array& params, bool fHelp)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
     std::string toAddress = ParseAddress(params[1]);
-    unsigned int propertyId = int64Touint32Safe(params[2].get_int64());
+    uint32_t propertyId = ParsePropertyId(params[2]);
     string strAmount = params[3].get_str();
     bool override = false;
     if (params.size() > 4) override = params[4].get_bool();
@@ -296,13 +291,13 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
     std::string fromAddress = ParseAddress(params[0]);
     int64_t ecosystem = params[1].get_int64();
     int64_t type = params[2].get_int64();
-    unsigned int previousId = int64Touint32Safe(params[3].get_int64());
+    uint32_t previousId = params[3].get_uint64(); // TODO: deal with 0
     std::string category = params[4].get_str();
     std::string subcategory = params[5].get_str();
     std::string name = params[6].get_str();
     std::string url = params[7].get_str();
     std::string data = params[8].get_str();
-    unsigned int propertyIdDesired = int64Touint32Safe(params[9].get_int64());
+    uint32_t propertyIdDesired = ParsePropertyId(params[9]);
     std::string numTokensStr = params[10].get_str();
     int64_t deadline = params[11].get_int64();
     int64_t earlyBonus = params[12].get_int64();
@@ -317,8 +312,6 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
     }
 
     // perform checks
-    CMPSPInfo::Entry sp;
-    if (false == _my_sps->getSP(propertyIdDesired, sp)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property desired does not exist");
     if ((type > 2) || (type <= 0)) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid type");
     if ((ecosystem > 2) || (ecosystem <= 0)) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid ecosystem");
     if (previousId != 0) throw JSONRPCError(RPC_TYPE_ERROR, "Property appends/replaces are not yet supported");
@@ -376,7 +369,7 @@ Value sendissuancefixed_OMNI(const Array& params, bool fHelp)
     std::string fromAddress = ParseAddress(params[0]);
     int64_t ecosystem = params[1].get_int64();
     int64_t type = params[2].get_int64();
-    unsigned int previousId = int64Touint32Safe(params[3].get_int64());
+    uint32_t previousId = params[3].get_uint64(); // TODO: deal with 0
     std::string category = params[4].get_str();
     std::string subcategory = params[5].get_str();
     std::string name = params[6].get_str();
@@ -447,7 +440,7 @@ Value sendissuancemanaged_OMNI(const Array& params, bool fHelp)
     std::string fromAddress = ParseAddress(params[0]);
     int64_t ecosystem = params[1].get_int64();
     int64_t type = params[2].get_int64();
-    unsigned int previousId = int64Touint32Safe(params[3].get_int64());
+    uint32_t previousId = params[3].get_uint64(); // TODO: deal with 0
     std::string category = params[4].get_str();
     std::string subcategory = params[5].get_str();
     std::string name = params[6].get_str();
@@ -500,18 +493,14 @@ Value sendsto_OMNI(const Array& params, bool fHelp)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
-    unsigned int propertyId = int64Touint32Safe(params[1].get_int64());
+    uint32_t propertyId = ParsePropertyId(params[1]);
     string strAmount = params[2].get_str();
     std::string redeemAddress = (params.size() > 3) ? (params[3].get_str()): "";
     const int64_t senderBalance = getMPbalance(fromAddress, propertyId, BALANCE);
     const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyId);
 
     // perform conversions
-    int64_t amount = 0;
-    CMPSPInfo::Entry sp;
-    if (false == _my_sps->getSP(propertyId, sp)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-    amount = StrToInt64(strAmount, sp.isDivisible());
-
+    int64_t amount = StrToInt64(strAmount, isPropertyDivisible(propertyId));
     // perform checks
     if (0 >= amount) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
     if (!isRangeOK(amount)) throw JSONRPCError(RPC_TYPE_ERROR, "Input not in range");
@@ -565,15 +554,13 @@ Value sendgrant_OMNI(const Array& params, bool fHelp)
     if (!params[1].get_str().empty()) {
         toAddress = ParseAddress(params[1]);
     }
-    unsigned int propertyId = int64Touint32Safe(params[2].get_int64());
+    CMPSPInfo::Entry sp;
+    uint32_t propertyId = ParsePropertyId(params[2], sp);
     string strAmount = params[3].get_str();
     std::string memo = (params.size() > 4) ? (params[4].get_str()): "";
 
     // perform conversions
-    int64_t amount = 0;
-    CMPSPInfo::Entry sp;
-    if (false == _my_sps->getSP(propertyId, sp)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-    amount = StrToInt64(strAmount, sp.isDivisible());
+    int64_t amount = StrToInt64(strAmount, sp.isDivisible());
 
     // perform checks
     if (0 >= amount) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
@@ -621,17 +608,15 @@ Value sendrevoke_OMNI(const Array& params, bool fHelp)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
-    unsigned int propertyId = int64Touint32Safe(params[1].get_int64());
+    CMPSPInfo::Entry sp;
+    uint32_t propertyId = ParsePropertyId(params[1], sp);
     string strAmount = params[2].get_str();
     std::string memo = (params.size() > 3) ? (params[3].get_str()): "";
     const int64_t senderBalance = getMPbalance(fromAddress, propertyId, BALANCE);
     const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyId);
 
     // perform conversions
-    int64_t amount = 0;
-    CMPSPInfo::Entry sp;
-    if (false == _my_sps->getSP(propertyId, sp)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-    amount = StrToInt64(strAmount, sp.isDivisible());
+    int64_t amount = StrToInt64(strAmount, sp.isDivisible());
 
     // perform checks
     if (0 >= amount) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
@@ -678,11 +663,8 @@ Value sendclosecrowdsale_OMNI(const Array& params, bool fHelp)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
-    unsigned int propertyId = int64Touint32Safe(params[1].get_int64());
-
-    // perform conversions
     CMPSPInfo::Entry sp;
-    if (false == _my_sps->getSP(propertyId, sp)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
+    uint32_t propertyId = ParsePropertyId(params[1], sp);
 
     // perform checks
     if (!isCrowdsaleActive(propertyId)) throw JSONRPCError(RPC_TYPE_ERROR, "The specified property does not have a crowdsale active");
@@ -730,10 +712,10 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
-    unsigned int propertyIdForSale = int64Touint32Safe(params[1].get_int64());
-    string strAmountForSale = params[2].get_str();
-    unsigned int propertyIdDesired = int64Touint32Safe(params[3].get_int64());
-    string strAmountDesired = params[4].get_str();
+    uint32_t propertyIdForSale = ParsePropertyIdUnchecked(params[1]);
+    std::string strAmountForSale = params[2].get_str();
+    uint32_t  propertyIdDesired = ParsePropertyIdUnchecked(params[3]);
+    std::string strAmountDesired = params[4].get_str();
     int64_t action = params[5].get_int64();
     const int64_t senderBalance = getMPbalance(fromAddress, propertyIdForSale, BALANCE);
     const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyIdForSale);
@@ -805,11 +787,8 @@ Value sendchangeissuer_OMNI(const Array& params, bool fHelp)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
     std::string toAddress = ParseAddress(params[1]);
-    unsigned int propertyId = int64Touint32Safe(params[2].get_int64());
-
-    // perform conversions
     CMPSPInfo::Entry sp;
-    if (false == _my_sps->getSP(propertyId, sp)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
+    uint32_t propertyId = ParsePropertyId(params[2], sp);
 
     // perform checks
     if (fromAddress != sp.issuer) throw JSONRPCError(RPC_TYPE_ERROR, "Sender is not authorized to transfer admnistration of this property");

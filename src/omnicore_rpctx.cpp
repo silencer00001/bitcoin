@@ -6,6 +6,7 @@
 #include "mastercore_convert.h"
 #include "mastercore_errors.h"
 #include "mastercore_parse_string.h"
+#include "mastercore_rpc_values.h"
 #include "mastercore_sp.h"
 #include "mastercore_dex.h"
 #include "mastercore_tx.h"
@@ -66,11 +67,11 @@ Value send_OMNI(const Array& params, bool fHelp)
         );
 
     // obtain parameters & info
-    std::string fromAddress = (params[0].get_str());
-    std::string toAddress = (params[1].get_str());
+    std::string fromAddress = ParseAddress(params[0]);
+    std::string toAddress = ParseAddress(params[1]);
     unsigned int propertyId = int64Touint32Safe(params[2].get_int64());
     string strAmount = params[3].get_str();
-    std::string redeemAddress = (params.size() > 4) ? (params[4].get_str()): "";
+    std::string redeemAddress = (params.size() > 4) ? ParseAddress(params[4]): "";
     std::string strReferenceAmount = (params.size() > 5) ? (params[5].get_str()): "0";
     const int64_t senderBalance = getMPbalance(fromAddress, propertyId, BALANCE);
     const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyId);
@@ -132,7 +133,7 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
         );
 
     // obtain parameters & info
-    std::string fromAddress = params[0].get_str();
+    std::string fromAddress = ParseAddress(params[0]);
     unsigned int propertyIdForSale = int64Touint32Safe(params[1].get_int64());
     string strAmountForSale = params[2].get_str();
     string strAmountDesired = params[3].get_str();
@@ -205,8 +206,8 @@ Value senddexaccept_OMNI(const Array& params, bool fHelp)
         );
 
     // obtain parameters & info
-    std::string fromAddress = (params[0].get_str());
-    std::string toAddress = (params[1].get_str());
+    std::string fromAddress = ParseAddress(params[0]);
+    std::string toAddress = ParseAddress(params[1]);
     unsigned int propertyId = int64Touint32Safe(params[2].get_int64());
     string strAmount = params[3].get_str();
     bool override = false;
@@ -292,7 +293,7 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
         );
 
     // obtain parameters & info
-    std::string fromAddress = params[0].get_str();
+    std::string fromAddress = ParseAddress(params[0]);
     int64_t ecosystem = params[1].get_int64();
     int64_t type = params[2].get_int64();
     unsigned int previousId = int64Touint32Safe(params[3].get_int64());
@@ -372,7 +373,7 @@ Value sendissuancefixed_OMNI(const Array& params, bool fHelp)
         );
 
     // obtain parameters & info
-    std::string fromAddress = params[0].get_str();
+    std::string fromAddress = ParseAddress(params[0]);
     int64_t ecosystem = params[1].get_int64();
     int64_t type = params[2].get_int64();
     unsigned int previousId = int64Touint32Safe(params[3].get_int64());
@@ -443,7 +444,7 @@ Value sendissuancemanaged_OMNI(const Array& params, bool fHelp)
         );
 
     // obtain parameters & info
-    std::string fromAddress = params[0].get_str();
+    std::string fromAddress = ParseAddress(params[0]);
     int64_t ecosystem = params[1].get_int64();
     int64_t type = params[2].get_int64();
     unsigned int previousId = int64Touint32Safe(params[3].get_int64());
@@ -498,7 +499,7 @@ Value sendsto_OMNI(const Array& params, bool fHelp)
         );
 
     // obtain parameters & info
-    std::string fromAddress = (params[0].get_str());
+    std::string fromAddress = ParseAddress(params[0]);
     unsigned int propertyId = int64Touint32Safe(params[1].get_int64());
     string strAmount = params[2].get_str();
     std::string redeemAddress = (params.size() > 3) ? (params[3].get_str()): "";
@@ -559,8 +560,11 @@ Value sendgrant_OMNI(const Array& params, bool fHelp)
         );
 
     // obtain parameters & info
-    std::string fromAddress = (params[0].get_str());
-    std::string toAddress = (params[1].get_str());
+    std::string fromAddress = ParseAddress(params[0].get_str());
+    std::string toAddress = fromAddress;
+    if (!params[1].get_str().empty()) {
+        toAddress = ParseAddress(params[1]);
+    }
     unsigned int propertyId = int64Touint32Safe(params[2].get_int64());
     string strAmount = params[3].get_str();
     std::string memo = (params.size() > 4) ? (params[4].get_str()): "";
@@ -616,7 +620,7 @@ Value sendrevoke_OMNI(const Array& params, bool fHelp)
         );
 
     // obtain parameters & info
-    std::string fromAddress = (params[0].get_str());
+    std::string fromAddress = ParseAddress(params[0]);
     unsigned int propertyId = int64Touint32Safe(params[1].get_int64());
     string strAmount = params[2].get_str();
     std::string memo = (params.size() > 3) ? (params[3].get_str()): "";
@@ -673,7 +677,7 @@ Value sendclosecrowdsale_OMNI(const Array& params, bool fHelp)
         );
 
     // obtain parameters & info
-    std::string fromAddress = (params[0].get_str());
+    std::string fromAddress = ParseAddress(params[0]);
     unsigned int propertyId = int64Touint32Safe(params[1].get_int64());
 
     // perform conversions
@@ -725,7 +729,7 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
         );
 
     // obtain parameters & info
-    std::string fromAddress = params[0].get_str();
+    std::string fromAddress = ParseAddress(params[0]);
     unsigned int propertyIdForSale = int64Touint32Safe(params[1].get_int64());
     string strAmountForSale = params[2].get_str();
     unsigned int propertyIdDesired = int64Touint32Safe(params[3].get_int64());
@@ -799,8 +803,8 @@ Value sendchangeissuer_OMNI(const Array& params, bool fHelp)
         );
 
     // obtain parameters & info
-    std::string fromAddress = (params[0].get_str());
-    std::string toAddress = (params[1].get_str());
+    std::string fromAddress = ParseAddress(params[0]);
+    std::string toAddress = ParseAddress(params[1]);
     unsigned int propertyId = int64Touint32Safe(params[2].get_int64());
 
     // perform conversions

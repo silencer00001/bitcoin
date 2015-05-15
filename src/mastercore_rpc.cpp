@@ -9,6 +9,7 @@
 #include "mastercore_log.h"
 #include "mastercore_mdex.h"
 #include "mastercore_parse_string.h"
+#include "mastercore_rpc_values.h"
 #include "mastercore_sp.h"
 #include "mastercore_tx.h"
 #include "mastercore_version.h"
@@ -252,7 +253,8 @@ Value getbalance_MP(const Array& params, bool fHelp)
             "\nExamples:\n"
             ">mastercored getbalance_MP 1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P 1\n"
         );
-    std::string address = params[0].get_str();
+
+    std::string address = ParseAddress(params[0]);
     int64_t tmpPropertyId = params[1].get_int64();
     if ((1 > tmpPropertyId) || (4294967295 < tmpPropertyId)) // not safe to do conversion
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid property identifier");
@@ -288,10 +290,10 @@ if (fHelp || params.size() < 2 || params.size() > 5)
             ">mastercored sendrawtx_MP 1FromAddress <tx bytes hex> 1ToAddress 1RedeemAddress\n"
         );
 
-  std::string fromAddress = (params[0].get_str());
+  std::string fromAddress = ParseAddress(params[0]);
   std::string hexTransaction = (params[1].get_str());
-  std::string toAddress = (params.size() > 2) ? (params[2].get_str()): "";
-  std::string redeemAddress = (params.size() > 3) ? (params[3].get_str()): "";
+  std::string toAddress = (params.size() > 2) ? ParseAddress(params[2]): "";
+  std::string redeemAddress = (params.size() > 3) ? ParseAddress(params[3]): "";
 
   int64_t referenceAmount = 0;
 
@@ -373,8 +375,6 @@ return response;
 
 Value getallbalancesforaddress_MP(const Array& params, bool fHelp)
 {
-   string address;
-
    if (fHelp || params.size() != 1)
         throw runtime_error(
             "getallbalancesforaddress_MP \"address\"\n"
@@ -393,9 +393,7 @@ Value getallbalancesforaddress_MP(const Array& params, bool fHelp)
             + HelpExampleRpc("getallbalancesforaddress_MP", "address")
         );
 
-    address = params[0].get_str();
-    if (address.empty())
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid address");
+    std::string address = ParseAddress(params[0]);
 
     Array response;
 
@@ -994,7 +992,7 @@ Value gettradehistory_MP(const Array& params, bool fHelp)
             "3. property_id         (int, optional) filter by propertyid on one side\n"
         );
 
-  string address = params[0].get_str();
+  std::string address = ParseAddress(params[0]);
   unsigned int number_trades = (params.size() == 2 ? (unsigned int) params[1].get_int64() : 512);
   unsigned int propertyIdFilter = 0;
 
@@ -1056,7 +1054,7 @@ Value getactivedexsells_MP(const Array& params, bool fHelp)
 
       if (params.size() > 0)
       {
-          addressParam = params[0].get_str();
+          addressParam = ParseAddress(params[0]);
           addressFilter = true;
       }
 
@@ -1623,8 +1621,7 @@ Value listtransactions_MP(const Array& params, bool fHelp)
         );
 
     CWallet *wallet = pwalletMain;
-    string sAddress = "";
-    string addressParam = "";
+    std::string addressParam;
     bool addressFilter;
 
     //if 0 params consider all addresses in wallet, otherwise first param is filter address
@@ -1634,7 +1631,7 @@ Value listtransactions_MP(const Array& params, bool fHelp)
         // allow setting "" or "*" to use nCount and nFrom params with all addresses in wallet
         if ( ("*" != params[0].get_str()) && ("" != params[0].get_str()) )
         {
-            addressParam = params[0].get_str();
+            addressParam = ParseAddress(params[0]);
             addressFilter = true;
         }
     }
@@ -1826,8 +1823,10 @@ Value getsto_MP(const Array& params, bool fHelp)
 
     uint256 hash;
     hash.SetHex(params[0].get_str());
-    string filterAddress = "";
-    if (params.size() == 2) filterAddress=params[1].get_str();
+    std::string filterAddress;
+    if (params.size() == 2) {
+        filterAddress = ParseAddress(params[1]);
+    }
     Object txobj;
     CTransaction wtx;
     uint256 blockHash = 0;

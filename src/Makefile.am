@@ -163,6 +163,7 @@ OMNICORE_H = \
   mastercore_parse_string.h \
   mastercore_persistence.h \
   mastercore_rpc.h \
+  mastercore_rpc_values.h \
   mastercore_script.h \
   mastercore_sp.h \
   mastercore_tx.h \
@@ -182,6 +183,7 @@ OMNICORE_CPP = \
   mastercore_parse_string.cpp \
   mastercore_persistence.cpp \
   mastercore_rpc.cpp \
+  mastercore_rpc_values.cpp \
   mastercore_script.cpp \
   mastercore_sp.cpp \
   mastercore_tx.cpp \

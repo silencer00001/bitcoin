@@ -8,7 +8,6 @@
 #include "mastercore_errors.h"
 #include "mastercore_log.h"
 #include "mastercore_mdex.h"
-#include "mastercore_parse_string.h"
 #include "mastercore_rpc_values.h"
 #include "mastercore_sp.h"
 #include "mastercore_tx.h"
@@ -289,10 +288,10 @@ if (fHelp || params.size() < 2 || params.size() > 5)
   std::string toAddress = (params.size() > 2) ? ParseAddress(params[2]): "";
   std::string redeemAddress = (params.size() > 3) ? ParseAddress(params[3]): "";
 
-  int64_t referenceAmount = 0;
-
-  if (params.size() > 4)
-      referenceAmount = StrToInt64(params[4].get_str(), true);
+    int64_t referenceAmount = 0;
+    if (params.size() > 4) {
+        referenceAmount = ParseAmount(params[4], true);
+    }
 
   //some sanity checking of the data supplied?
   uint256 newTX;

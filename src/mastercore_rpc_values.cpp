@@ -1,11 +1,13 @@
 #include "mastercore_rpc_values.h"
 
 #include "mastercore_sp.h"
+#include "mastercore_parse_string.h"
 
 #include "base58.h"
 #include "rpcprotocol.h"
 
 #include "json/json_spirit_value.h"
+
 
 #include <string>
 
@@ -44,5 +46,17 @@ uint32_t ParsePropertyId(const json_spirit::Value& value)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
     }
     return propertyId;
+}
+
+int64_t ParseAmount(const json_spirit::Value& value, bool fDivisible)
+{
+    int64_t amount = mastercore::StrToInt64(value.get_str(), fDivisible);
+    if (amount <= 0) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
+    }
+    if (!isRangeOK(amount)) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Input not in range");
+    }
+    return amount;
 }
 

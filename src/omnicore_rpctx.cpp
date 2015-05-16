@@ -66,22 +66,19 @@ Value send_OMNI(const Array& params, bool fHelp)
     CMPSPInfo::Entry sp;
     uint32_t propertyId = ParsePropertyId(params[2], sp);
 
-    string strAmount = params[3].get_str();
+    int64_t amount = ParseAmount(params[3], sp.isDivisible());
     std::string redeemAddress = (params.size() > 4) ? ParseAddress(params[4]): "";
-    std::string strReferenceAmount = (params.size() > 5) ? (params[5].get_str()): "0";
+
+    int64_t referenceAmount = 0;
+    if (params.size() > 5) {
+        referenceAmount = ParseAmount(params[5], true);
+    }
 
     const int64_t senderBalance = getMPbalance(fromAddress, propertyId, BALANCE);
     const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyId);
 
-    // perform conversions
-    int64_t amount = 0, referenceAmount = 0;
-    amount = StrToInt64(strAmount, sp.isDivisible());
-    referenceAmount = StrToInt64(strReferenceAmount, true);
-
     // perform checks
-    if (0 >= amount) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
     if ((0.01 * COIN) < referenceAmount) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid reference amount");
-    if (!isRangeOK(amount)) throw JSONRPCError(RPC_TYPE_ERROR, "Input not in range");
     if (senderBalance < amount) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
     if (senderAvailableBalance < amount) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
 
@@ -204,18 +201,12 @@ Value senddexaccept_OMNI(const Array& params, bool fHelp)
     std::string fromAddress = ParseAddress(params[0]);
     std::string toAddress = ParseAddress(params[1]);
     uint32_t propertyId = ParsePropertyId(params[2]);
-    string strAmount = params[3].get_str();
+    int64_t amount = ParseAmount(params[2], true); // MSC/TMSC always divisible
     bool override = false;
     if (params.size() > 4) override = params[4].get_bool();
 
-    // perform conversions
-    int64_t amount = 0;
-    if ((propertyId > 2 || propertyId <=0)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid propertyID - only 1 and 2 are permitted");
-    amount = StrToInt64(strAmount, true); // MSC/TMSC always divisible
-
     // perform checks
-    if (0 >= amount) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
-    if (!isRangeOK(amount)) throw JSONRPCError(RPC_TYPE_ERROR, "Input not in range");
+    if (propertyId > 2 || propertyId <= 0) throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid propertyID - only 1 and 2 are permitted");
     if (!DEx_offerExists(toAddress, propertyId)) throw JSONRPCError(RPC_TYPE_ERROR, "There is no matching sell offer on the distributed exchange");
 
     // retrieve the sell we're accepting and obtain the required minimum fee and payment window
@@ -298,18 +289,10 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
     std::string url = params[7].get_str();
     std::string data = params[8].get_str();
     uint32_t propertyIdDesired = ParsePropertyId(params[9]);
-    std::string numTokensStr = params[10].get_str();
+    int64_t numTokens = ParseAmount(params[10], (type == 2)); // 1 = indivisible, 2 = divisible
     int64_t deadline = params[11].get_int64();
     int64_t earlyBonus = params[12].get_int64();
     int64_t issuerPercentage = params[13].get_int64();
-
-    // perform conversions
-    int64_t numTokens = 0;
-    if (type == 1) {
-        numTokens = StrToInt64(numTokensStr, false);
-    } else { // only type 1 and 2 supported currently
-        numTokens = StrToInt64(numTokensStr, true);
-    }
 
     // perform checks
     if ((type > 2) || (type <= 0)) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid type");
@@ -318,8 +301,6 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
     if (name.empty()) throw JSONRPCError(RPC_TYPE_ERROR, "Property name cannot be empty");
     if ((earlyBonus <=0) || (earlyBonus > 255)) throw JSONRPCError(RPC_TYPE_ERROR, "Early bonus must be in the range 1-255");
     if ((issuerPercentage <=0) || (issuerPercentage > 255)) throw JSONRPCError(RPC_TYPE_ERROR, "Issuer percentage must be in the range 1-255");
-    if (0 >= numTokens) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid number of tokens per unit");
-    if (!isRangeOK(numTokens)) throw JSONRPCError(RPC_TYPE_ERROR, "Input not in range");
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_IssuanceVariable(ecosystem, type, previousId, category, subcategory, name, url, data, propertyIdDesired, numTokens, deadline, earlyBonus, issuerPercentage);
@@ -375,23 +356,13 @@ Value sendissuancefixed_OMNI(const Array& params, bool fHelp)
     std::string name = params[6].get_str();
     std::string url = params[7].get_str();
     std::string data = params[8].get_str();
-    string strAmount = params[9].get_str();
-
-    // perform conversions
-    int64_t amount = 0;
-    if (type == 1) {
-        amount = StrToInt64(strAmount, false);
-    } else { // only type 1 and 2 supported currently
-        amount = StrToInt64(strAmount, true);
-    }
+    int64_t amount = ParseAmount(params[9], (type == 2)); // 1 = indivisible, 2 = divisible
 
     // perform checks
     if ((type > 2) || (type <= 0)) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid type");
     if ((ecosystem > 2) || (ecosystem <= 0)) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid ecosystem");
     if (previousId != 0) throw JSONRPCError(RPC_TYPE_ERROR, "Property appends/replaces are not yet supported");
     if (name.empty()) throw JSONRPCError(RPC_TYPE_ERROR, "Property name cannot be empty");
-    if (0 >= amount) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
-    if (!isRangeOK(amount)) throw JSONRPCError(RPC_TYPE_ERROR, "Input not in range");
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_IssuanceFixed(ecosystem, type, previousId, category, subcategory, name, url, data, amount);
@@ -494,16 +465,11 @@ Value sendsto_OMNI(const Array& params, bool fHelp)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
     uint32_t propertyId = ParsePropertyId(params[1]);
-    string strAmount = params[2].get_str();
+    int64_t amount = ParseAmount(params[2], isPropertyDivisible(propertyId));
     std::string redeemAddress = (params.size() > 3) ? (params[3].get_str()): "";
     const int64_t senderBalance = getMPbalance(fromAddress, propertyId, BALANCE);
     const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyId);
 
-    // perform conversions
-    int64_t amount = StrToInt64(strAmount, isPropertyDivisible(propertyId));
-    // perform checks
-    if (0 >= amount) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
-    if (!isRangeOK(amount)) throw JSONRPCError(RPC_TYPE_ERROR, "Input not in range");
     if (senderBalance < amount) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
     if (senderAvailableBalance < amount) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
 
@@ -556,15 +522,10 @@ Value sendgrant_OMNI(const Array& params, bool fHelp)
     }
     CMPSPInfo::Entry sp;
     uint32_t propertyId = ParsePropertyId(params[2], sp);
-    string strAmount = params[3].get_str();
+    int64_t amount = ParseAmount(params[3], sp.isDivisible());
     std::string memo = (params.size() > 4) ? (params[4].get_str()): "";
 
-    // perform conversions
-    int64_t amount = StrToInt64(strAmount, sp.isDivisible());
-
     // perform checks
-    if (0 >= amount) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
-    if (!isRangeOK(amount)) throw JSONRPCError(RPC_TYPE_ERROR, "Input not in range");
     if (fromAddress != sp.issuer) throw JSONRPCError(RPC_TYPE_ERROR, "Sender is not authorized to grant tokens for this property");
 
     // create a payload for the transaction
@@ -610,17 +571,12 @@ Value sendrevoke_OMNI(const Array& params, bool fHelp)
     std::string fromAddress = ParseAddress(params[0]);
     CMPSPInfo::Entry sp;
     uint32_t propertyId = ParsePropertyId(params[1], sp);
-    string strAmount = params[2].get_str();
+    int64_t amount = ParseAmount(params[2], sp.isDivisible());
     std::string memo = (params.size() > 3) ? (params[3].get_str()): "";
     const int64_t senderBalance = getMPbalance(fromAddress, propertyId, BALANCE);
     const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyId);
 
-    // perform conversions
-    int64_t amount = StrToInt64(strAmount, sp.isDivisible());
-
     // perform checks
-    if (0 >= amount) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
-    if (!isRangeOK(amount)) throw JSONRPCError(RPC_TYPE_ERROR, "Input not in range");
     if (fromAddress != sp.issuer) throw JSONRPCError(RPC_TYPE_ERROR, "Sender is not authorized to revoke tokens for this property");
     if (senderBalance < amount) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
     if (senderAvailableBalance < amount) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");

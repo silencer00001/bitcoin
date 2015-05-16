@@ -280,7 +280,7 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
-    int64_t ecosystem = params[1].get_int64();
+    uint8_t ecosystem = ParseEcosystem(params[1]);
     int64_t type = params[2].get_int64();
     uint32_t previousId = params[3].get_uint64(); // TODO: deal with 0
     std::string category = params[4].get_str();
@@ -296,7 +296,6 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
 
     // perform checks
     if ((type > 2) || (type <= 0)) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid type");
-    if ((ecosystem > 2) || (ecosystem <= 0)) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid ecosystem");
     if (previousId != 0) throw JSONRPCError(RPC_TYPE_ERROR, "Property appends/replaces are not yet supported");
     if (name.empty()) throw JSONRPCError(RPC_TYPE_ERROR, "Property name cannot be empty");
     if ((earlyBonus <=0) || (earlyBonus > 255)) throw JSONRPCError(RPC_TYPE_ERROR, "Early bonus must be in the range 1-255");
@@ -348,7 +347,7 @@ Value sendissuancefixed_OMNI(const Array& params, bool fHelp)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
-    int64_t ecosystem = params[1].get_int64();
+    uint8_t ecosystem = ParseEcosystem(params[1]);
     int64_t type = params[2].get_int64();
     uint32_t previousId = params[3].get_uint64(); // TODO: deal with 0
     std::string category = params[4].get_str();
@@ -360,7 +359,6 @@ Value sendissuancefixed_OMNI(const Array& params, bool fHelp)
 
     // perform checks
     if ((type > 2) || (type <= 0)) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid type");
-    if ((ecosystem > 2) || (ecosystem <= 0)) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid ecosystem");
     if (previousId != 0) throw JSONRPCError(RPC_TYPE_ERROR, "Property appends/replaces are not yet supported");
     if (name.empty()) throw JSONRPCError(RPC_TYPE_ERROR, "Property name cannot be empty");
 
@@ -409,7 +407,7 @@ Value sendissuancemanaged_OMNI(const Array& params, bool fHelp)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
-    int64_t ecosystem = params[1].get_int64();
+    uint8_t ecosystem = ParseEcosystem(params[1]);
     int64_t type = params[2].get_int64();
     uint32_t previousId = params[3].get_uint64(); // TODO: deal with 0
     std::string category = params[4].get_str();
@@ -420,7 +418,6 @@ Value sendissuancemanaged_OMNI(const Array& params, bool fHelp)
 
     // perform checks
     if ((type > 2) || (type <= 0)) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid type");
-    if ((ecosystem > 2) || (ecosystem <= 0)) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid ecosystem");
     if (previousId != 0) throw JSONRPCError(RPC_TYPE_ERROR, "Property appends/replaces are not yet supported");
     if (name.empty()) throw JSONRPCError(RPC_TYPE_ERROR, "Property name cannot be empty");
 

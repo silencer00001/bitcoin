@@ -283,11 +283,11 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
     uint8_t ecosystem = ParseEcosystem(params[1]);
     uint16_t type = ParsePropertyType(params[2]);
     uint32_t previousId = ParsePreviousPropertyId(params[3]);
-    std::string category = params[4].get_str();
-    std::string subcategory = params[5].get_str();
-    std::string name = params[6].get_str();
-    std::string url = params[7].get_str();
-    std::string data = params[8].get_str();
+    std::string category = ParseText(params[4]);
+    std::string subcategory = ParseText(params[5]);
+    std::string name = ParseText(params[6]);
+    std::string url = ParseText(params[7]);
+    std::string data = ParseText(params[8]);
     uint32_t propertyIdDesired = ParsePropertyId(params[9]);
     int64_t numTokens = ParseAmount(params[10], (type == 2)); // 1 = indivisible, 2 = divisible
     int64_t deadline = params[11].get_int64();
@@ -348,11 +348,11 @@ Value sendissuancefixed_OMNI(const Array& params, bool fHelp)
     uint8_t ecosystem = ParseEcosystem(params[1]);
     uint16_t type = ParsePropertyType(params[2]);
     uint32_t previousId = ParsePreviousPropertyId(params[3]);
-    std::string category = params[4].get_str();
-    std::string subcategory = params[5].get_str();
-    std::string name = params[6].get_str();
-    std::string url = params[7].get_str();
-    std::string data = params[8].get_str();
+    std::string category = ParseText(params[4]);
+    std::string subcategory = ParseText(params[5]);
+    std::string name = ParseText(params[6]);
+    std::string url = ParseText(params[7]);
+    std::string data = ParseText(params[8]);
     int64_t amount = ParseAmount(params[9], (type == 2)); // 1 = indivisible, 2 = divisible
 
     // perform checks
@@ -406,11 +406,11 @@ Value sendissuancemanaged_OMNI(const Array& params, bool fHelp)
     uint8_t ecosystem = ParseEcosystem(params[1]);
     uint16_t type = ParsePropertyType(params[2]);
     uint32_t previousId = ParsePreviousPropertyId(params[3]);
-    std::string category = params[4].get_str();
-    std::string subcategory = params[5].get_str();
-    std::string name = params[6].get_str();
-    std::string url = params[7].get_str();
-    std::string data = params[8].get_str();
+    std::string category = ParseText(params[4]);
+    std::string subcategory = ParseText(params[5]);
+    std::string name = ParseText(params[6]);
+    std::string url = ParseText(params[7]);
+    std::string data = ParseText(params[8]);
 
     // perform checks
     if (name.empty()) throw JSONRPCError(RPC_TYPE_ERROR, "Property name cannot be empty");
@@ -514,7 +514,7 @@ Value sendgrant_OMNI(const Array& params, bool fHelp)
     CMPSPInfo::Entry sp;
     uint32_t propertyId = ParsePropertyId(params[2], sp);
     int64_t amount = ParseAmount(params[3], sp.isDivisible());
-    std::string memo = (params.size() > 4) ? (params[4].get_str()): "";
+    std::string memo = (params.size() > 4) ? ParseText(params[4]): "";
 
     // perform checks
     if (fromAddress != sp.issuer) throw JSONRPCError(RPC_TYPE_ERROR, "Sender is not authorized to grant tokens for this property");
@@ -563,7 +563,7 @@ Value sendrevoke_OMNI(const Array& params, bool fHelp)
     CMPSPInfo::Entry sp;
     uint32_t propertyId = ParsePropertyId(params[1], sp);
     int64_t amount = ParseAmount(params[2], sp.isDivisible());
-    std::string memo = (params.size() > 3) ? (params[3].get_str()): "";
+    std::string memo = (params.size() > 3) ? ParseText(params[3]): "";
     const int64_t senderBalance = getMPbalance(fromAddress, propertyId, BALANCE);
     const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyId);
 

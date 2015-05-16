@@ -87,3 +87,11 @@ uint32_t ParsePreviousPropertyId(const json_spirit::Value& value)
     return static_cast<uint32_t>(previousId);
 }
 
+std::string ParseText(const json_spirit::Value& value)
+{
+    std::string text = value.get_str();
+    if (text.size() > 255) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Text must not be longer than 255 characters");
+    }
+    return text;
+}

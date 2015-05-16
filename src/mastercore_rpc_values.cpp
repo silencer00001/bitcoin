@@ -78,3 +78,12 @@ uint16_t ParsePropertyType(const json_spirit::Value& value)
     return static_cast<uint16_t>(propertyType);
 }
 
+uint32_t ParsePreviousPropertyId(const json_spirit::Value& value)
+{
+    uint64_t previousId = value.get_uint64();
+    if (previousId != 0) { // TODO: avoid magic numbers
+        throw JSONRPCError(RPC_TYPE_ERROR, "Property appends/replaces are not yet supported");
+    }
+    return static_cast<uint32_t>(previousId);
+}
+

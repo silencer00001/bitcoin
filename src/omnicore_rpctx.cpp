@@ -282,7 +282,7 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
     std::string fromAddress = ParseAddress(params[0]);
     uint8_t ecosystem = ParseEcosystem(params[1]);
     uint16_t type = ParsePropertyType(params[2]);
-    uint32_t previousId = params[3].get_uint64(); // TODO: deal with 0
+    uint32_t previousId = ParsePreviousPropertyId(params[3]);
     std::string category = params[4].get_str();
     std::string subcategory = params[5].get_str();
     std::string name = params[6].get_str();
@@ -295,7 +295,6 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
     int64_t issuerPercentage = params[13].get_int64();
 
     // perform checks
-    if (previousId != 0) throw JSONRPCError(RPC_TYPE_ERROR, "Property appends/replaces are not yet supported");
     if (name.empty()) throw JSONRPCError(RPC_TYPE_ERROR, "Property name cannot be empty");
     if ((earlyBonus <=0) || (earlyBonus > 255)) throw JSONRPCError(RPC_TYPE_ERROR, "Early bonus must be in the range 1-255");
     if ((issuerPercentage <=0) || (issuerPercentage > 255)) throw JSONRPCError(RPC_TYPE_ERROR, "Issuer percentage must be in the range 1-255");
@@ -348,7 +347,7 @@ Value sendissuancefixed_OMNI(const Array& params, bool fHelp)
     std::string fromAddress = ParseAddress(params[0]);
     uint8_t ecosystem = ParseEcosystem(params[1]);
     uint16_t type = ParsePropertyType(params[2]);
-    uint32_t previousId = params[3].get_uint64(); // TODO: deal with 0
+    uint32_t previousId = ParsePreviousPropertyId(params[3]);
     std::string category = params[4].get_str();
     std::string subcategory = params[5].get_str();
     std::string name = params[6].get_str();
@@ -357,7 +356,6 @@ Value sendissuancefixed_OMNI(const Array& params, bool fHelp)
     int64_t amount = ParseAmount(params[9], (type == 2)); // 1 = indivisible, 2 = divisible
 
     // perform checks
-    if (previousId != 0) throw JSONRPCError(RPC_TYPE_ERROR, "Property appends/replaces are not yet supported");
     if (name.empty()) throw JSONRPCError(RPC_TYPE_ERROR, "Property name cannot be empty");
 
     // create a payload for the transaction
@@ -407,7 +405,7 @@ Value sendissuancemanaged_OMNI(const Array& params, bool fHelp)
     std::string fromAddress = ParseAddress(params[0]);
     uint8_t ecosystem = ParseEcosystem(params[1]);
     uint16_t type = ParsePropertyType(params[2]);
-    uint32_t previousId = params[3].get_uint64(); // TODO: deal with 0
+    uint32_t previousId = ParsePreviousPropertyId(params[3]);
     std::string category = params[4].get_str();
     std::string subcategory = params[5].get_str();
     std::string name = params[6].get_str();
@@ -415,7 +413,6 @@ Value sendissuancemanaged_OMNI(const Array& params, bool fHelp)
     std::string data = params[8].get_str();
 
     // perform checks
-    if (previousId != 0) throw JSONRPCError(RPC_TYPE_ERROR, "Property appends/replaces are not yet supported");
     if (name.empty()) throw JSONRPCError(RPC_TYPE_ERROR, "Property name cannot be empty");
 
     // create a payload for the transaction

@@ -14,5 +14,6 @@ uint32_t ParsePropertyId(const json_spirit::Value& value, CMPSPInfo::Entry& info
 uint32_t ParsePropertyId(const json_spirit::Value& value);
 int64_t ParseAmount(const json_spirit::Value& value, bool fDivisible);
 uint8_t ParseEcosystem(const json_spirit::Value& value);
+uint16_t ParsePropertyType(const json_spirit::Value& value);
 
 #endif // MASTERCORE_RPC_VALUES_H

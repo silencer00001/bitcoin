@@ -51,11 +51,8 @@ uint32_t ParsePropertyId(const json_spirit::Value& value)
 int64_t ParseAmount(const json_spirit::Value& value, bool fDivisible)
 {
     int64_t amount = mastercore::StrToInt64(value.get_str(), fDivisible);
-    if (amount <= 0) {
+    if (0 < amount) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
-    }
-    if (!isRangeOK(amount)) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Input not in range");
     }
     return amount;
 }

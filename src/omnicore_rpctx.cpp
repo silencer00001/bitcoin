@@ -59,6 +59,13 @@ static void RequireSufficientBalance(const std::string fromAddress, uint32_t pro
     }
 }
 
+static void RequireNonEmptyPropertyName(const std::string& name)
+{
+    if (name.empty()) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Property name must not be empty");
+    }
+}
+
 // send_OMNI - simple send
 Value send_OMNI(const Array& params, bool fHelp)
 {
@@ -306,7 +313,7 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
     int64_t issuerPercentage = params[13].get_int64();
 
     // perform checks
-    if (name.empty()) throw JSONRPCError(RPC_TYPE_ERROR, "Property name cannot be empty");
+    RequireNonEmptyPropertyName(name);
     if ((earlyBonus <=0) || (earlyBonus > 255)) throw JSONRPCError(RPC_TYPE_ERROR, "Early bonus must be in the range 1-255");
     if ((issuerPercentage <=0) || (issuerPercentage > 255)) throw JSONRPCError(RPC_TYPE_ERROR, "Issuer percentage must be in the range 1-255");
 
@@ -367,7 +374,7 @@ Value sendissuancefixed_OMNI(const Array& params, bool fHelp)
     int64_t amount = ParseAmount(params[9], (type == 2)); // 1 = indivisible, 2 = divisible
 
     // perform checks
-    if (name.empty()) throw JSONRPCError(RPC_TYPE_ERROR, "Property name cannot be empty");
+    RequireNonEmptyPropertyName(name);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_IssuanceFixed(ecosystem, type, previousId, category, subcategory, name, url, data, amount);
@@ -424,7 +431,7 @@ Value sendissuancemanaged_OMNI(const Array& params, bool fHelp)
     std::string data = ParseText(params[8]);
 
     // perform checks
-    if (name.empty()) throw JSONRPCError(RPC_TYPE_ERROR, "Property name cannot be empty");
+    RequireNonEmptyPropertyName(name);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_IssuanceManaged(ecosystem, type, previousId, category, subcategory, name, url, data);

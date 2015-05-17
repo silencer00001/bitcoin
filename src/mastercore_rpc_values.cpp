@@ -108,7 +108,7 @@ uint8_t ParsePaymentTimeframe(const json_spirit::Value& value)
     if (blocks < 1 || 255 < blocks) { // TODO: avoid magic numbers
         throw JSONRPCError(RPC_TYPE_ERROR, "Payment window invalid");
     }
-    return static_cast<uint32_t>(previousId);
+    return static_cast<uint8_t>(blocks);
 }
 
 int64_t ParseDeadline(const json_spirit::Value& value)

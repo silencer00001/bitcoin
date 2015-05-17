@@ -23,8 +23,8 @@ std::string ParseAddress(const json_spirit::Value& value)
 
 uint32_t ParsePropertyIdUnchecked(const json_spirit::Value& value)
 {
-    uint64_t propertyId = value.get_uint64();
-    if (propertyId < 1 || 4294967295 < propertyId) { // TODO: avoid magic numbers
+    int64_t propertyId = value.get_int64();
+    if (propertyId < 1 || 4294967295 < propertyId) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid property identifier");
     }
     return static_cast<uint32_t>(propertyId);

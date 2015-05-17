@@ -113,3 +113,12 @@ int64_t ParseDeadline(const json_spirit::Value& value)
     }
     return deadline;
 }
+
+uint8_t ParseDexAction(const json_spirit::Value& value)
+{
+    int64_t action = value.get_int64();
+    if (action <= 0 || 3 < action) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid action (1, 2, 3 only)");
+    }
+    return static_cast<uint8_t>(action);
+}

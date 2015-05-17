@@ -131,7 +131,7 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
     string strAmountDesired = params[3].get_str();
     uint8_t paymentWindow = ParsePaymentTimeframe(params[4]);
     int64_t minAcceptFee = StrToInt64(params[5].get_str(), true); // BTC so always divisible
-    int64_t action = params[6].get_int64();
+    uint8_t action = ParseDexAction(params[6]);
     const int64_t senderBalance = getMPbalance(fromAddress, propertyIdForSale, BALANCE);
     const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyIdForSale);
 
@@ -142,7 +142,6 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
     amountDesired = StrToInt64(strAmountDesired, true); // BTC so always divisible
 
     // perform checks
-    if (action <= 0 || 3 < action) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid action (1,2,3 only)");
     if (action <= 2) { // actions 3 permit zero values, skip check
         if (0 >= amountForSale) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for sale");
         if (!isRangeOK(amountForSale)) throw JSONRPCError(RPC_TYPE_ERROR, "Amount for sale not in range");

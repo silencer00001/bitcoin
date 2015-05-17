@@ -104,6 +104,43 @@ static void RequireNoOtherDexOffer(const std::string& fromAddress, uint32_t prop
     }
 }
 
+static Value CreateOrSend(const std::string& source, const std::string& destination,
+        const std::string& redeemer, int64_t reference, const std::vector<unsigned char>& payload)
+{
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid = 0;
+    std::string rawHex;
+    int result = ClassAgnosticWalletTXBuilder(source, destination, redeemer, 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    }
+
+    if (!autoCommit) {
+        return rawHex;
+    } else {
+        return txid.GetHex();
+    }
+}
+
+static Value CreateOrSend(const std::string& source, const std::string& destination, const std::string& redeemer,
+        const std::vector<unsigned char>& payload)
+{
+    return CreateOrSend(source, destination, redeemer, 0, payload);
+}
+
+static Value CreateOrSend(const std::string& source, const std::string& destination, const std::vector<unsigned char>& payload)
+{
+    return CreateOrSend(source, destination, "", 0, payload);
+}
+
+static Value CreateOrSend(const std::string& source, const std::vector<unsigned char>& payload)
+{
+    return CreateOrSend(source, "", "", 0, payload);
+}
+
+
 // send_OMNI - simple send
 Value send_OMNI(const Array& params, bool fHelp)
 {
@@ -147,21 +184,11 @@ Value send_OMNI(const Array& params, bool fHelp)
     std::vector<unsigned char> payload = CreatePayload_SimpleSend(propertyId, amount);
 
     // request the wallet build the transaction (and if needed commit it)
-    uint256 txid = 0;
-    std::string rawHex;
-    int result = ClassAgnosticWalletTXBuilder(fromAddress, toAddress, redeemAddress, referenceAmount, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            PendingAdd(txid, fromAddress, toAddress, MSC_TYPE_SIMPLE_SEND, propertyId, amount);
-            return txid.GetHex();
-        }
+    Value result = CreateOrSend(fromAddress, toAddress, redeemAddress, referenceAmount, payload);
+    if (autoCommit) {
+        PendingAdd(txid, fromAddress, toAddress, MSC_TYPE_SIMPLE_SEND, propertyId, amount); // TODO: not here
     }
+    return result;
 }
 
 // senddexsell_OMNI - DEx sell offer
@@ -219,21 +246,11 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
     std::vector<unsigned char> payload = CreatePayload_DExSell(propertyIdForSale, amountForSale, amountDesired, paymentWindow, minAcceptFee, action);
 
     // request the wallet build the transaction (and if needed commit it)
-    uint256 txid = 0;
-    std::string rawHex;
-    int result = ClassAgnosticWalletTXBuilder(fromAddress, "", "", 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            PendingAdd(txid, fromAddress, "", MSC_TYPE_TRADE_OFFER, propertyIdForSale, amountForSale, 0, amountDesired, action);
-            return txid.GetHex();
-        }
+    Value result = CreateOrSend(fromAddress, payload);
+    if (autoCommit) {
+        PendingAdd(txid, fromAddress, "", MSC_TYPE_TRADE_OFFER, propertyIdForSale, amountForSale, 0, amountDesired, action); // TODO: not here
     }
+    return result;
 }
 
 // senddexaccept_OMNI - DEx accept offer
@@ -288,24 +305,13 @@ Value senddexaccept_OMNI(const Array& params, bool fHelp)
     std::vector<unsigned char> payload = CreatePayload_DExAccept(propertyId, amount);
 
     // request the wallet build the transaction (and if needed commit it)
-    uint256 txid = 0;
-    std::string rawHex;
-    int result = ClassAgnosticWalletTXBuilder(fromAddress, toAddress, "", 0, payload, txid, rawHex, autoCommit);
+    Value result = CreateOrSend(fromAddress, toAddress, payload);
 
     // set the custom fee back to original
     payTxFee = payTxFeeOriginal;
     fPayAtLeastCustomFee = fPayAtLeastCustomFeeOriginal;
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            return txid.GetHex();
-        }
-    }
+    
+    return result;
 }
 
 // sendissuancecrowdsale_OMNI - Issue new property with crowdsale
@@ -359,20 +365,7 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
     std::vector<unsigned char> payload = CreatePayload_IssuanceVariable(ecosystem, type, previousId, category, subcategory, name, url, data, propertyIdDesired, numTokens, deadline, earlyBonus, issuerPercentage);
 
     // request the wallet build the transaction (and if needed commit it)
-    uint256 txid = 0;
-    std::string rawHex;
-    int result = ClassAgnosticWalletTXBuilder(fromAddress, "", "", 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            return txid.GetHex();
-        }
-    }
+    return CreateOrSend(fromAddress, payload);
 }
 
 // sendissuancecfixed_OMNI - Issue new property with fixed amount
@@ -418,20 +411,7 @@ Value sendissuancefixed_OMNI(const Array& params, bool fHelp)
     std::vector<unsigned char> payload = CreatePayload_IssuanceFixed(ecosystem, type, previousId, category, subcategory, name, url, data, amount);
 
     // request the wallet build the transaction (and if needed commit it)
-    uint256 txid = 0;
-    std::string rawHex;
-    int result = ClassAgnosticWalletTXBuilder(fromAddress, "", "", 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            return txid.GetHex();
-        }
-    }
+    return CreateOrSend(fromAddress, payload);
 }
 
 // sendissuancemanual_OMNI - Issue new property with manual issuance (grant/revoke)
@@ -475,20 +455,7 @@ Value sendissuancemanaged_OMNI(const Array& params, bool fHelp)
     std::vector<unsigned char> payload = CreatePayload_IssuanceManaged(ecosystem, type, previousId, category, subcategory, name, url, data);
 
     // request the wallet build the transaction (and if needed commit it)
-    uint256 txid = 0;
-    std::string rawHex;
-    int result = ClassAgnosticWalletTXBuilder(fromAddress, "", "", 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            return txid.GetHex();
-        }
-    }
+    return CreateOrSend(fromAddress, payload);
 }
 
 // sendsto_OMNI - Send to owners
@@ -522,21 +489,11 @@ Value sendsto_OMNI(const Array& params, bool fHelp)
     std::vector<unsigned char> payload = CreatePayload_SendToOwners(propertyId, amount);
 
     // request the wallet build the transaction (and if needed commit it)
-    uint256 txid = 0;
-    std::string rawHex;
-    int result = ClassAgnosticWalletTXBuilder(fromAddress, "", redeemAddress, 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            PendingAdd(txid, fromAddress, "", MSC_TYPE_SEND_TO_OWNERS, propertyId, amount);
-            return txid.GetHex();
-        }
+    Value result = CreateOrSend(fromAddress, "", redeemAddress, payload);
+    if (autoCommit) {
+        PendingAdd(txid, fromAddress, "", MSC_TYPE_SEND_TO_OWNERS, propertyId, amount); // TODO: not here
     }
+    return result;
 }
 
 // sendgrant_OMNI - Grant tokens
@@ -577,20 +534,7 @@ Value sendgrant_OMNI(const Array& params, bool fHelp)
     std::vector<unsigned char> payload = CreatePayload_Grant(propertyId, amount, memo);
 
     // request the wallet build the transaction (and if needed commit it)
-    uint256 txid = 0;
-    std::string rawHex;
-    int result = ClassAgnosticWalletTXBuilder(fromAddress, toAddress, "", 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            return txid.GetHex();
-        }
-    }
+    return CreateOrSend(fromAddress, toAddress, payload);
 }
 
 // sendrevoke_OMNI - Revoke tokens
@@ -627,20 +571,7 @@ Value sendrevoke_OMNI(const Array& params, bool fHelp)
     std::vector<unsigned char> payload = CreatePayload_Revoke(propertyId, amount, memo);
 
     // request the wallet build the transaction (and if needed commit it)
-    uint256 txid = 0;
-    std::string rawHex;
-    int result = ClassAgnosticWalletTXBuilder(fromAddress, "", "", 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            return txid.GetHex();
-        }
-    }
+    return CreateOrSend(fromAddress, payload);
 }
 
 // sendclosecrowdsale_OMNI - Close an active crowdsale
@@ -671,20 +602,7 @@ Value sendclosecrowdsale_OMNI(const Array& params, bool fHelp)
     std::vector<unsigned char> payload = CreatePayload_CloseCrowdsale(propertyId);
 
     // request the wallet build the transaction (and if needed commit it)
-    uint256 txid = 0;
-    std::string rawHex;
-    int result = ClassAgnosticWalletTXBuilder(fromAddress, "", "", 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            return txid.GetHex();
-        }
-    }
+    return CreateOrSend(fromAddress, payload);
 }
 
 // sendtrade_OMNI - MetaDEx trade
@@ -743,21 +661,11 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
     std::vector<unsigned char> payload = CreatePayload_MetaDExTrade(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired, action);
 
     // request the wallet build the transaction (and if needed commit it)
-    uint256 txid = 0;
-    std::string rawHex;
-    int result = ClassAgnosticWalletTXBuilder(fromAddress, "", "", 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            PendingAdd(txid, fromAddress, "", MSC_TYPE_METADEX, propertyIdForSale, amountForSale, propertyIdDesired, amountDesired, action);
-            return txid.GetHex();
-        }
+    Value result = CreateOrSend(fromAddress, payload);
+    if (autoCommit) {
+        PendingAdd(txid, fromAddress, "", MSC_TYPE_METADEX, propertyIdForSale, amountForSale, propertyIdDesired, amountDesired, action); // TODO: not here
     }
+    return result;
 }
 
 // sendchangeissuer_OMNI - Change issuer for a property
@@ -789,20 +697,6 @@ Value sendchangeissuer_OMNI(const Array& params, bool fHelp)
     std::vector<unsigned char> payload = CreatePayload_ChangeIssuer(propertyId);
 
     // request the wallet build the transaction (and if needed commit it)
-    uint256 txid = 0;
-    std::string rawHex;
-    int result = ClassAgnosticWalletTXBuilder(fromAddress, toAddress, "", 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            return txid.GetHex();
-        }
-    }
+    return CreateOrSend(fromAddress, toAddress, payload);
 }
-
 

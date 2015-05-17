@@ -74,8 +74,8 @@ uint8_t ParseEcosystem(const json_spirit::Value& value)
 
 uint16_t ParsePropertyType(const json_spirit::Value& value)
 {
-    uint64_t propertyType = value.get_uint64();
-    if (propertyType < 1 || 2 < propertyType) { // TODO: avoid magic numbers
+    int64_t propertyType = value.get_int64();
+    if (propertyType < 1 || 2 < propertyType) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid type");
     }
     return static_cast<uint16_t>(propertyType);

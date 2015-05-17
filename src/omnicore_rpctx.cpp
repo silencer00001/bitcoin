@@ -97,6 +97,13 @@ static void RequireMatchingDexOffer(const std::string& toAddress, uint32_t prope
     }
 }
 
+static void RequireNoOtherDexOffer(const std::string& fromAddress, uint32_t propertyId)
+{
+    if (DEx_offerExists(fromAddress, propertyId)) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "There is already a sell offer from this address on the distributed exchange, use update instead");
+    }
+}
+
 // send_OMNI - simple send
 Value send_OMNI(const Array& params, bool fHelp)
 {
@@ -201,10 +208,12 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
         if (0 >= amountDesired) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount desired");
         if (!isRangeOK(amountDesired)) throw JSONRPCError(RPC_TYPE_ERROR, "Amount desired not in range");
     }
-    if (action != 3) { // only check for sufficient balance for new/update sell offers
+    if (action <= 3) { // only check for sufficient balance for new/update sell offers
         RequireSufficientBalance(fromAddress, propertyIdForSale, amountForSale);
     }
-    if ((action == 1) && (DEx_offerExists(fromAddress, propertyIdForSale))) throw JSONRPCError(RPC_TYPE_ERROR, "There is already a sell offer from this address on the distributed exchange, use update instead");
+    if (action == 1) {
+        RequireNoOtherDexOffer(fromAddress, propertyIdForSale);
+    }
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_DExSell(propertyIdForSale, amountForSale, amountDesired, paymentWindow, minAcceptFee, action);

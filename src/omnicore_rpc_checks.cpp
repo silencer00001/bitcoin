@@ -2,6 +2,7 @@
 
 #include "mastercore.h"
 #include "mastercore_dex.h"
+#include "mastercore_sp.h"
 
 #include "amount.h"
 #include "rpcprotocol.h"
@@ -23,7 +24,7 @@ void RequireSufficientBalance(const std::string fromAddress, uint32_t propertyId
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
     }
 
-    int64_t balanceUnconfirmed = getUserAvailableMPbalance(fromAddress, propertyId, BALANCE);
+    int64_t balanceUnconfirmed = getUserAvailableMPbalance(fromAddress, propertyId);
     if (balanceUnconfirmed < amount) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
     }

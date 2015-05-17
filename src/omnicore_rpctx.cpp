@@ -129,7 +129,7 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
     uint32_t propertyIdForSale = ParsePropertyId(params[1]);
     string strAmountForSale = params[2].get_str();
     string strAmountDesired = params[3].get_str();
-    int64_t paymentWindow = params[4].get_int64();
+    uint8_t paymentWindow = ParsePaymentTimeframe(params[4]);
     int64_t minAcceptFee = StrToInt64(params[5].get_str(), true); // BTC so always divisible
     int64_t action = params[6].get_int64();
     const int64_t senderBalance = getMPbalance(fromAddress, propertyIdForSale, BALANCE);
@@ -154,7 +154,6 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
         if (senderAvailableBalance < amountForSale) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
     }
     if (minAcceptFee < 0) throw JSONRPCError(RPC_TYPE_ERROR, "Mininmum accept mining fee invalid");
-    if ((paymentWindow <= 0) || (paymentWindow > 255)) throw JSONRPCError(RPC_TYPE_ERROR, "Payment window invalid");
     if ((action == 1) && (DEx_offerExists(fromAddress, propertyIdForSale))) throw JSONRPCError(RPC_TYPE_ERROR, "There is already a sell offer from this address on the distributed exchange, use update instead");
 
     // create a payload for the transaction

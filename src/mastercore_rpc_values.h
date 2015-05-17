@@ -10,7 +10,6 @@
 
 std::string ParseAddress(const json_spirit::Value& value);
 uint32_t ParsePropertyIdUnchecked(const json_spirit::Value& value);
-uint32_t ParsePropertyId(const json_spirit::Value& value, CMPSPInfo::Entry& info);
 uint32_t ParsePropertyId(const json_spirit::Value& value);
 int64_t ParseAmount(const json_spirit::Value& value, bool fDivisible);
 int64_t ParseAmount(const json_spirit::Value& value, int propertyType);

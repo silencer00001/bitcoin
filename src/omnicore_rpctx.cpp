@@ -100,11 +100,9 @@ Value send_OMNI(const Array& params, bool fHelp)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
     std::string toAddress = ParseAddress(params[1]);
+    uint32_t propertyId = ParsePropertyId(params[2]);
+    int64_t amount = ParseAmount(params[3], isPropertyDivisible(propertyId));
 
-    CMPSPInfo::Entry sp;
-    uint32_t propertyId = ParsePropertyId(params[2], sp);
-
-    int64_t amount = ParseAmount(params[3], sp.isDivisible());
     std::string redeemAddress = (params.size() > 4) ? ParseAddress(params[4]): "";
 
     int64_t referenceAmount = 0;
@@ -458,9 +456,9 @@ Value sendgrant_OMNI(const Array& params, bool fHelp)
     if (!params[1].get_str().empty()) {
         toAddress = ParseAddress(params[1]);
     }
-    CMPSPInfo::Entry sp;
-    uint32_t propertyId = ParsePropertyId(params[2], sp);
-    int64_t amount = ParseAmount(params[3], sp.isDivisible());
+    uint32_t propertyId = ParsePropertyId(params[2]);
+    int64_t amount = ParseAmount(params[3], isPropertyDivisible(propertyId));
+
     std::string memo = (params.size() > 4) ? ParseText(params[4]): "";
 
     // perform checks
@@ -494,9 +492,9 @@ Value sendrevoke_OMNI(const Array& params, bool fHelp)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
-    CMPSPInfo::Entry sp;
-    uint32_t propertyId = ParsePropertyId(params[1], sp);
-    int64_t amount = ParseAmount(params[2], sp.isDivisible());
+    uint32_t propertyId = ParsePropertyId(params[1]);
+    int64_t amount = ParseAmount(params[2], isPropertyDivisible(propertyId));
+
     std::string memo = (params.size() > 3) ? ParseText(params[3]): "";
 
     // perform checks

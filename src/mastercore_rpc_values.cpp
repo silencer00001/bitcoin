@@ -30,15 +30,6 @@ uint32_t ParsePropertyIdUnchecked(const json_spirit::Value& value)
     return static_cast<uint32_t>(propertyId);
 }
 
-uint32_t ParsePropertyId(const json_spirit::Value& value, CMPSPInfo::Entry& info)
-{
-    uint32_t propertyId = ParsePropertyIdUnchecked(value);
-    if (!mastercore::_my_sps->getSP(propertyId, info)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-    }
-    return propertyId;
-}
-
 uint32_t ParsePropertyId(const json_spirit::Value& value)
 {
     uint32_t propertyId = ParsePropertyIdUnchecked(value);

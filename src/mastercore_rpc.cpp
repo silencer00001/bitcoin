@@ -254,9 +254,7 @@ Value getbalance_MP(const Array& params, bool fHelp)
         );
 
     std::string address = ParseAddress(params[0]);
-
-    CMPSPInfo::Entry sp;
-    uint32_t propertyId = ParsePropertyId(params[1], sp);
+    uint32_t propertyId = ParsePropertyId(params[1]);
 
     Object balance_obj;
     BalanceToJSON(address, propertyId, balance_obj, isPropertyDivisible(propertyId));
@@ -330,8 +328,7 @@ Value getallbalancesforid_MP(const Array& params, bool fHelp)
             + HelpExampleRpc("getallbalancesforid_MP", "1")
         );
 
-    CMPSPInfo::Entry sp;
-    uint32_t propertyId = ParsePropertyId(params[0], sp);
+    uint32_t propertyId = ParsePropertyId(params[0]);
 
     Array response;
     bool divisible = isPropertyDivisible(propertyId); // we want to check this BEFORE the loop
@@ -428,8 +425,12 @@ Value getproperty_MP(const Array& params, bool fHelp)
             + HelpExampleRpc("getproperty_MP", "3")
         );
 
+    uint32_t propertyId = ParsePropertyId(params[0]);
+
     CMPSPInfo::Entry sp;
-    uint32_t propertyId = ParsePropertyId(params[0], sp);
+    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
+    }
 
     int64_t nTotalTokens = getTotalTokens(propertyId);
     std::string strCreationHash = sp.txid.GetHex();
@@ -531,11 +532,15 @@ Value getcrowdsale_MP(const Array& params, bool fHelp)
             + HelpExampleRpc("getcrowdsale_MP", "3")
         );
 
-    CMPSPInfo::Entry sp;
-    uint32_t propertyId = ParsePropertyId(params[0], sp);
+    uint32_t propertyId = ParsePropertyId(params[0]);
 
     bool showVerbose = false;
     if (params.size() > 1) showVerbose = params[1].get_bool();
+
+    CMPSPInfo::Entry sp;
+    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
+    }
 
     bool fixedIssuance = sp.fixed;
     bool manualIssuance = sp.manual;
@@ -747,8 +752,12 @@ Value getgrants_MP(const Array& params, bool fHelp)
             + HelpExampleRpc("getgrants_MP", "3")
         );
 
+    uint32_t propertyId = ParsePropertyId(params[0]);
+
     CMPSPInfo::Entry sp;
-    uint32_t propertyId = ParsePropertyId(params[0], sp);
+    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
+    }
 
     bool fixedIssuance = sp.fixed;
     bool manualIssuance = sp.manual;

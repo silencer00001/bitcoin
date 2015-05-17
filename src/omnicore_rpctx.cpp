@@ -661,7 +661,7 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
     std::string strAmountForSale = params[2].get_str();
     uint32_t  propertyIdDesired = ParsePropertyIdUnchecked(params[3]);
     std::string strAmountDesired = params[4].get_str();
-    int64_t action = params[5].get_int64();
+    int64_t action = ParseMetaDexAction(params[5]);
     const int64_t senderBalance = getMPbalance(fromAddress, propertyIdForSale, BALANCE);
     const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyIdForSale);
 
@@ -671,7 +671,6 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
     CMPSPInfo::Entry spDesired;
 
     // perform conversions & checks
-    if (action <= 0 || CMPTransaction::CANCEL_EVERYTHING < action) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid action (1,2,3,4 only)");
     if (action != CMPTransaction::CANCEL_EVERYTHING) { // these checks are not applicable to cancel everything
         if (false == _my_sps->getSP(propertyIdForSale, spForSale)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property for sale does not exist");
         if (false == _my_sps->getSP(propertyIdDesired, spDesired)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property desired does not exist");

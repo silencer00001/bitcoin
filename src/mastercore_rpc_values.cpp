@@ -122,3 +122,13 @@ uint8_t ParseDexAction(const json_spirit::Value& value)
     }
     return static_cast<uint8_t>(action);
 }
+
+uint8_t ParseMetaDexAction(const json_spirit::Value& value)
+{
+    int64_t action = value.get_int64();
+    if (action <= 0 || 4 < action) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid action (1, 2, 3, 4 only)");
+    }
+    return static_cast<uint8_t>(action);
+}
+

@@ -102,7 +102,7 @@ std::string ParseText(const json_spirit::Value& value)
 uint8_t ParsePaymentTimeframe(const json_spirit::Value& value)
 {
     int64_t blocks = value.get_int64();
-    if (blocks < 1 || 255 < blocks) { // TODO: avoid magic numbers
+    if (blocks < 1 || 255 < blocks) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Payment window invalid");
     }
     return static_cast<uint8_t>(blocks);

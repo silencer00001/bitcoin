@@ -60,6 +60,12 @@ int64_t ParseAmount(const json_spirit::Value& value, bool fDivisible)
     return amount;
 }
 
+int64_t ParseAmount(const json_spirit::Value& value, int propertyType)
+{
+    bool fDivisible = (type == 2);  // 1 = indivisible, 2 = divisible
+    return ParseAmount(value, fDivisible);
+}
+
 uint8_t ParseEcosystem(const json_spirit::Value& value)
 {
     uint64_t ecosystem = value.get_uint64();

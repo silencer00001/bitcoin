@@ -306,7 +306,7 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
     std::string url = ParseText(params[7]);
     std::string data = ParseText(params[8]);
     uint32_t propertyIdDesired = ParsePropertyId(params[9]);
-    int64_t numTokens = ParseAmount(params[10], (type == 2)); // 1 = indivisible, 2 = divisible
+    int64_t numTokens = ParseAmount(params[10], type);
     int64_t deadline = ParseDeadline(params[11]);
     int64_t earlyBonus = ParseEarlyBirdBonus(params[12]);
     int64_t issuerPercentage = ParseIssuerBonus(params[13]);
@@ -368,7 +368,7 @@ Value sendissuancefixed_OMNI(const Array& params, bool fHelp)
     std::string name = ParseText(params[6]);
     std::string url = ParseText(params[7]);
     std::string data = ParseText(params[8]);
-    int64_t amount = ParseAmount(params[9], (type == 2)); // 1 = indivisible, 2 = divisible
+    int64_t amount = ParseAmount(params[9], type);
 
     // perform checks
     RequireNonEmptyPropertyName(name);

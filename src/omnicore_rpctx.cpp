@@ -40,6 +40,7 @@ using std::vector;
 using namespace json_spirit;
 using namespace mastercore;
 
+// <editor-fold defaultstate="collapsed" desc="CreateOrSend() workaround">
 static Value CreateOrSend(const std::string& source, const std::string& destination,
         const std::string& redeemer, int64_t reference, const std::vector<unsigned char>& payload)
 {
@@ -75,7 +76,7 @@ static Value CreateOrSend(const std::string& source, const std::vector<unsigned 
 {
     return CreateOrSend(source, "", "", 0, payload);
 }
-
+// </editor-fold>
 
 // send_OMNI - simple send
 Value send_OMNI(const Array& params, bool fHelp)

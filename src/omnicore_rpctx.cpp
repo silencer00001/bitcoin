@@ -309,11 +309,10 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
     int64_t numTokens = ParseAmount(params[10], (type == 2)); // 1 = indivisible, 2 = divisible
     int64_t deadline = ParseDeadline(params[11]);
     int64_t earlyBonus = ParseEarlyBirdBonus(params[12]);
-    int64_t issuerPercentage = params[13].get_int64();
+    int64_t issuerPercentage = ParseIssuerBonus(params[13]);
 
     // perform checks
     RequireNonEmptyPropertyName(name);
-    if ((issuerPercentage <=0) || (issuerPercentage > 255)) throw JSONRPCError(RPC_TYPE_ERROR, "Issuer percentage must be in the range 1-255");
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_IssuanceVariable(ecosystem, type, previousId, category, subcategory, name, url, data, propertyIdDesired, numTokens, deadline, earlyBonus, issuerPercentage);

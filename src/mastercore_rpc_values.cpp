@@ -150,3 +150,12 @@ uint8_t ParseEarlyBirdBonus(const json_spirit::Value& value)
     return static_cast<uint8_t>(percentage);
 }
 
+uint8_t ParseIssuerBonus(const json_spirit::Value& value)
+{
+    int64_t percentage = value.get_int64();
+    if (percentage < 0 || 255 < percentage) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Bonus percentage for issuer be in the range 0-255")
+    }
+    return static_cast<uint8_t>(percentage);
+}
+

@@ -80,6 +80,15 @@ static void RequireActiveCrowdsale(uint32_t propertyId)
     }
 }
 
+static void RequireTokenAdministrator(const std::string& sender, uint32_t propertyId)
+{
+    CMPSPInfo::Entry sp;
+    mastercore::_my_sps->getSP(propertyId, sp);
+
+    if (sender != sp.issuer) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Sender is not authorized to manage this property");
+    }
+}
 
 // send_OMNI - simple send
 Value send_OMNI(const Array& params, bool fHelp)
@@ -546,7 +555,7 @@ Value sendgrant_OMNI(const Array& params, bool fHelp)
     std::string memo = (params.size() > 4) ? ParseText(params[4]): "";
 
     // perform checks
-    if (fromAddress != sp.issuer) throw JSONRPCError(RPC_TYPE_ERROR, "Sender is not authorized to grant tokens for this property");
+    RequireTokenAdministrator(fromAddress, propertyId);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Grant(propertyId, amount, memo);
@@ -595,7 +604,7 @@ Value sendrevoke_OMNI(const Array& params, bool fHelp)
     std::string memo = (params.size() > 3) ? ParseText(params[3]): "";
 
     // perform checks
-    if (fromAddress != sp.issuer) throw JSONRPCError(RPC_TYPE_ERROR, "Sender is not authorized to revoke tokens for this property");
+    RequireTokenAdministrator(fromAddress, propertyId);
     RequireSufficientBalance(fromAddress, propertyId, amount);
 
     // create a payload for the transaction
@@ -636,12 +645,11 @@ Value sendclosecrowdsale_OMNI(const Array& params, bool fHelp)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
-    CMPSPInfo::Entry sp;
-    uint32_t propertyId = ParsePropertyId(params[1], sp);
+    uint32_t propertyId = ParsePropertyId(params[1]);
 
     // perform checks
     RequireActiveCrowdsale(propertyId);
-    if (fromAddress != sp.issuer) throw JSONRPCError(RPC_TYPE_ERROR, "Sender is not authorized to close the crowdsale for this property");
+    RequireTokenAdministrator(fromAddress, propertyId);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_CloseCrowdsale(propertyId);
@@ -756,11 +764,10 @@ Value sendchangeissuer_OMNI(const Array& params, bool fHelp)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
     std::string toAddress = ParseAddress(params[1]);
-    CMPSPInfo::Entry sp;
-    uint32_t propertyId = ParsePropertyId(params[2], sp);
+    uint32_t propertyId = ParsePropertyId(params[2]);
 
     // perform checks
-    if (fromAddress != sp.issuer) throw JSONRPCError(RPC_TYPE_ERROR, "Sender is not authorized to transfer admnistration of this property");
+    RequireTokenAdministrator(fromAddress, propertyId);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_ChangeIssuer(propertyId);

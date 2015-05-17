@@ -39,6 +39,26 @@ using std::vector;
 using namespace json_spirit;
 using namespace mastercore;
 
+static void RequireSaneReferenceAmount(int64_t amount)
+{
+    if ((0.01 * COIN) < amount) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid reference amount");
+    }
+}
+
+static void RequireSufficientBalance(const std::string fromAddress, uint32_t propertyId, int64_t amount)
+{
+    int64_t balance = getMPbalance(fromAddress, propertyId, BALANCE);
+    if (balance < amount) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
+    }
+
+    int64_t balanceUnconfirmed = getUserAvailableMPbalance(fromAddress, propertyId, BALANCE);
+    if (balanceUnconfirmed < amount) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
+    }
+}
+
 // send_OMNI - simple send
 Value send_OMNI(const Array& params, bool fHelp)
 {
@@ -74,13 +94,9 @@ Value send_OMNI(const Array& params, bool fHelp)
         referenceAmount = ParseAmount(params[5], true);
     }
 
-    const int64_t senderBalance = getMPbalance(fromAddress, propertyId, BALANCE);
-    const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyId);
-
     // perform checks
-    if ((0.01 * COIN) < referenceAmount) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid reference amount");
-    if (senderBalance < amount) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
-    if (senderAvailableBalance < amount) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
+    RequireSaneReferenceAmount(referenceAmount);
+    RequireSufficientBalance(fromAddress, propertyId, amount);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_SimpleSend(propertyId, amount);
@@ -132,8 +148,6 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
     uint8_t paymentWindow = ParsePaymentTimeframe(params[4]);
     int64_t minAcceptFee = StrToInt64(params[5].get_str(), true); // BTC so always divisible
     uint8_t action = ParseDexAction(params[6]);
-    const int64_t senderBalance = getMPbalance(fromAddress, propertyIdForSale, BALANCE);
-    const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyIdForSale);
 
     // perform conversions
     int64_t amountForSale = 0, amountDesired = 0;
@@ -149,8 +163,7 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
         if (!isRangeOK(amountDesired)) throw JSONRPCError(RPC_TYPE_ERROR, "Amount desired not in range");
     }
     if (action != 3) { // only check for sufficient balance for new/update sell offers
-        if (senderBalance < amountForSale) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
-        if (senderAvailableBalance < amountForSale) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
+        RequireSufficientBalance(fromAddress, propertyIdForSale, amountForSale);
     }
     if (minAcceptFee < 0) throw JSONRPCError(RPC_TYPE_ERROR, "Mininmum accept mining fee invalid");
     if ((action == 1) && (DEx_offerExists(fromAddress, propertyIdForSale))) throw JSONRPCError(RPC_TYPE_ERROR, "There is already a sell offer from this address on the distributed exchange, use update instead");
@@ -456,11 +469,9 @@ Value sendsto_OMNI(const Array& params, bool fHelp)
     uint32_t propertyId = ParsePropertyId(params[1]);
     int64_t amount = ParseAmount(params[2], isPropertyDivisible(propertyId));
     std::string redeemAddress = (params.size() > 3) ? (params[3].get_str()): "";
-    const int64_t senderBalance = getMPbalance(fromAddress, propertyId, BALANCE);
-    const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyId);
 
-    if (senderBalance < amount) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
-    if (senderAvailableBalance < amount) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
+    // perform checks
+    RequireSufficientBalance(fromAddress, propertyId, amount);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_SendToOwners(propertyId, amount);
@@ -562,13 +573,10 @@ Value sendrevoke_OMNI(const Array& params, bool fHelp)
     uint32_t propertyId = ParsePropertyId(params[1], sp);
     int64_t amount = ParseAmount(params[2], sp.isDivisible());
     std::string memo = (params.size() > 3) ? ParseText(params[3]): "";
-    const int64_t senderBalance = getMPbalance(fromAddress, propertyId, BALANCE);
-    const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyId);
 
     // perform checks
     if (fromAddress != sp.issuer) throw JSONRPCError(RPC_TYPE_ERROR, "Sender is not authorized to revoke tokens for this property");
-    if (senderBalance < amount) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
-    if (senderAvailableBalance < amount) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
+    RequireSufficientBalance(fromAddress, propertyId, amount);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Revoke(propertyId, amount, memo);
@@ -662,8 +670,6 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
     uint32_t  propertyIdDesired = ParsePropertyIdUnchecked(params[3]);
     std::string strAmountDesired = params[4].get_str();
     int64_t action = ParseMetaDexAction(params[5]);
-    const int64_t senderBalance = getMPbalance(fromAddress, propertyIdForSale, BALANCE);
-    const int64_t senderAvailableBalance = getUserAvailableMPbalance(fromAddress, propertyIdForSale);
 
     // setup a few vars
     int64_t amountForSale = 0, amountDesired = 0;
@@ -686,8 +692,7 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
         if (!isRangeOK(amountDesired)) throw JSONRPCError(RPC_TYPE_ERROR, "Amount desired not in range");
     }
     if (action == CMPTransaction::ADD) { // only check for sufficient balance for new trades
-        if (senderBalance < amountForSale) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
-        if (senderAvailableBalance < amountForSale) throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
+        RequireSufficientBalance(fromAddress, propertyIdForSale, amountForSale);
     }
 
     // create a payload for the transaction

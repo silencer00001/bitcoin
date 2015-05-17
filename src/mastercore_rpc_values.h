@@ -18,5 +18,6 @@ uint16_t ParsePropertyType(const json_spirit::Value& value);
 uint32_t ParsePreviousPropertyId(const json_spirit::Value& value);
 std::string ParseText(const json_spirit::Value& value);
 uint8_t ParsePaymentTimeframe(const json_spirit::Value& value);
+int64_t ParseDeadline(const json_spirit::Value& value);
 
 #endif // MASTERCORE_RPC_VALUES_H

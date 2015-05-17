@@ -289,7 +289,7 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
     std::string data = ParseText(params[8]);
     uint32_t propertyIdDesired = ParsePropertyId(params[9]);
     int64_t numTokens = ParseAmount(params[10], (type == 2)); // 1 = indivisible, 2 = divisible
-    int64_t deadline = params[11].get_int64();
+    int64_t deadline = ParseDeadline(params[11]);
     int64_t earlyBonus = params[12].get_int64();
     int64_t issuerPercentage = params[13].get_int64();
 

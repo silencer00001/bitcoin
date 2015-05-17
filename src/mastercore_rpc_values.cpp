@@ -105,3 +105,11 @@ uint8_t ParsePaymentTimeframe(const json_spirit::Value& value)
     return static_cast<uint32_t>(previousId);
 }
 
+int64_t ParseDeadline(const json_spirit::Value& value)
+{
+    int64_t deadline = value.get_int64();
+    if (deadline < 0) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Deadline must be positive");
+    }
+    return deadline;
+}

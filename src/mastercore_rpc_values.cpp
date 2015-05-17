@@ -8,9 +8,9 @@
 
 #include "json/json_spirit_value.h"
 
-
 #include <string>
 
+using mastercore::StrToInt64;
 
 std::string ParseAddress(const json_spirit::Value& value)
 {

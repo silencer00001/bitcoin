@@ -73,6 +73,13 @@ static void RequireOnlyMSC(uint32_t propertyId)
     }
 }
 
+static void RequireActiveCrowdsale(uint32_t propertyId)
+{
+    if (!isCrowdsaleActive(propertyId)) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "The specified property does not have a crowdsale active");
+    }
+}
+
 
 // send_OMNI - simple send
 Value send_OMNI(const Array& params, bool fHelp)
@@ -633,7 +640,7 @@ Value sendclosecrowdsale_OMNI(const Array& params, bool fHelp)
     uint32_t propertyId = ParsePropertyId(params[1], sp);
 
     // perform checks
-    if (!isCrowdsaleActive(propertyId)) throw JSONRPCError(RPC_TYPE_ERROR, "The specified property does not have a crowdsale active");
+    RequireActiveCrowdsale(propertyId);
     if (fromAddress != sp.issuer) throw JSONRPCError(RPC_TYPE_ERROR, "Sender is not authorized to close the crowdsale for this property");
 
     // create a payload for the transaction

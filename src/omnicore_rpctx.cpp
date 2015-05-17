@@ -90,6 +90,13 @@ static void RequireTokenAdministrator(const std::string& sender, uint32_t proper
     }
 }
 
+static void RequireMatchingDexOffer(const std::string& toAddress, uint32_t propertyId)
+{
+    if (!DEx_offerExists(toAddress, propertyId)) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "There is no matching sell offer on the distributed exchange");
+    }
+}
+
 // send_OMNI - simple send
 Value send_OMNI(const Array& params, bool fHelp)
 {
@@ -249,7 +256,7 @@ Value senddexaccept_OMNI(const Array& params, bool fHelp)
 
     // perform checks
     RequireOnlyMSC(propertyId);
-    if (!DEx_offerExists(toAddress, propertyId)) throw JSONRPCError(RPC_TYPE_ERROR, "There is no matching sell offer on the distributed exchange");
+    RequireMatchingDexOffer(toAddress, propertyId);
 
     // retrieve the sell we're accepting and obtain the required minimum fee and payment window
     CMPOffer *sellOffer = DEx_getOffer(toAddress, propertyId);

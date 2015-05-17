@@ -66,7 +66,7 @@ int64_t ParseAmount(const json_spirit::Value& value, int propertyType)
 uint8_t ParseEcosystem(const json_spirit::Value& value)
 {
     uint64_t ecosystem = value.get_uint64();
-    if (ecosystem < 1 || 2 < ecosystem) { // TODO: avoid magic numbers
+    if (ecosystem < 1 || 2 < ecosystem) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid ecosystem");
     }
     return static_cast<uint8_t>(ecosystem);

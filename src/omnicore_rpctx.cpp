@@ -153,7 +153,7 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
     string strAmountForSale = params[2].get_str();
     string strAmountDesired = params[3].get_str();
     uint8_t paymentWindow = ParsePaymentTimeframe(params[4]);
-    int64_t minAcceptFee = StrToInt64(params[5].get_str(), true); // BTC so always divisible
+    int64_t minAcceptFee = ParseCommitmentFee(params[5]);
     uint8_t action = ParseDexAction(params[6]);
 
     // perform conversions
@@ -172,7 +172,6 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
     if (action != 3) { // only check for sufficient balance for new/update sell offers
         RequireSufficientBalance(fromAddress, propertyIdForSale, amountForSale);
     }
-    if (minAcceptFee < 0) throw JSONRPCError(RPC_TYPE_ERROR, "Mininmum accept mining fee invalid");
     if ((action == 1) && (DEx_offerExists(fromAddress, propertyIdForSale))) throw JSONRPCError(RPC_TYPE_ERROR, "There is already a sell offer from this address on the distributed exchange, use update instead");
 
     // create a payload for the transaction

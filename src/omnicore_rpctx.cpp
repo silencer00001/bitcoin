@@ -66,6 +66,14 @@ static void RequireNonEmptyPropertyName(const std::string& name)
     }
 }
 
+static void RequireOnlyMSC(uint32_t propertyId)
+{
+    if (propertyId < 1 || 2 < propertyId) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid propertyID for sale - only 1 and 2 are permitted");
+    }
+}
+
+
 // send_OMNI - simple send
 Value send_OMNI(const Array& params, bool fHelp)
 {
@@ -156,13 +164,14 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
     int64_t minAcceptFee = ParseCommitmentFee(params[5]);
     uint8_t action = ParseDexAction(params[6]);
 
-    // perform conversions
+    // perform conversions    
     int64_t amountForSale = 0, amountDesired = 0;
-    if ((propertyIdForSale > 2 || propertyIdForSale <=0)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid propertyID for sale - only 1 and 2 are permitted");
     amountForSale = StrToInt64(strAmountForSale, true); // TMSC/MSC always divisible
     amountDesired = StrToInt64(strAmountDesired, true); // BTC so always divisible
 
     // perform checks
+    RequireOnlyMSC(propertyIdForSale);
+    
     if (action <= 2) { // actions 3 permit zero values, skip check
         if (0 >= amountForSale) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for sale");
         if (!isRangeOK(amountForSale)) throw JSONRPCError(RPC_TYPE_ERROR, "Amount for sale not in range");
@@ -223,7 +232,7 @@ Value senddexaccept_OMNI(const Array& params, bool fHelp)
     if (params.size() > 4) override = params[4].get_bool();
 
     // perform checks
-    if (propertyId > 2 || propertyId <= 0) throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid propertyID - only 1 and 2 are permitted");
+    RequireOnlyMSC(propertyId);
     if (!DEx_offerExists(toAddress, propertyId)) throw JSONRPCError(RPC_TYPE_ERROR, "There is no matching sell offer on the distributed exchange");
 
     // retrieve the sell we're accepting and obtain the required minimum fee and payment window

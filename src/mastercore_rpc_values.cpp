@@ -137,7 +137,7 @@ uint8_t ParseMetaDexAction(const json_spirit::Value& value)
 
 int64_t ParseCommitmentFee(const json_spirit::Value& value)
 {
-    int64_t minfee = StrToInt64(value.get_str(), true); // BTC so always divisible
+    int64_t minfee = StrToInt64(value.get_str(), true);  // BTC is divisible
     if (minfee < 0) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Mininmum accept mining fee invalid");
     }

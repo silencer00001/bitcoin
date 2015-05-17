@@ -12,6 +12,7 @@
 #include "mastercore_tx.h"
 #include "omnicore_createpayload.h"
 #include "omnicore_pending.h"
+#include "omnicore_rpc_checks.h"
 
 #include "rpcserver.h"
 #include "wallet.h"
@@ -38,71 +39,6 @@ using std::vector;
 
 using namespace json_spirit;
 using namespace mastercore;
-
-static void RequireSaneReferenceAmount(int64_t amount)
-{
-    if ((0.01 * COIN) < amount) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid reference amount");
-    }
-}
-
-static void RequireSufficientBalance(const std::string fromAddress, uint32_t propertyId, int64_t amount)
-{
-    int64_t balance = getMPbalance(fromAddress, propertyId, BALANCE);
-    if (balance < amount) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
-    }
-
-    int64_t balanceUnconfirmed = getUserAvailableMPbalance(fromAddress, propertyId, BALANCE);
-    if (balanceUnconfirmed < amount) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
-    }
-}
-
-static void RequireNonEmptyPropertyName(const std::string& name)
-{
-    if (name.empty()) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Property name must not be empty");
-    }
-}
-
-static void RequireOnlyMSC(uint32_t propertyId)
-{
-    if (propertyId < 1 || 2 < propertyId) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid propertyID for sale - only 1 and 2 are permitted");
-    }
-}
-
-static void RequireActiveCrowdsale(uint32_t propertyId)
-{
-    if (!isCrowdsaleActive(propertyId)) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "The specified property does not have a crowdsale active");
-    }
-}
-
-static void RequireTokenAdministrator(const std::string& sender, uint32_t propertyId)
-{
-    CMPSPInfo::Entry sp;
-    mastercore::_my_sps->getSP(propertyId, sp);
-
-    if (sender != sp.issuer) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Sender is not authorized to manage this property");
-    }
-}
-
-static void RequireMatchingDexOffer(const std::string& toAddress, uint32_t propertyId)
-{
-    if (!DEx_offerExists(toAddress, propertyId)) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "There is no matching sell offer on the distributed exchange");
-    }
-}
-
-static void RequireNoOtherDexOffer(const std::string& fromAddress, uint32_t propertyId)
-{
-    if (DEx_offerExists(fromAddress, propertyId)) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "There is already a sell offer from this address on the distributed exchange, use update instead");
-    }
-}
 
 static Value CreateOrSend(const std::string& source, const std::string& destination,
         const std::string& redeemer, int64_t reference, const std::vector<unsigned char>& payload)

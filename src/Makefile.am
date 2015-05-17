@@ -170,6 +170,7 @@ OMNICORE_H = \
   mastercore_version.h \
   omnicore_encoding.h \
   omnicore_createpayload.h \
+  omnicore_rpc_checks.h \
   omnicore_rpctx.h \
   omnicore_utils.h \
   omnicore_pending.h
@@ -190,6 +191,7 @@ OMNICORE_CPP = \
   mastercore_version.cpp \
   omnicore_encoding.cpp \
   omnicore_createpayload.cpp \
+  omnicore_rpc_checks.cpp \
   omnicore_rpctx.cpp \
   omnicore_utils.cpp \
   omnicore_pending.cpp

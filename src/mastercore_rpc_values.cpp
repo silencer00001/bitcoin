@@ -62,7 +62,7 @@ int64_t ParseAmount(const json_spirit::Value& value, bool fDivisible)
 
 int64_t ParseAmount(const json_spirit::Value& value, int propertyType)
 {
-    bool fDivisible = (type == 2);  // 1 = indivisible, 2 = divisible
+    bool fDivisible = (propertyType == 2);  // 1 = indivisible, 2 = divisible
     return ParseAmount(value, fDivisible);
 }
 

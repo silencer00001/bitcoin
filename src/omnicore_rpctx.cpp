@@ -122,7 +122,7 @@ Value send_OMNI(const Array& params, bool fHelp)
     // request the wallet build the transaction (and if needed commit it)
     Value result = CreateOrSend(fromAddress, toAddress, redeemAddress, referenceAmount, payload);
     if (autoCommit) {
-        PendingAdd(txid, fromAddress, toAddress, MSC_TYPE_SIMPLE_SEND, propertyId, amount); // TODO: not here
+        PendingAdd(uint256(result.get_str()), fromAddress, toAddress, MSC_TYPE_SIMPLE_SEND, propertyId, amount); // TODO: not here
     }
     return result;
 }
@@ -184,7 +184,7 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
     // request the wallet build the transaction (and if needed commit it)
     Value result = CreateOrSend(fromAddress, payload);
     if (autoCommit) {
-        PendingAdd(txid, fromAddress, "", MSC_TYPE_TRADE_OFFER, propertyIdForSale, amountForSale, 0, amountDesired, action); // TODO: not here
+        PendingAdd(uint256(result.get_str()), fromAddress, "", MSC_TYPE_TRADE_OFFER, propertyIdForSale, amountForSale, 0, amountDesired, action); // TODO: not here
     }
     return result;
 }
@@ -427,7 +427,7 @@ Value sendsto_OMNI(const Array& params, bool fHelp)
     // request the wallet build the transaction (and if needed commit it)
     Value result = CreateOrSend(fromAddress, "", redeemAddress, payload);
     if (autoCommit) {
-        PendingAdd(txid, fromAddress, "", MSC_TYPE_SEND_TO_OWNERS, propertyId, amount); // TODO: not here
+        PendingAdd(uint256(result.get_str()), fromAddress, "", MSC_TYPE_SEND_TO_OWNERS, propertyId, amount); // TODO: not here
     }
     return result;
 }
@@ -599,7 +599,7 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
     // request the wallet build the transaction (and if needed commit it)
     Value result = CreateOrSend(fromAddress, payload);
     if (autoCommit) {
-        PendingAdd(txid, fromAddress, "", MSC_TYPE_METADEX, propertyIdForSale, amountForSale, propertyIdDesired, amountDesired, action); // TODO: not here
+        PendingAdd(uint256(result.get_str()), fromAddress, "", MSC_TYPE_METADEX, propertyIdForSale, amountForSale, propertyIdDesired, amountDesired, action); // TODO: not here
     }
     return result;
 }

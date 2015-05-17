@@ -308,12 +308,11 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
     uint32_t propertyIdDesired = ParsePropertyId(params[9]);
     int64_t numTokens = ParseAmount(params[10], (type == 2)); // 1 = indivisible, 2 = divisible
     int64_t deadline = ParseDeadline(params[11]);
-    int64_t earlyBonus = params[12].get_int64();
+    int64_t earlyBonus = ParseEarlyBirdBonus(params[12]);
     int64_t issuerPercentage = params[13].get_int64();
 
     // perform checks
     RequireNonEmptyPropertyName(name);
-    if ((earlyBonus <=0) || (earlyBonus > 255)) throw JSONRPCError(RPC_TYPE_ERROR, "Early bonus must be in the range 1-255");
     if ((issuerPercentage <=0) || (issuerPercentage > 255)) throw JSONRPCError(RPC_TYPE_ERROR, "Issuer percentage must be in the range 1-255");
 
     // create a payload for the transaction

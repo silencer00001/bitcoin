@@ -22,5 +22,7 @@ int64_t ParseDeadline(const json_spirit::Value& value);
 uint8_t ParseDexAction(const json_spirit::Value& value);
 uint8_t ParseMetaDexAction(const json_spirit::Value& value);
 int64_t ParseCommitmentFee(const json_spirit::Value& value);
+uint8_t ParseEarlyBirdBonus(const json_spirit::Value& value);
+
 
 #endif // MASTERCORE_RPC_VALUES_H

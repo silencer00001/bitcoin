@@ -264,8 +264,8 @@ Value senddexaccept_OMNI(const Array& params, bool fHelp)
     }
 
     // perform checks
-    RequireOnlyMSC(propertyId);
     RequireExistingProperty(propertyId);
+    RequireOnlyMSC(propertyId);
     RequireMatchingDexOffer(toAddress, propertyId);
 
     // reject unsafe accepts - note client maximum tx fee will always be respected regardless of override here

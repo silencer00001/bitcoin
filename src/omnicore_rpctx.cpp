@@ -206,8 +206,8 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
     amountDesired = StrToInt64(strAmountDesired, true); // BTC so always divisible
 
     // perform checks
-    RequireOnlyMSC(propertyIdForSale);
     RequireExistingProperty(propertyIdForSale);
+    RequireOnlyMSC(propertyIdForSale);
 
     if (action <= 2) { // actions 3 permit zero values, skip check
         if (0 >= amountForSale) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for sale");

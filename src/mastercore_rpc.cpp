@@ -265,52 +265,6 @@ Value getbalance_MP(const Array& params, bool fHelp)
     return balance_obj;
 }
 
-Value sendrawtx_MP(const Array& params, bool fHelp)
-{
-if (fHelp || params.size() < 2 || params.size() > 5)
-        throw runtime_error(
-            "sendrawtx_MP \"fromaddress\" \"hexstring\" ( \"toaddress\" \"redeemaddress\" \"referenceamount\" )\n"
-            "\nCreates and broadcasts a raw Master protocol transaction.\n"
-            "\nParameters:\n"
-            "FromAddress   : the address to send from\n"
-            "RawTX         : the hex-encoded raw transaction\n"
-            "ToAddress     : the address to send to.  This should be empty: (\"\") for transaction\n"
-            "                types that do not use a reference/to address\n"
-            "RedeemAddress : (optional) the address that can redeem the bitcoin outputs. Defaults to FromAddress\n"
-            "ReferenceAmount:(optional)\n"
-            "\nResult:\n"
-            "txid    (string) The transaction ID of the sent transaction\n"
-            "\nExamples:\n"
-            ">mastercored sendrawtx_MP 1FromAddress <tx bytes hex> 1ToAddress 1RedeemAddress\n"
-        );
-
-  std::string fromAddress = ParseAddress(params[0]);
-  std::vector<unsigned char> data = ParseHexV(params[1], "parameter 2");
-  std::string toAddress = (params.size() > 2) ? ParseAddress(params[2]): "";
-  std::string redeemAddress = (params.size() > 3) ? ParseAddress(params[3]): "";
-
-    int64_t referenceAmount = 0;
-    if (params.size() > 4) {
-        referenceAmount = ParseAmount(params[4], true);
-    }
-
-  //some sanity checking of the data supplied?
-  uint256 newTX;
-  string rawHex;
-  int result = ClassAgnosticWalletTXBuilder(fromAddress, toAddress, redeemAddress, referenceAmount, data, newTX, rawHex, autoCommit);
-
-  // check error and return the txid (or raw hex depending on autocommit)
-  if (result != 0) {
-      throw JSONRPCError(result, error_str(result));
-  } else {
-      if (!autoCommit) {
-          return rawHex;
-      } else {
-          return newTX.GetHex();
-      }
-  }
-}
-
 Value getallbalancesforid_MP(const Array& params, bool fHelp)
 {
    if (fHelp || params.size() != 1)

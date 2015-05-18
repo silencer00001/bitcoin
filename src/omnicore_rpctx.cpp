@@ -213,6 +213,7 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
     }
     if (action <= 3) { // only check for sufficient balance for new/update sell offers
         RequireEnoughBalance(fromAddress, propertyIdForSale, amountForSale);
+        // TODO: require active offer?
     }
     if (action == 1) {
         RequireNoOtherDexOffer(fromAddress, propertyIdForSale);

@@ -157,7 +157,7 @@ Value send_OMNI(const Array& params, bool fHelp)
     // perform checks
     RequireExistingProperty(propertyId);
     RequireSaneReferenceAmount(referenceAmount);
-    RequireSufficientBalance(fromAddress, propertyId, amount);
+    RequireEnoughBalance(fromAddress, propertyId, amount);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_SimpleSend(propertyId, amount);
@@ -212,7 +212,7 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
         amountDesired = ParseAmount(strAmountDesired, true); // BTC so always divisible
     }
     if (action <= 3) { // only check for sufficient balance for new/update sell offers
-        RequireSufficientBalance(fromAddress, propertyIdForSale, amountForSale);
+        RequireEnoughBalance(fromAddress, propertyIdForSale, amountForSale);
     }
     if (action == 1) {
         RequireNoOtherDexOffer(fromAddress, propertyIdForSale);
@@ -469,7 +469,7 @@ Value sendsto_OMNI(const Array& params, bool fHelp)
 
     // perform checks
     RequireExistingProperty(propertyId);
-    RequireSufficientBalance(fromAddress, propertyId, amount);
+    RequireEnoughBalance(fromAddress, propertyId, amount);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_SendToOwners(propertyId, amount);
@@ -561,7 +561,7 @@ Value sendrevoke_OMNI(const Array& params, bool fHelp)
     RequireExistingProperty(propertyId);
     RequireManagedProperty(propertyId);
     RequireTokenAdministrator(fromAddress, propertyId);
-    RequireSufficientBalance(fromAddress, propertyId, amount);
+    RequireEnoughBalance(fromAddress, propertyId, amount);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Revoke(propertyId, amount, memo);
@@ -647,7 +647,7 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
         // TODO: require active offer
     }
     if (action == CMPTransaction::ADD) { // only check for sufficient balance for new trades
-        RequireSufficientBalance(fromAddress, propertyIdForSale, amountForSale);
+        RequireEnoughBalance(fromAddress, propertyIdForSale, amountForSale);
     }
 
     // create a payload for the transaction

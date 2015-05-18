@@ -255,6 +255,8 @@ Value getbalance_MP(const Array& params, bool fHelp)
 
     std::string address = ParseAddress(params[0]);
     uint32_t propertyId = ParsePropertyId(params[1]);
+    
+    
 
     Object balance_obj;
     BalanceToJSON(address, propertyId, balance_obj, isPropertyDivisible(propertyId));

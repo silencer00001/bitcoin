@@ -1,6 +1,5 @@
 #include "mastercore_rpc_values.h"
 
-#include "mastercore_sp.h"
 #include "mastercore_parse_string.h"
 
 #include "base58.h"
@@ -21,22 +20,13 @@ std::string ParseAddress(const json_spirit::Value& value)
     return address.ToString();
 }
 
-uint32_t ParsePropertyIdUnchecked(const json_spirit::Value& value)
+uint32_t ParsePropertyId(const json_spirit::Value& value)
 {
     int64_t propertyId = value.get_int64();
     if (propertyId < 1 || 4294967295 < propertyId) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid property identifier");
     }
     return static_cast<uint32_t>(propertyId);
-}
-
-uint32_t ParsePropertyId(const json_spirit::Value& value)
-{
-    uint32_t propertyId = ParsePropertyIdUnchecked(value);
-    if (!mastercore::_my_sps->hasSP(propertyId)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-    }
-    return propertyId;
 }
 
 int64_t ParseAmount(const json_spirit::Value& value, bool fDivisible)

@@ -112,6 +112,7 @@ Value send_OMNI(const Array& params, bool fHelp)
     }
 
     // perform checks
+    RequireExistingProperty(propertyId);
     RequireSaneReferenceAmount(referenceAmount);
     RequireSufficientBalance(fromAddress, propertyId, amount);
 
@@ -163,7 +164,8 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
 
     // perform checks
     RequireOnlyMSC(propertyIdForSale);
-    
+    RequireExistingProperty(propertyIdForSale);
+
     if (action <= 2) { // actions 3 permit zero values, skip check
         if (0 >= amountForSale) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for sale");
         if (!isRangeOK(amountForSale)) throw JSONRPCError(RPC_TYPE_ERROR, "Amount for sale not in range");
@@ -217,6 +219,7 @@ Value senddexaccept_OMNI(const Array& params, bool fHelp)
 
     // perform checks
     RequireOnlyMSC(propertyId);
+    RequireExistingProperty(propertyId);
     RequireMatchingDexOffer(toAddress, propertyId);
 
     // retrieve the sell we're accepting and obtain the required minimum fee and payment window
@@ -295,6 +298,7 @@ Value sendissuancecrowdsale_OMNI(const Array& params, bool fHelp)
 
     // perform checks
     RequireNonEmptyPropertyName(name);
+    RequireExistingProperty(propertyIdDesired);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_IssuanceVariable(ecosystem, type, previousId, category, subcategory, name, url, data, propertyIdDesired, numTokens, deadline, earlyBonus, issuerPercentage);
@@ -418,6 +422,7 @@ Value sendsto_OMNI(const Array& params, bool fHelp)
     std::string redeemAddress = (params.size() > 3) ? (params[3].get_str()): "";
 
     // perform checks
+    RequireExistingProperty(propertyId);
     RequireSufficientBalance(fromAddress, propertyId, amount);
 
     // create a payload for the transaction
@@ -463,6 +468,7 @@ Value sendgrant_OMNI(const Array& params, bool fHelp)
     std::string memo = (params.size() > 4) ? ParseText(params[4]): "";
 
     // perform checks
+    RequireExistingProperty(propertyId);
     RequireTokenAdministrator(fromAddress, propertyId);
 
     // create a payload for the transaction
@@ -499,6 +505,7 @@ Value sendrevoke_OMNI(const Array& params, bool fHelp)
     std::string memo = (params.size() > 3) ? ParseText(params[3]): "";
 
     // perform checks
+    RequireExistingProperty(propertyId);
     RequireTokenAdministrator(fromAddress, propertyId);
     RequireSufficientBalance(fromAddress, propertyId, amount);
 
@@ -530,6 +537,7 @@ Value sendclosecrowdsale_OMNI(const Array& params, bool fHelp)
     uint32_t propertyId = ParsePropertyId(params[1]);
 
     // perform checks
+    RequireExistingProperty(propertyId);
     RequireActiveCrowdsale(propertyId);
     RequireTokenAdministrator(fromAddress, propertyId);
 
@@ -562,27 +570,25 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
-    uint32_t propertyIdForSale = ParsePropertyIdUnchecked(params[1]);
+    uint32_t propertyIdForSale = ParsePropertyId(params[1]);
     std::string strAmountForSale = params[2].get_str();
-    uint32_t  propertyIdDesired = ParsePropertyIdUnchecked(params[3]);
+    uint32_t  propertyIdDesired = ParsePropertyId(params[3]);
     std::string strAmountDesired = params[4].get_str();
     int64_t action = ParseMetaDexAction(params[5]);
 
     // setup a few vars
     int64_t amountForSale = 0, amountDesired = 0;
-    CMPSPInfo::Entry spForSale;
-    CMPSPInfo::Entry spDesired;
 
     // perform conversions & checks
     if (action != CMPTransaction::CANCEL_EVERYTHING) { // these checks are not applicable to cancel everything
-        if (false == _my_sps->getSP(propertyIdForSale, spForSale)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property for sale does not exist");
-        if (false == _my_sps->getSP(propertyIdDesired, spDesired)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property desired does not exist");
+        RequireExistingProperty(propertyIdForSale);
+        RequireExistingProperty(propertyIdDesired);
         if (isTestEcosystemProperty(propertyIdForSale) != isTestEcosystemProperty(propertyIdDesired)) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property for sale and property desired must be in the same ecosystem");
         if (propertyIdForSale == propertyIdDesired) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property for sale and property desired must be different");
     }
     if (action <= CMPTransaction::CANCEL_AT_PRICE) { // cancel pair and cancel everything permit zero values
-        amountForSale = StrToInt64(strAmountForSale, spForSale.isDivisible());
-        amountDesired = StrToInt64(strAmountDesired, spDesired.isDivisible());
+        amountForSale = StrToInt64(strAmountForSale, isPropertyDivisible(propertyIdForSale));
+        amountDesired = StrToInt64(strAmountDesired, isPropertyDivisible(propertyIdDesired));
         if (0 >= amountForSale) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for sale");
         if (!isRangeOK(amountForSale)) throw JSONRPCError(RPC_TYPE_ERROR, "Amount for sale not in range");
         if (0 >= amountDesired) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount desired");

@@ -20,5 +20,7 @@ void RequireMatchingDexOffer(const std::string& toAddress, uint32_t propertyId);
 
 void RequireNoOtherDexOffer(const std::string& fromAddress, uint32_t propertyId);
 
+void RequireExistingProperty(uint32_t propertyId);
+
 
 #endif // OMNICORE_RPC_CHECKS_H

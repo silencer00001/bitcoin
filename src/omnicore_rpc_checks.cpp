@@ -74,3 +74,11 @@ void RequireNoOtherDexOffer(const std::string& fromAddress, uint32_t propertyId)
         throw JSONRPCError(RPC_TYPE_ERROR, "There is already a sell offer from this address on the distributed exchange, use update instead");
     }
 }
+
+void RequireExistingProperty(uint32_t propertyId)
+{
+    if (!mastercore::_my_sps->hasSP(propertyId)) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
+    }
+}
+

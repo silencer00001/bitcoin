@@ -18,7 +18,7 @@ void RequireSaneReferenceAmount(int64_t amount)
     }
 }
 
-void RequireSufficientBalance(const std::string fromAddress, uint32_t propertyId, int64_t amount)
+void RequireEnoughBalance(const std::string fromAddress, uint32_t propertyId, int64_t amount)
 {
     int64_t balance = getMPbalance(fromAddress, propertyId, BALANCE);
     if (balance < amount) {

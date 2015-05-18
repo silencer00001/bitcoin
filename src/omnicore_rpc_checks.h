@@ -6,7 +6,7 @@
 
 void RequireSaneReferenceAmount(int64_t amount);
 
-void RequireSufficientBalance(const std::string fromAddress, uint32_t propertyId, int64_t amount);
+void RequireEnoughBalance(const std::string fromAddress, uint32_t propertyId, int64_t amount);
 
 void RequireNonEmptyPropertyName(const std::string& name);
 

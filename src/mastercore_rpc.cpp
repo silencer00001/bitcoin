@@ -1066,8 +1066,7 @@ Value listblocktransactions_MP(const Array& params, bool fHelp)
 
   // firstly let's get the block height given in the param
   int blockHeight = params[0].get_int();
-  if (blockHeight < 0 || blockHeight > GetHeight())
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Block height out of range");
+  RequireBlockHeightInRange(blockHeight);
 
   // next let's obtain the block for this height
   CBlockIndex* mpBlockIndex = chainActive[blockHeight];

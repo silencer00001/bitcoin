@@ -5,6 +5,7 @@
 #include "mastercore_sp.h"
 
 #include "amount.h"
+#include "main.h"
 #include "rpcprotocol.h"
 
 #include <stdint.h>
@@ -121,6 +122,13 @@ void RequireSaneDexPaymentTimeframe(const std::string& toAddress, uint32_t prope
     }
     if (offer->getBlockTimeLimit() < 10) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Unsafe trade protection - payment time limit is less than 10 blocks");
+    }
+}
+
+void RequireHeightInRange(int blockHeight)
+{
+    if (blockHeight < 0 || chainActive.Height() < blockHeight) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Block height out of range");
     }
 }
 

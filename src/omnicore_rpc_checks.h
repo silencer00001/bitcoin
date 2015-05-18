@@ -30,5 +30,7 @@ void RequireSaneDexCommitmentFee(const std::string& toAddress, uint32_t property
 
 void RequireSaneDexPaymentTimeframe(const std::string& toAddress, uint32_t propertyId);
 
+void RequireHeightInRange(int blockHeight);
+
 
 #endif // OMNICORE_RPC_CHECKS_H

@@ -103,10 +103,12 @@ Value send_OMNI(const Array& params, bool fHelp)
     std::string toAddress = ParseAddress(params[1]);
     uint32_t propertyId = ParsePropertyId(params[2]);
     int64_t amount = ParseAmount(params[3], isPropertyDivisible(propertyId));
-
-    std::string redeemAddress = (params.size() > 4) ? ParseAddress(params[4]): "";
-
+    std::string redeemAddress = "";
     int64_t referenceAmount = 0;
+
+    if (params.size() > 4) {
+        redeemAddress = ParseAddress(params[4]);
+    }
     if (params.size() > 5) {
         referenceAmount = ParseAmount(params[5], true);
     }
@@ -215,7 +217,10 @@ Value senddexaccept_OMNI(const Array& params, bool fHelp)
     uint32_t propertyId = ParsePropertyId(params[2]);
     int64_t amount = ParseAmount(params[2], true); // MSC/TMSC always divisible
     bool override = false;
-    if (params.size() > 4) override = params[4].get_bool();
+
+    if (params.size() > 4) {
+        override = params[4].get_bool();
+    }
 
     // perform checks
     RequireOnlyMSC(propertyId);
@@ -419,7 +424,11 @@ Value sendsto_OMNI(const Array& params, bool fHelp)
     std::string fromAddress = ParseAddress(params[0]);
     uint32_t propertyId = ParsePropertyId(params[1]);
     int64_t amount = ParseAmount(params[2], isPropertyDivisible(propertyId));
-    std::string redeemAddress = (params.size() > 3) ? (params[3].get_str()): "";
+    std::string redeemAddress = "";
+
+    if (params.size() > 3) {
+        redeemAddress = ParseAddress(params[3]);
+    }
 
     // perform checks
     RequireExistingProperty(propertyId);
@@ -458,14 +467,17 @@ Value sendgrant_OMNI(const Array& params, bool fHelp)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0].get_str());
-    std::string toAddress = fromAddress;
+    std::string toAddress = "";
+    uint32_t propertyId = ParsePropertyId(params[2]);
+    int64_t amount = ParseAmount(params[3], isPropertyDivisible(propertyId));
+    std::string memo = "";
+
     if (!params[1].get_str().empty()) {
         toAddress = ParseAddress(params[1]);
     }
-    uint32_t propertyId = ParsePropertyId(params[2]);
-    int64_t amount = ParseAmount(params[3], isPropertyDivisible(propertyId));
-
-    std::string memo = (params.size() > 4) ? ParseText(params[4]): "";
+    if (params.size() > 4) {
+        memo = ParseText(params[4]);
+    }
 
     // perform checks
     RequireExistingProperty(propertyId);
@@ -502,8 +514,11 @@ Value sendrevoke_OMNI(const Array& params, bool fHelp)
     std::string fromAddress = ParseAddress(params[0]);
     uint32_t propertyId = ParsePropertyId(params[1]);
     int64_t amount = ParseAmount(params[2], isPropertyDivisible(propertyId));
+    std::string memo = "";
 
-    std::string memo = (params.size() > 3) ? ParseText(params[3]): "";
+    if (params.size() > 3) {
+        std::string memo = ParseText(params[3]);
+    }
 
     // perform checks
     RequireExistingProperty(propertyId);

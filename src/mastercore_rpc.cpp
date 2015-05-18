@@ -1066,7 +1066,7 @@ Value listblocktransactions_MP(const Array& params, bool fHelp)
 
   // firstly let's get the block height given in the param
   int blockHeight = params[0].get_int();
-  RequireBlockHeightInRange(blockHeight);
+  RequireHeightInRange(blockHeight);
 
   // next let's obtain the block for this height
   CBlockIndex* mpBlockIndex = chainActive[blockHeight];

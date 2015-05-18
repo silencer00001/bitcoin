@@ -541,20 +541,16 @@ Value getcrowdsale_MP(const Array& params, bool fHelp)
 
     uint32_t propertyId = ParsePropertyId(params[0]);
 
-    RequireExistingProperty(propertyId);
-
     bool showVerbose = false;
     if (params.size() > 1) showVerbose = params[1].get_bool();
 
-    CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-    }
+    RequireExistingProperty(propertyId);
+    RequireCrowdsale(propertyId);
 
-    bool fixedIssuance = sp.fixed;
-    bool manualIssuance = sp.manual;
-    if (fixedIssuance || manualIssuance) // property was not a variable issuance
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property was not created with a crowdsale");
+    CMPSPInfo::Entry sp;
+    if (!mastercore::_my_sps->getSP(propertyId, sp)) { // TODO: remove somehow
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve information about the property");
+    }
 
     uint256 creationHash = sp.txid;
 

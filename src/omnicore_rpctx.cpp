@@ -538,6 +538,7 @@ Value sendclosecrowdsale_OMNI(const Array& params, bool fHelp)
 
     // perform checks
     RequireExistingProperty(propertyId);
+    RequireCrowdsale(propertyId);
     RequireActiveCrowdsale(propertyId);
     RequireTokenAdministrator(fromAddress, propertyId);
 

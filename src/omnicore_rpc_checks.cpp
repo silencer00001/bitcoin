@@ -82,3 +82,13 @@ void RequireExistingProperty(uint32_t propertyId)
     }
 }
 
+void RequireCrowdsale(uint32_t propertyId)
+{
+    CMPSPInfo::Entry sp;
+    mastercore::_my_sps->getSP(propertyId, sp);
+
+    if (sp.fixed || sp.manual) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property was not created with a crowdsale");
+    }
+}
+

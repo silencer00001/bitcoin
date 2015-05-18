@@ -22,5 +22,7 @@ void RequireNoOtherDexOffer(const std::string& fromAddress, uint32_t propertyId)
 
 void RequireExistingProperty(uint32_t propertyId);
 
+void RequireCrowdsale(uint32_t propertyId);
+
 
 #endif // OMNICORE_RPC_CHECKS_H

@@ -102,3 +102,14 @@ void RequireManagedProperty(uint32_t propertyId)
     }
 }
 
+void RequireSaneDexCommitmentFee(const std::string& toAddress, uint32_t propertyId)
+{
+    CMPOffer* offer = mastercore::DEx_getOffer(toAddress, propertyId);
+    if (offer == NULL) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Unable to load sell offer from the distributed exchange");
+    }
+    if (offer->getMinFee() > 1000000) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Unsafe trade protection - minimum accept fee is above 0.01 BTC");
+    }
+}
+

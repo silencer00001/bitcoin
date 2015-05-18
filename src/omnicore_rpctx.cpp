@@ -229,7 +229,7 @@ Value senddexaccept_OMNI(const Array& params, bool fHelp)
     unsigned char nBlockTimeLimit = sellOffer->getBlockTimeLimit();
 
     if (!override) { // reject unsafe accepts - note client maximum tx fee will always be respected regardless of override here
-        if (nMinimumAcceptFee > 1000000) throw JSONRPCError(RPC_TYPE_ERROR, "Unsafe trade protection - minimum accept fee is above 0.01 BTC");
+        RequireSaneDexCommitmentFee(toAddress, propertyId);
         if (nBlockTimeLimit < 10) throw JSONRPCError(RPC_TYPE_ERROR, "Unsafe trade protection - payment time limit is less than 10 blocks");
     }
 

@@ -635,6 +635,7 @@ Value sendchangeissuer_OMNI(const Array& params, bool fHelp)
     uint32_t propertyId = ParsePropertyId(params[2]);
 
     // perform checks
+    RequireExistingProperty(propertyId);
     RequireTokenAdministrator(fromAddress, propertyId);
 
     // create a payload for the transaction

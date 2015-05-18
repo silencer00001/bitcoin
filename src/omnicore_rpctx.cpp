@@ -194,26 +194,22 @@ Value senddexsell_OMNI(const Array& params, bool fHelp)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
     uint32_t propertyIdForSale = ParsePropertyId(params[1]);
-    string strAmountForSale = params[2].get_str();
-    string strAmountDesired = params[3].get_str();
+    std::string strAmountForSale = params[2].get_str();
+    std::string strAmountDesired = params[3].get_str();
     uint8_t paymentWindow = ParsePaymentTimeframe(params[4]);
     int64_t minAcceptFee = ParseCommitmentFee(params[5]);
     uint8_t action = ParseDexAction(params[6]);
 
-    // perform conversions    
+    // set default values
     int64_t amountForSale = 0, amountDesired = 0;
-    amountForSale = StrToInt64(strAmountForSale, true); // TMSC/MSC always divisible
-    amountDesired = StrToInt64(strAmountDesired, true); // BTC so always divisible
 
     // perform checks
     RequireExistingProperty(propertyIdForSale);
     RequireOnlyMSC(propertyIdForSale);
 
     if (action <= 2) { // actions 3 permit zero values, skip check
-        if (0 >= amountForSale) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for sale");
-        if (!isRangeOK(amountForSale)) throw JSONRPCError(RPC_TYPE_ERROR, "Amount for sale not in range");
-        if (0 >= amountDesired) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount desired");
-        if (!isRangeOK(amountDesired)) throw JSONRPCError(RPC_TYPE_ERROR, "Amount desired not in range");
+        amountForSale = ParseAmount(strAmountForSale, true); // TMSC/MSC always divisible
+        amountDesired = ParseAmount(strAmountDesired, true); // BTC so always divisible
     }
     if (action <= 3) { // only check for sufficient balance for new/update sell offers
         RequireSufficientBalance(fromAddress, propertyIdForSale, amountForSale);
@@ -631,7 +627,7 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
     std::string fromAddress = ParseAddress(params[0]);
     uint32_t propertyIdForSale = ParsePropertyId(params[1]);
     std::string strAmountForSale = params[2].get_str();
-    uint32_t  propertyIdDesired = ParsePropertyId(params[3]);
+    uint32_t propertyIdDesired = ParsePropertyId(params[3]);
     std::string strAmountDesired = params[4].get_str();
     int64_t action = ParseMetaDexAction(params[5]);
 
@@ -646,12 +642,9 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
         if (propertyIdForSale == propertyIdDesired) throw JSONRPCError(RPC_INVALID_PARAMETER, "Property for sale and property desired must be different");
     }
     if (action <= CMPTransaction::CANCEL_AT_PRICE) { // cancel pair and cancel everything permit zero values
-        amountForSale = StrToInt64(strAmountForSale, isPropertyDivisible(propertyIdForSale));
-        amountDesired = StrToInt64(strAmountDesired, isPropertyDivisible(propertyIdDesired));
-        if (0 >= amountForSale) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for sale");
-        if (!isRangeOK(amountForSale)) throw JSONRPCError(RPC_TYPE_ERROR, "Amount for sale not in range");
-        if (0 >= amountDesired) throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount desired");
-        if (!isRangeOK(amountDesired)) throw JSONRPCError(RPC_TYPE_ERROR, "Amount desired not in range");
+        amountForSale = ParseAmount(strAmountForSale, isPropertyDivisible(propertyIdForSale));
+        amountDesired = ParseAmount(strAmountDesired, isPropertyDivisible(propertyIdDesired));
+        // TODO: require active offer
     }
     if (action == CMPTransaction::ADD) { // only check for sufficient balance for new trades
         RequireSufficientBalance(fromAddress, propertyIdForSale, amountForSale);

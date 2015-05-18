@@ -13,6 +13,7 @@
 #include "mastercore_tx.h"
 #include "mastercore_version.h"
 #include "omnicore_createpayload.h"
+#include "omnicore_rpc_checks.h"
 #include "omnicore_rpctx.h"
 
 #include "amount.h"
@@ -255,8 +256,8 @@ Value getbalance_MP(const Array& params, bool fHelp)
 
     std::string address = ParseAddress(params[0]);
     uint32_t propertyId = ParsePropertyId(params[1]);
-    
-    
+
+    RequireExistingProperty(propertyId);
 
     Object balance_obj;
     BalanceToJSON(address, propertyId, balance_obj, isPropertyDivisible(propertyId));
@@ -331,6 +332,8 @@ Value getallbalancesforid_MP(const Array& params, bool fHelp)
         );
 
     uint32_t propertyId = ParsePropertyId(params[0]);
+
+    RequireExistingProperty(propertyId);
 
     Array response;
     bool divisible = isPropertyDivisible(propertyId); // we want to check this BEFORE the loop
@@ -428,6 +431,8 @@ Value getproperty_MP(const Array& params, bool fHelp)
         );
 
     uint32_t propertyId = ParsePropertyId(params[0]);
+
+    RequireExistingProperty(propertyId);
 
     CMPSPInfo::Entry sp;
     if (!mastercore::_my_sps->getSP(propertyId, sp)) {
@@ -535,6 +540,8 @@ Value getcrowdsale_MP(const Array& params, bool fHelp)
         );
 
     uint32_t propertyId = ParsePropertyId(params[0]);
+
+    RequireExistingProperty(propertyId);
 
     bool showVerbose = false;
     if (params.size() > 1) showVerbose = params[1].get_bool();
@@ -755,6 +762,8 @@ Value getgrants_MP(const Array& params, bool fHelp)
         );
 
     uint32_t propertyId = ParsePropertyId(params[0]);
+
+    RequireExistingProperty(propertyId);
 
     CMPSPInfo::Entry sp;
     if (!mastercore::_my_sps->getSP(propertyId, sp)) {

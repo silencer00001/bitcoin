@@ -469,6 +469,7 @@ Value sendgrant_OMNI(const Array& params, bool fHelp)
 
     // perform checks
     RequireExistingProperty(propertyId);
+    RequireManagedProperty(propertyId);
     RequireTokenAdministrator(fromAddress, propertyId);
 
     // create a payload for the transaction
@@ -506,6 +507,7 @@ Value sendrevoke_OMNI(const Array& params, bool fHelp)
 
     // perform checks
     RequireExistingProperty(propertyId);
+    RequireManagedProperty(propertyId);
     RequireTokenAdministrator(fromAddress, propertyId);
     RequireSufficientBalance(fromAddress, propertyId, amount);
 

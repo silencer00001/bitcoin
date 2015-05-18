@@ -760,16 +760,12 @@ Value getgrants_MP(const Array& params, bool fHelp)
     uint32_t propertyId = ParsePropertyId(params[0]);
 
     RequireExistingProperty(propertyId);
+    RequireManagedProperty(propertyId);
 
     CMPSPInfo::Entry sp;
     if (!mastercore::_my_sps->getSP(propertyId, sp)) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
     }
-
-    bool fixedIssuance = sp.fixed;
-    bool manualIssuance = sp.manual;
-    if (fixedIssuance || !manualIssuance) // property was not a manual issuance
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property was not created with a manual issuance");
 
     uint256 creationHash = sp.txid;
 

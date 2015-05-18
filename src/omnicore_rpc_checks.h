@@ -24,5 +24,7 @@ void RequireExistingProperty(uint32_t propertyId);
 
 void RequireCrowdsale(uint32_t propertyId);
 
+void RequireManagedProperty(uint32_t propertyId);
+
 
 #endif // OMNICORE_RPC_CHECKS_H

@@ -222,16 +222,16 @@ Value senddexaccept_OMNI(const Array& params, bool fHelp)
     RequireExistingProperty(propertyId);
     RequireMatchingDexOffer(toAddress, propertyId);
 
+    // reject unsafe accepts - note client maximum tx fee will always be respected regardless of override here
+    if (!override) {
+        RequireSaneDexCommitmentFee(toAddress, propertyId);
+        RequireSaneDexPaymentTimeframe(toAddress, propertyId);
+    }
+
     // retrieve the sell we're accepting and obtain the required minimum fee and payment window
-    CMPOffer *sellOffer = DEx_getOffer(toAddress, propertyId);
+    CMPOffer *sellOffer = DEx_getOffer(toAddress, propertyId); // TODO: remove somehow
     if (sellOffer == NULL) throw JSONRPCError(RPC_TYPE_ERROR, "Unable to load sell offer from the distributed exchange");
     int64_t nMinimumAcceptFee = sellOffer->getMinFee();
-    unsigned char nBlockTimeLimit = sellOffer->getBlockTimeLimit();
-
-    if (!override) { // reject unsafe accepts - note client maximum tx fee will always be respected regardless of override here
-        RequireSaneDexCommitmentFee(toAddress, propertyId);
-        if (nBlockTimeLimit < 10) throw JSONRPCError(RPC_TYPE_ERROR, "Unsafe trade protection - payment time limit is less than 10 blocks");
-    }
 
     // use new 0.10 custom fee to set the accept minimum fee appropriately
     CFeeRate payTxFeeOriginal = payTxFee;

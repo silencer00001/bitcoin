@@ -113,3 +113,14 @@ void RequireSaneDexCommitmentFee(const std::string& toAddress, uint32_t property
     }
 }
 
+void RequireSaneDexPaymentTimeframe(const std::string& toAddress, uint32_t propertyId)
+{
+    CMPOffer* offer = mastercore::DEx_getOffer(toAddress, propertyId);
+    if (offer == NULL) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Unable to load sell offer from the distributed exchange");
+    }
+    if (offer->getBlockTimeLimit() < 10) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Unsafe trade protection - payment time limit is less than 10 blocks");
+    }
+}
+

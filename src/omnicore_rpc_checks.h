@@ -28,5 +28,7 @@ void RequireManagedProperty(uint32_t propertyId);
 
 void RequireSaneDexCommitmentFee(const std::string& toAddress, uint32_t propertyId);
 
+void RequireSaneDexPaymentTimeframe(const std::string& toAddress, uint32_t propertyId);
+
 
 #endif // OMNICORE_RPC_CHECKS_H

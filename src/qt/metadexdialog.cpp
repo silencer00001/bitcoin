@@ -603,7 +603,7 @@ void MetaDExDialog::sendTrade(bool sell)
     }
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_MetaDExTrade(propertyIdSell, amountSell, propertyIdDes, amountDes, 1);
+    std::vector<unsigned char> payload = CreatePayload_MetaDExTrade(propertyIdSell, amountSell, propertyIdDes, amountDes);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid = 0;
@@ -621,7 +621,7 @@ void MetaDExDialog::sendTrade(bool sell)
             PopulateSimpleDialog(rawHex, "Raw Hex (auto commit is disabled)", "Raw transaction hex");
         } else {
             PopulateTXSentDialog(txid.GetHex());
-            PendingAdd(txid, strFromAddress, "", MSC_TYPE_METADEX, propertyIdSell, amountSell, propertyIdDes, amountDes, 1);
+            PendingAdd(txid, strFromAddress, "", MSC_TYPE_MDEX_NEW, propertyIdSell, amountSell, propertyIdDes, amountDes, 1);
         }
     }
 }

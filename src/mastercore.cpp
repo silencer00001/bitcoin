@@ -147,7 +147,10 @@ static const int txRestrictionsRules[][3] = {
   {MSC_TYPE_CREATE_PROPERTY_VARIABLE, MSC_SP_BLOCK,       MP_TX_PKT_V1},
   {MSC_TYPE_CLOSE_CROWDSALE,          MSC_SP_BLOCK,       MP_TX_PKT_V0},
   {MSC_TYPE_SEND_TO_OWNERS,           MSC_STO_BLOCK,      MP_TX_PKT_V0},
-  {MSC_TYPE_METADEX,                  MSC_METADEX_BLOCK,  MP_TX_PKT_V0},
+  {MSC_TYPE_MDEX_NEW,                 MSC_METADEX_BLOCK,  MP_TX_PKT_V0},
+  {MSC_TYPE_MDEX_CANCEL_PRICE,        MSC_METADEX_BLOCK,  MP_TX_PKT_V0},
+  {MSC_TYPE_MDEX_CANCEL_PAIR,         MSC_METADEX_BLOCK,  MP_TX_PKT_V0},
+  {MSC_TYPE_MDEX_CANCEL_ECOSYSTEM,    MSC_METADEX_BLOCK,  MP_TX_PKT_V0},
   {MSC_TYPE_OFFER_ACCEPT_A_BET,       MSC_BET_BLOCK,      MP_TX_PKT_V0},
   {MSC_TYPE_CREATE_PROPERTY_MANUAL,   MSC_MANUALSP_BLOCK,      MP_TX_PKT_V0},
   {MSC_TYPE_GRANT_PROPERTY_TOKENS,    MSC_MANUALSP_BLOCK,      MP_TX_PKT_V0},
@@ -1261,7 +1264,10 @@ int parseTransaction(bool bRPConly, const CTransaction &wtx, int nBlock, unsigne
               if (op_return_script_data[0].size() > 4) {
                   std::string payload = op_return_script_data[0].substr(4,op_return_script_data[0].size()-4); // strip out marker
                   packet_size=(payload.size())/2; // get packet byte size - hex so always a multiple of 2
-                  if(packet_size < MIN_PAYLOAD_SIZE) return -111;
+                  if(packet_size < MIN_PAYLOAD_SIZE) {
+                      if (msc_debug_verbose) file_log("payload size too small! [%d < %d]\n", packet_size, MIN_PAYLOAD_SIZE);
+                      return -111;
+                  }
                   memcpy(single_pkt, &ParseHex(payload)[0], packet_size); // load the packet ready to set mp tx info
               }
           }
@@ -3622,10 +3628,18 @@ int rc = PKT_ERROR;
 int step_rc;
 std::string new_global_alert_message;
 
+  // TODO: check actual packet for before parsing
   if (0>step1()) return -98765;
 
   if ((obj_o) && (MSC_TYPE_TRADE_OFFER != type)) return -777; // can't fill in the Offer object !
-  if ((mdex_o) && (MSC_TYPE_METADEX != type)) return -778; // can't fill in the MetaDEx object !
+
+  if (mdex_o) {
+    if ((type != MSC_TYPE_MDEX_NEW
+          && type != MSC_TYPE_MDEX_CANCEL_PRICE
+          && type != MSC_TYPE_MDEX_CANCEL_PAIR
+          && type != MSC_TYPE_MDEX_CANCEL_ECOSYSTEM))
+      return -778; // can't fill in the MetaDEx object !
+  }
 
   // further processing for complex types
   // TODO: version may play a role here !
@@ -3650,6 +3664,22 @@ std::string new_global_alert_message;
       if (0>step_rc) return step_rc;
 
       rc = logicMath_AcceptOffer_BTC();
+      break;
+
+    case MSC_TYPE_MDEX_NEW:
+      rc = logicMath_MetaDEx_New(mdex_o);
+      break;
+
+    case MSC_TYPE_MDEX_CANCEL_PRICE:
+      rc = logicMath_MetaDEx_CancelPrice(mdex_o);
+      break;
+
+    case MSC_TYPE_MDEX_CANCEL_PAIR:
+      rc = logicMath_MetaDEx_CancelPair(mdex_o);
+      break;
+
+    case MSC_TYPE_MDEX_CANCEL_ECOSYSTEM:
+      rc = logicMath_MetaDEx_CancelEcosystem(mdex_o);
       break;
 
     case MSC_TYPE_CREATE_PROPERTY_FIXED:
@@ -3847,25 +3877,6 @@ std::string new_global_alert_message;
       if (fp) fclose(fp);
     }
     break;
-
-    case MSC_TYPE_METADEX:
-#ifdef  MY_HACK
-//      if (304500 > block) return -31337;
-//      if (305100 > block) return -31337;
-
-//      if (304930 > block) return -31337;
-//      if (307057 > block) return -31337;
-
-//      if (307234 > block) return -31337;
-//      if (307607 > block) return -31337;
-
-      if (307057 > block) return -31337;
-#endif
-      step_rc = step2_Value();
-      if (0>step_rc) return step_rc;
-
-      rc = logicMath_MetaDEx(mdex_o);
-      break;
 
     case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
       // parse the property from the packet

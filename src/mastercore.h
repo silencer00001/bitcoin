@@ -70,7 +70,7 @@ int const MAX_STATE_HISTORY = 50;
 
 #define MAX_SHA256_OBFUSCATION_TIMES  255
 
-#define MIN_PAYLOAD_SIZE     8
+#define MIN_PAYLOAD_SIZE     5
 #define PACKET_SIZE_CLASS_A 19
 #define PACKET_SIZE         31
 #define MAX_PACKETS         64
@@ -85,8 +85,11 @@ enum TransactionType {
   MSC_TYPE_RATELIMITED_MARK         = 12,
   MSC_TYPE_AUTOMATIC_DISPENSARY     = 15,
   MSC_TYPE_TRADE_OFFER              = 20,
-  MSC_TYPE_METADEX                  = 21,
   MSC_TYPE_ACCEPT_OFFER_BTC         = 22,
+  MSC_TYPE_MDEX_NEW                 = 25,
+  MSC_TYPE_MDEX_CANCEL_PRICE        = 26,
+  MSC_TYPE_MDEX_CANCEL_PAIR         = 27,
+  MSC_TYPE_MDEX_CANCEL_ECOSYSTEM    = 28,
   MSC_TYPE_NOTIFICATION             = 31,
   MSC_TYPE_OFFER_ACCEPT_A_BET       = 40,
   MSC_TYPE_CREATE_PROPERTY_FIXED    = 50,

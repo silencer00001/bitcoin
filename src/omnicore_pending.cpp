@@ -54,7 +54,10 @@ void PendingAdd(const uint256& txid, const std::string& sendingAddress, const st
             txobj.push_back(Pair("btcamountdesired", amountDStr));
             txobj.push_back(Pair("action", action));
         break;
-        case MSC_TYPE_METADEX:
+        case MSC_TYPE_MDEX_NEW:
+        case MSC_TYPE_MDEX_CANCEL_PRICE:
+        case MSC_TYPE_MDEX_CANCEL_PAIR:
+        case MSC_TYPE_MDEX_CANCEL_ECOSYSTEM:
             divisible = isPropertyDivisible(propertyId);
             divisibleDesired = isPropertyDivisible(propertyIdDesired);
             if (divisible) { amountStr = FormatDivisibleMP(amount); } else { amountStr = FormatIndivisibleMP(amount); }

@@ -761,7 +761,28 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
     }
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_MetaDExTrade(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired, action);
+    std::vector<unsigned char> payload;
+    int nTransactionType = 0; // TODO: no magic number here!
+
+    if (action == CMPTransaction::ADD) {
+        nTransactionType = MSC_TYPE_MDEX_NEW;
+        payload = CreatePayload_MetaDExTrade(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired);
+    }
+    if (action == CMPTransaction::CANCEL_AT_PRICE) {
+        nTransactionType = MSC_TYPE_MDEX_CANCEL_PRICE;
+        payload = CreatePayload_MetaDExCancelPrice(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired);
+    }
+    if (action == CMPTransaction::CANCEL_ALL_FOR_PAIR) {
+        nTransactionType = MSC_TYPE_MDEX_CANCEL_PAIR;
+        payload = CreatePayload_MetaDExCancelPair(propertyIdForSale, propertyIdDesired);
+    }
+    if (action == CMPTransaction::CANCEL_EVERYTHING) {
+        nTransactionType = MSC_TYPE_MDEX_CANCEL_ECOSYSTEM;
+        uint8_t ecosystem = 0;
+        if (isMainEcosystemProperty(propertyIdForSale) && isMainEcosystemProperty(propertyIdDesired)) ecosystem = OMNI_PROPERTY_MSC;
+        if (isTestEcosystemProperty(propertyIdForSale) && isTestEcosystemProperty(propertyIdDesired)) ecosystem = OMNI_PROPERTY_TMSC;
+        payload = CreatePayload_MetaDExCancelEcosystem(ecosystem);
+    }
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid = 0;
@@ -775,7 +796,7 @@ Value sendtrade_OMNI(const Array& params, bool fHelp)
         if (!autoCommit) {
             return rawHex;
         } else {
-            PendingAdd(txid, fromAddress, "", MSC_TYPE_METADEX, propertyIdForSale, amountForSale, propertyIdDesired, amountDesired, action);
+            PendingAdd(txid, fromAddress, "", nTransactionType, propertyIdForSale, amountForSale, propertyIdDesired, amountDesired, action);
             return txid.GetHex();
         }
     }

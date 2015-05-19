@@ -480,10 +480,25 @@ int rc = DEX_ERROR_ACCEPT;
     return rc;
 }
 
-int CMPTransaction::logicMath_MetaDEx(CMPMetaDEx *mdex_o)
+int CMPTransaction::logicMath_MetaDEx_New(CMPMetaDEx* mdex_o)
 {
     int rc = PKT_ERROR_METADEX -100;
-    unsigned char action = 0;
+
+    memcpy(&nValue, &pkt[8], 8);
+    swapByteOrder64(nValue);
+
+    // here we are copying nValue into nNewValue to be stored into our leveldb later: MP_txlist
+    nNewValue = nValue;
+
+    memcpy(&property, &pkt[4], 4);
+    swapByteOrder32(property);
+
+    file_log("\t        property: %u (%s)\n", property, strMPProperty(property));
+    file_log("\t           value: %s\n", FormatMP(property, nValue));
+
+    if (MAX_INT_8_BYTES < nValue) {
+        return (PKT_ERROR -801);  // out of range
+    }
 
     memcpy(&desired_property, &pkt[16], 4);
     swapByteOrder32(desired_property);
@@ -491,100 +506,185 @@ int CMPTransaction::logicMath_MetaDEx(CMPMetaDEx *mdex_o)
     memcpy(&desired_value, &pkt[20], 8);
     swapByteOrder64(desired_value);
 
+    if (MAX_INT_8_BYTES < desired_value) {
+        return (PKT_ERROR -801);  // out of range
+    }
+
     file_log("\tdesired property: %u (%s)\n", desired_property, strMPProperty(desired_property));
     file_log("\t   desired value: %s\n", FormatMP(desired_property, desired_value));
 
-    memcpy(&action, &pkt[28], 1);
+    uint8_t action = CMPTransaction::ADD;
 
     file_log("\t          action: %u\n", action);
 
-    if (mdex_o)
-    {
-      mdex_o->Set(sender, block, property, nValue, desired_property, desired_value, txid, tx_idx, action);
-      return PKT_RETURNED_OBJECT;
+    if (mdex_o) {
+        mdex_o->Set(sender, block, property, nValue, desired_property, desired_value, txid, tx_idx, action);
+        return PKT_RETURNED_OBJECT;
     }
 
-    switch (action)
-    {
-      case ADD:
-      {
-        if (!isTransactionTypeAllowed(block, property, type, version)) return (PKT_ERROR_METADEX -889);
+    if (!isTransactionTypeAllowed(block, property, type, version)) return (PKT_ERROR_METADEX -889);
 
-        // ensure we are not trading same property for itself
-        if (property == desired_property) return (PKT_ERROR_METADEX -5);
+    // ensure we are not trading same property for itself
+    if (property == desired_property) return (PKT_ERROR_METADEX -5);
 
-        // ensure no cross-over of properties from test to main ecosystem
-        if (isTestEcosystemProperty(property) != isTestEcosystemProperty(desired_property)) return (PKT_ERROR_METADEX -4);
+    // ensure no cross-over of properties from test to main ecosystem
+    if (isTestEcosystemProperty(property) != isTestEcosystemProperty(desired_property)) return (PKT_ERROR_METADEX -4);
 
-        // ensure the desired property exists in our universe
-        if (!_my_sps->hasSP(desired_property)) return (PKT_ERROR_METADEX -30);
+    // ensure the desired property exists in our universe
+    if (!_my_sps->hasSP(desired_property)) return (PKT_ERROR_METADEX -30);
 
-        // ensure offered and desired values are positive
-        if (0 >= static_cast<int64_t>(nNewValue)) return (PKT_ERROR_METADEX -11);
-        if (0 >= static_cast<int64_t>(desired_value)) return (PKT_ERROR_METADEX -12);
+    // ensure offered and desired values are positive
+    if (0 >= static_cast<int64_t>(nNewValue)) return (PKT_ERROR_METADEX -11);
+    if (0 >= static_cast<int64_t>(desired_value)) return (PKT_ERROR_METADEX -12);
 
-        // ensure sufficient balance is available to offer
-        if (getMPbalance(sender, property, BALANCE) < static_cast<int64_t>(nNewValue)) return (PKT_ERROR_METADEX -567);
+    // ensure sufficient balance is available to offer
+    if (getMPbalance(sender, property, BALANCE) < static_cast<int64_t>(nNewValue)) return (PKT_ERROR_METADEX -567);
 
-        rc = MetaDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx);
-        break;
-      }
+    rc = MetaDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx);
 
-      case CANCEL_AT_PRICE:
-      {
-        if (!isTransactionTypeAllowed(block, property, type, version)) return (PKT_ERROR_METADEX -890);
+    return rc;
+}
 
-        // ensure we are not trading same property for itself
-        if (property == desired_property) return (PKT_ERROR_METADEX -5);
+int CMPTransaction::logicMath_MetaDEx_CancelPrice(CMPMetaDEx* mdex_o)
+{
+    int rc = PKT_ERROR_METADEX -100;
 
-        // ensure no cross-over of properties from test to main ecosystem
-        if (isTestEcosystemProperty(property) != isTestEcosystemProperty(desired_property)) return (PKT_ERROR_METADEX -4);
+    memcpy(&nValue, &pkt[8], 8);
+    swapByteOrder64(nValue);
 
-        // ensure the desired property exists in our universe
-        if (!_my_sps->hasSP(desired_property)) return (PKT_ERROR_METADEX -30);
+    // here we are copying nValue into nNewValue to be stored into our leveldb later: MP_txlist
+    nNewValue = nValue;
 
-        // ensure offered and desired values are positive
-        if (0 >= static_cast<int64_t>(nNewValue)) return (PKT_ERROR_METADEX -11);
-        if (0 >= static_cast<int64_t>(desired_value)) return (PKT_ERROR_METADEX -12);
+    memcpy(&property, &pkt[4], 4);
+    swapByteOrder32(property);
 
-        rc = MetaDEx_CANCEL_AT_PRICE(txid, block, sender, property, nNewValue, desired_property, desired_value);
-        break;
-      }
+    file_log("\t        property: %u (%s)\n", property, strMPProperty(property));
+    file_log("\t           value: %s\n", FormatMP(property, nValue));
 
-      case CANCEL_ALL_FOR_PAIR:
-      {
-        if (!isTransactionTypeAllowed(block, property, type, version)) return (PKT_ERROR_METADEX -891);
-
-        // ensure we are not trading same property for itself
-        if (property == desired_property) return (PKT_ERROR_METADEX -5);
-
-        // ensure no cross-over of properties from test to main ecosystem
-        if (isTestEcosystemProperty(property) != isTestEcosystemProperty(desired_property)) return (PKT_ERROR_METADEX -4);
-
-        // ensure the desired property exists in our universe
-        if (!_my_sps->hasSP(desired_property)) return (PKT_ERROR_METADEX -30);
-
-        rc = MetaDEx_CANCEL_ALL_FOR_PAIR(txid, block, sender, property, desired_property);
-        break;
-      }
-
-      case CANCEL_EVERYTHING:
-      {
-        // cancel all open orders, if offered and desired properties are within the same ecosystem,
-        // otherwise cancel all open orders for all properties of both ecosystems
-        unsigned char ecosystem = 0;
-        if (isMainEcosystemProperty(property) && isMainEcosystemProperty(desired_property)) ecosystem = OMNI_PROPERTY_MSC;
-        if (isTestEcosystemProperty(property) && isTestEcosystemProperty(desired_property)) ecosystem = OMNI_PROPERTY_TMSC;
-
-        if (!isTransactionTypeAllowed(block, ecosystem, type, version, true)) return (PKT_ERROR_METADEX -892);
-
-        rc = MetaDEx_CANCEL_EVERYTHING(txid, block, sender, ecosystem);
-        break;
-      }
-
-      default:
-        return (PKT_ERROR_METADEX -999);
+    if (MAX_INT_8_BYTES < nValue) {
+        return (PKT_ERROR -801);  // out of range
     }
+
+    memcpy(&desired_property, &pkt[16], 4);
+    swapByteOrder32(desired_property);
+
+    memcpy(&desired_value, &pkt[20], 8);
+    swapByteOrder64(desired_value);
+
+    if (MAX_INT_8_BYTES < desired_value) {
+        return (PKT_ERROR -801);  // out of range
+    }
+
+    file_log("\tdesired property: %u (%s)\n", desired_property, strMPProperty(desired_property));
+    file_log("\t   desired value: %s\n", FormatMP(desired_property, desired_value));
+
+    uint8_t action = CMPTransaction::CANCEL_AT_PRICE;
+
+    file_log("\t          action: %u\n", action);
+
+    if (mdex_o) {
+        mdex_o->Set(sender, block, property, nValue, desired_property, desired_value, txid, tx_idx, action);
+        return PKT_RETURNED_OBJECT;
+    }
+
+    if (!isTransactionTypeAllowed(block, property, type, version)) return (PKT_ERROR_METADEX -890);
+
+    // ensure we are not trading same property for itself
+    if (property == desired_property) return (PKT_ERROR_METADEX -5);
+
+    // ensure no cross-over of properties from test to main ecosystem
+    if (isTestEcosystemProperty(property) != isTestEcosystemProperty(desired_property)) return (PKT_ERROR_METADEX -4);
+
+    // ensure the desired property exists in our universe
+    if (!_my_sps->hasSP(desired_property)) return (PKT_ERROR_METADEX -30);
+
+    // ensure offered and desired values are positive
+    if (0 >= static_cast<int64_t>(nNewValue)) return (PKT_ERROR_METADEX -11);
+    if (0 >= static_cast<int64_t>(desired_value)) return (PKT_ERROR_METADEX -12);
+
+    rc = MetaDEx_CANCEL_AT_PRICE(txid, block, sender, property, nNewValue, desired_property, desired_value);
+
+    return rc;
+}
+
+int CMPTransaction::logicMath_MetaDEx_CancelPair(CMPMetaDEx* mdex_o)
+{
+    int rc = PKT_ERROR_METADEX -100;
+
+    nValue = 0;
+    desired_value = 0;
+    nNewValue = nValue;
+
+    memcpy(&property, &pkt[4], 4);
+    swapByteOrder32(property);
+
+    file_log("\t        property: %u (%s)\n", property, strMPProperty(property));
+    file_log("\t           value: %s\n", FormatMP(property, nValue));
+
+    memcpy(&desired_property, &pkt[8], 4);
+    swapByteOrder32(desired_property);
+
+    file_log("\tdesired property: %u (%s)\n", desired_property, strMPProperty(desired_property));
+    file_log("\t   desired value: %s\n", FormatMP(desired_property, desired_value));
+
+    uint8_t action = CMPTransaction::CANCEL_ALL_FOR_PAIR;
+
+    file_log("\t          action: %u\n", action);
+
+    if (mdex_o) {
+        mdex_o->Set(sender, block, property, nValue, desired_property, desired_value, txid, tx_idx, action);
+        return PKT_RETURNED_OBJECT;
+    }
+
+    if (!isTransactionTypeAllowed(block, property, type, version)) return (PKT_ERROR_METADEX -891);
+
+    // ensure we are not trading same property for itself
+    if (property == desired_property) return (PKT_ERROR_METADEX -5);
+
+    // ensure no cross-over of properties from test to main ecosystem
+    if (isTestEcosystemProperty(property) != isTestEcosystemProperty(desired_property)) return (PKT_ERROR_METADEX -4);
+
+    // ensure the desired property exists in our universe
+    if (!_my_sps->hasSP(desired_property)) return (PKT_ERROR_METADEX -30);
+
+    rc = MetaDEx_CANCEL_ALL_FOR_PAIR(txid, block, sender, property, desired_property);
+
+    return rc;
+}
+
+int CMPTransaction::logicMath_MetaDEx_CancelEcosystem(CMPMetaDEx* mdex_o)
+{
+    int rc = PKT_ERROR_METADEX -100;
+
+    nValue = 0;
+    desired_value = 0;
+    nNewValue = nValue;
+
+    uint8_t ecosystem = 0;
+    memcpy(&ecosystem, &pkt[4], 1);
+
+    property = ecosystem;
+    desired_property = ecosystem;
+
+    file_log("\t        property: %u (%s)\n", property, strMPProperty(property));
+    file_log("\t           value: %s\n", FormatMP(property, nValue));
+    file_log("\tdesired property: %u (%s)\n", desired_property, strMPProperty(desired_property));
+    file_log("\t   desired value: %s\n", FormatMP(desired_property, desired_value));
+
+    uint8_t action = CMPTransaction::CANCEL_EVERYTHING;
+
+    file_log("\t          action: %u\n", action);
+
+    if (mdex_o) {
+        mdex_o->Set(sender, block, property, nValue, desired_property, desired_value, txid, tx_idx, action);
+        return PKT_RETURNED_OBJECT;
+    }
+
+    // cancel all open orders, if offered and desired properties are within the same ecosystem,
+    // otherwise cancel all open orders for all properties of both ecosystems
+    if (!isTransactionTypeAllowed(block, ecosystem, type, version, true)) return (PKT_ERROR_METADEX -892);
+
+    rc = MetaDEx_CANCEL_EVERYTHING(txid, block, sender, ecosystem);
 
     return rc;
 }
@@ -769,7 +869,10 @@ char *mastercore::c_strMasterProtocolTXType(int i)
     case MSC_TYPE_RATELIMITED_MARK: return ((char *)"Rate-Limiting");
     case MSC_TYPE_AUTOMATIC_DISPENSARY: return ((char *)"Automatic Dispensary");
     case MSC_TYPE_TRADE_OFFER: return ((char *)"DEx Sell Offer");
-    case MSC_TYPE_METADEX: return ((char *)"MetaDEx token trade");
+    case MSC_TYPE_MDEX_NEW: return ((char *)"MetaDEx order");
+    case MSC_TYPE_MDEX_CANCEL_PRICE: return ((char *)"MetaDEx cancel price");
+    case MSC_TYPE_MDEX_CANCEL_PAIR: return ((char *)"MetaDEx cancel pair");
+    case MSC_TYPE_MDEX_CANCEL_ECOSYSTEM: return ((char *)"MetaDEx cancel ecosystem");
     case MSC_TYPE_ACCEPT_OFFER_BTC: return ((char *)"DEx Accept Offer");
     case MSC_TYPE_CREATE_PROPERTY_FIXED: return ((char *)"Create Property - Fixed");
     case MSC_TYPE_CREATE_PROPERTY_VARIABLE: return ((char *)"Create Property - Variable");

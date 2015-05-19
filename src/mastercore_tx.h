@@ -152,12 +152,15 @@ public:
   int logicMath_TradeOffer(CMPOffer *);
   int logicMath_AcceptOffer_BTC(void);
   int logicMath_SendToOwners(FILE *fp = NULL);
-  int logicMath_MetaDEx(CMPMetaDEx *);
   int logicMath_GrantTokens(void);
   int logicMath_RevokeTokens(void);
   int logicMath_ChangeIssuer(void);
   int logicMath_SavingsMark(void);
   int logicMath_SavingsCompromised(void);
+  int logicMath_MetaDEx_New(CMPMetaDEx*);
+  int logicMath_MetaDEx_CancelPrice(CMPMetaDEx*);
+  int logicMath_MetaDEx_CancelPair(CMPMetaDEx*);
+  int logicMath_MetaDEx_CancelEcosystem(CMPMetaDEx*);
 
  int interpretPacket(CMPOffer *obj_o = NULL, CMPMetaDEx *mdex_o = NULL);
  int step1(void);

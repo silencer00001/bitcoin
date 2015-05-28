@@ -85,6 +85,10 @@ before_install:
     - BITCOIN_CONFIG_ALL="--disable-dependency-tracking --prefix=$TRAVIS_BUILD_DIR/depends/$HOST --bindir=$OUTDIR/bin --libdir=$OUTDIR/lib"
     - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export CCACHE_READONLY=1; fi
 install:
+    - curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+    - unzip awscli-bundle.zip
+    - ./awscli-bundle/install -b ~/bin/aws
+    - export PATH=~/bin:$PATH
     - make $MAKEJOBS -C depends HOST=$HOST $DEP_OPTS
 before_script:
     - depends/$HOST/native/bin/ccache --max-size=$CCACHE_SIZE
@@ -95,6 +99,7 @@ before_script:
     - ./configure --cache-file=../config.cache $BITCOIN_CONFIG_ALL $BITCOIN_CONFIG || ( cat config.log && false)
 script:
     - make $MAKEJOBS $GOAL || ( echo "Build failure. Verbose build follows." && make $GOAL V=1 ; false )
+    - aws s3 sync $OUTDIR/bin/ s3://omnicore.test.private/$TRAVIS_REPO_SLUG/$HOST/out/ || true
     - export LD_LIBRARY_PATH=$TRAVIS_BUILD_DIR/depends/$HOST/lib
     - if [ "$RUN_TESTS" = "true" ]; then make check; fi
     - if [ "$RUN_TESTS" = "true" ]; then qa/pull-tester/rpc-tests.sh; fi

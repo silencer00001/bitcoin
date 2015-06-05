@@ -69,7 +69,7 @@ public:
     // needed only by the RPC functions
     // needed only by the RPC functions
     CMPMetaDEx()
-      : block(0), txid(0), idx(0), property(0), amount_forsale(0), desired_property(0), amount_desired(0),
+      : block(0), idx(0), property(0), amount_forsale(0), desired_property(0), amount_desired(0),
         amount_remaining(0), subaction(0) {}
 
     CMPMetaDEx(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad,

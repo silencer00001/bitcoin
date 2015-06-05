@@ -345,7 +345,7 @@ void MetaDExCancelDialog::SendCancelTransaction()
     }
 
     // request the wallet build the transaction (and if needed commit it)
-    uint256 txid = 0;
+    uint256 txid;
     std::string rawHex;
     int result = ClassAgnosticWalletTXBuilder(fromAddress, "", "", 0, payload, txid, rawHex, autoCommit);
 

@@ -490,7 +490,7 @@ int mastercore::MetaDEx_ADD(const std::string& sender_addr, uint32_t prop, int64
 int mastercore::MetaDEx_CANCEL_AT_PRICE(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t prop, int64_t amount, uint32_t property_desired, int64_t amount_desired)
 {
     int rc = METADEX_ERROR -20;
-    CMPMetaDEx mdex(sender_addr, 0, prop, amount, property_desired, amount_desired, 0, 0, CMPTransaction::CANCEL_AT_PRICE);
+    CMPMetaDEx mdex(sender_addr, 0, prop, amount, property_desired, amount_desired, txid, 0, CMPTransaction::CANCEL_AT_PRICE);
     md_PricesMap* prices = get_Prices(prop);
     const CMPMetaDEx* p_mdex = NULL;
 

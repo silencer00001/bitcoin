@@ -54,7 +54,7 @@ public:
 
   CMPOffer()
       : offerBlock(0), offer_amount_original(0), property(0), BTC_desired_original(0), min_fee(0), blocktimelimit(0),
-        txid(0), subaction(0)
+        subaction(0)
   {
   }
 

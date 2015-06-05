@@ -25,7 +25,7 @@
 #include "sync.h"
 #include "txdb.h"
 #include "uint256.h"
-#include "wallet.h"
+#include "wallet/wallet.h"
 
 #include "json/json_spirit_value.h"
 #include "json/json_spirit_writer_template.h"
@@ -298,10 +298,10 @@ int TradeHistoryDialog::PopulateTradeHistoryMap()
 
         // tx not in historyMap, retrieve the transaction object
         CTransaction wtx;
-        uint256 blockHash = 0;
+        uint256 blockHash;
         if (!GetTransaction(hash, wtx, blockHash, true)) continue;
         blockHash = pwtx->hashBlock;
-        if ((0 == blockHash) || (NULL == GetBlockIndex(blockHash))) continue;
+        if (blockHash.IsNull() || (NULL == GetBlockIndex(blockHash))) continue;
         CBlockIndex* pBlockIndex = GetBlockIndex(blockHash);
         if (NULL == pBlockIndex) continue;
         int blockHeight = pBlockIndex->nHeight;
@@ -525,7 +525,7 @@ void TradeHistoryDialog::showDetails()
             string senderAddress;
             unsigned int propertyId = 0;
             CTransaction wtx;
-            uint256 blockHash = 0;
+            uint256 blockHash;
             if (!GetTransaction(txid, wtx, blockHash, true)) { return; }
             CMPTransaction mp_obj;
             int parseRC = ParseTransaction(wtx, 0, 0, mp_obj);

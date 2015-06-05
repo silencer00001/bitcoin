@@ -127,7 +127,7 @@ void CMPSPInfo::Entry::fromJSON(const Object& json)
         max_tokens = (unsigned char)json[idx++].value_.get_int();
         missedTokens = (unsigned char)json[idx++].value_.get_int();
         timeclosed = boost::lexical_cast<uint64_t>(json[idx++].value_.get_str());
-        txid_close = uint256(json[idx++].value_.get_str());
+        txid_close = uint256S(json[idx++].value_.get_str());
     }
 
     // Reconstruct database
@@ -161,9 +161,9 @@ void CMPSPInfo::Entry::fromJSON(const Object& json)
 
         historicalData.insert(std::make_pair(str_split_vec.at(0), txDataVec));
     }
-    txid = uint256(json[idx++].value_.get_str());
-    creation_block = uint256(json[idx++].value_.get_str());
-    update_block = uint256(json[idx++].value_.get_str());
+    txid = uint256S(json[idx++].value_.get_str());
+    creation_block = uint256S(json[idx++].value_.get_str());
+    update_block = uint256S(json[idx++].value_.get_str());
 }
 
 bool CMPSPInfo::Entry::isDivisible() const
@@ -682,7 +682,7 @@ bool mastercore::isCrowdsalePurchase(const uint256& txid, const std::string& add
         std::map<std::string, std::vector<uint64_t> >::const_iterator it;
         const std::map<std::string, std::vector<uint64_t> >& database = pcrowdsale->getDatabase();
         for (it = database.begin(); it != database.end(); it++) {
-            uint256 tmpTxid(it->first); // construct from string
+            uint256 tmpTxid = uint256S(it->first); // construct from string
             if (tmpTxid == txid) {
                 *propertyId = pcrowdsale->getPropertyId();
                 *userTokens = it->second.at(2);
@@ -704,7 +704,7 @@ bool mastercore::isCrowdsalePurchase(const uint256& txid, const std::string& add
         std::map<std::string, std::vector<uint64_t> >::const_iterator it;
         const std::map<std::string, std::vector<uint64_t> >& database = sp.historicalData;
         for (it = database.begin(); it != database.end(); it++) {
-            uint256 tmpTxid(it->first); // construct from string
+            uint256 tmpTxid = uint256S(it->first); // construct from string
             if (tmpTxid == txid) {
                 *propertyId = tmpPropertyId;
                 *userTokens = it->second.at(2);
@@ -722,7 +722,7 @@ bool mastercore::isCrowdsalePurchase(const uint256& txid, const std::string& add
         std::map<std::string, std::vector<uint64_t> >::const_iterator it;
         const std::map<std::string, std::vector<uint64_t> >& database = sp.historicalData;
         for (it = database.begin(); it != database.end(); it++) {
-            uint256 tmpTxid(it->first); // construct from string
+            uint256 tmpTxid = uint256S(it->first); // construct from string
             if (tmpTxid == txid) {
                 *propertyId = tmpPropertyId;
                 *userTokens = it->second.at(2);

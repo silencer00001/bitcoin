@@ -27,7 +27,7 @@
 #include "tinyformat.h"
 #include "uint256.h"
 #include "utilstrencodings.h"
-#include "wallet.h"
+#include "wallet/wallet.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/exception/to_string.hpp>
@@ -595,7 +595,7 @@ Value getcrowdsale_MP(const Array& params, bool fHelp)
     const std::string& txidClosed = sp.txid_close.GetHex();
 
     int64_t startTime = -1;
-    if (0 != hashBlock && GetBlockIndex(hashBlock)) {
+    if (hashBlock.IsNull() && GetBlockIndex(hashBlock)) {
         startTime = GetBlockIndex(hashBlock)->nTime;
     }
 
@@ -687,7 +687,7 @@ Value getactivecrowdsales_MP(const Array& params, bool fHelp)
         }
 
         int64_t startTime = -1;
-        if (0 != hashBlock && GetBlockIndex(hashBlock)) {
+        if (hashBlock.IsNull() && GetBlockIndex(hashBlock)) {
             startTime = GetBlockIndex(hashBlock)->nTime;
         }
 
@@ -1135,7 +1135,7 @@ int populateRPCTransactionObject(const uint256& txid, Object *txobj, std::string
     //hash.SetHex(params[0].get_str());
 
     CTransaction wtx;
-    uint256 blockHash = 0;
+    uint256 blockHash;
     if (!GetTransaction(txid, wtx, blockHash, true)) { return MP_TX_NOT_FOUND; }
 
     CMPTransaction mp_obj;
@@ -1175,7 +1175,7 @@ int populateRPCTransactionObject(const uint256& txid, Object *txobj, std::string
     string mdex_unitPriceStr;
     string mdex_actionStr;
 
-    if (0 == blockHash) { return MP_TX_UNCONFIRMED; }
+    if (blockHash.IsNull()) { return MP_TX_UNCONFIRMED; }
 
     CBlockIndex* pBlockIndex = GetBlockIndex(blockHash);
     if (NULL == pBlockIndex) { return MP_BLOCK_NOT_IN_CHAIN; }
@@ -1622,7 +1622,7 @@ Value listtransactions_MP(const Array& params, bool fHelp)
         {
             // get the height of the transaction and check it's within the chosen parameters
             uint256 blockHash = pwtx->hashBlock;
-            if ((0 == blockHash) || (NULL == GetBlockIndex(blockHash))) continue;
+            if (blockHash.IsNull() || (NULL == GetBlockIndex(blockHash))) continue;
             CBlockIndex* pBlockIndex = GetBlockIndex(blockHash);
             if (NULL == pBlockIndex) continue;
             int blockHeight = pBlockIndex->nHeight;
@@ -1808,7 +1808,7 @@ Value getsto_MP(const Array& params, bool fHelp)
     if (params.size() == 2) filterAddress=params[1].get_str();
     Object txobj;
     CTransaction wtx;
-    uint256 blockHash = 0;
+    uint256 blockHash;
     if (!GetTransaction(hash, wtx, blockHash, true)) { return MP_TX_NOT_FOUND; }
     uint64_t propertyId = 0;
     CMPTransaction mp_obj;
@@ -1882,7 +1882,7 @@ Value gettrade_MP(const Array& params, bool fHelp)
     Object txobj;
     CMPMetaDEx temp_metadexoffer;
     CTransaction wtx;
-    uint256 blockHash = 0;
+    uint256 blockHash;
     string senderAddress;
     unsigned int propertyId = 0;
     CMPTransaction mp_obj;

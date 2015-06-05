@@ -23,7 +23,7 @@
 #include "sync.h"
 #include "txdb.h"
 #include "uint256.h"
-#include "wallet.h"
+#include "wallet/wallet.h"
 
 #include "json/json_spirit_value.h"
 #include "json/json_spirit_writer_template.h"
@@ -231,10 +231,10 @@ int TXHistoryDialog::PopulateHistoryMap()
             }
             // tx not in historyMap, retrieve the transaction object
             CTransaction wtx;
-            uint256 blockHash = 0;
+            uint256 blockHash;
             if (!GetTransaction(hash, wtx, blockHash, true)) continue;
             blockHash = pwtx->hashBlock;
-            if ((0 == blockHash) || (NULL == GetBlockIndex(blockHash))) continue;
+            if (blockHash.IsNull() || (NULL == GetBlockIndex(blockHash))) continue;
             CBlockIndex* pBlockIndex = GetBlockIndex(blockHash);
             if (NULL == pBlockIndex) continue;
             int blockHeight = pBlockIndex->nHeight; // get the height of the transaction

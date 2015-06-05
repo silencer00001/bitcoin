@@ -22,7 +22,7 @@
 #include "main.h"
 #include "sync.h"
 #include "uint256.h"
-#include "wallet.h"
+#include "wallet/wallet.h"
 
 #include <stdint.h>
 #include <map>
@@ -309,7 +309,7 @@ void SendMPDialog::sendMPTransaction()
     std::vector<unsigned char> payload = CreatePayload_SimpleSend(propertyId, sendAmount);
 
     // request the wallet build the transaction (and if needed commit it) - note UI does not support added reference amounts currently
-    uint256 txid = 0;
+    uint256 txid;
     std::string rawHex;
     int result = ClassAgnosticWalletTXBuilder(fromAddress.ToString(), refAddress.ToString(), "", 0, payload, txid, rawHex, autoCommit);
 

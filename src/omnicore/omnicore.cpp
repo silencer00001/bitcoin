@@ -34,6 +34,7 @@
 #include "chainparams.h"
 #include "coincontrol.h"
 #include "init.h"
+#include "main.h"
 #include "primitives/block.h"
 #include "primitives/transaction.h"
 #include "script/script.h"
@@ -41,11 +42,11 @@
 #include "sync.h"
 #include "tinyformat.h"
 #include "uint256.h"
+#include "ui_interface.h"
 #include "util.h"
 #include "utilstrencodings.h"
 #include "utiltime.h"
-#include "ui_interface.h"
-#include "wallet.h"
+#include "wallet/wallet.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/exception/to_string.hpp>
@@ -1249,7 +1250,7 @@ int input_mp_offers_string(const std::string& s)
     uint32_t prop_desired = boost::lexical_cast<uint32_t>(vstr[i++]);
     int64_t minFee = boost::lexical_cast<int64_t>(vstr[i++]);
     uint8_t blocktimelimit = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
-    uint256 txid = uint256(vstr[i++]);
+    uint256 txid = uint256S(vstr[i++]);
 
     // TODO: should this be here? There are usually no sanity checks..
     if (OMNI_PROPERTY_BTC != prop_desired) return -1;
@@ -1290,7 +1291,7 @@ int input_mp_accepts_string(const string &s)
   txidStr = vstr[i++];
 
   const string combo = STR_ACCEPT_ADDR_PROP_ADDR_COMBO(sellerAddr, buyerAddr);
-  CMPAccept newAccept(amountOriginal, amountRemaining, nBlock, blocktimelimit, prop, offerOriginal, btcDesired, uint256(txidStr));
+  CMPAccept newAccept(amountOriginal, amountRemaining, nBlock, blocktimelimit, prop, offerOriginal, btcDesired, uint256S(txidStr));
   if (my_accepts.insert(std::make_pair(combo, newAccept)).second) {
     return 0;
   } else {
@@ -1394,7 +1395,7 @@ int input_mp_mdexorder_string(const std::string& s)
     uint32_t desired_property = boost::lexical_cast<uint32_t>(vstr[i++]);
     uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
     unsigned int idx = boost::lexical_cast<unsigned int>(vstr[i++]);
-    uint256 txid = uint256(vstr[i++]);
+    uint256 txid = uint256S(vstr[i++]);
     int64_t amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
 
     CMPMetaDEx mdexObj(addr, block, property, amount_forsale, desired_property,
@@ -2237,9 +2238,10 @@ int mastercore::ClassAgnosticWalletTXBuilder(const string &senderAddress, const 
     // Prepare the transaction - first setup some vars
     CWallet *wallet = pwalletMain;
     CCoinControl coinControl;
-    txid = 0;
+    txid.SetNull();
     CWalletTx wtxNew;
     int64_t nFeeRet = 0;
+    int nChangePosRet = 0;
     std::string strFailReason;
     vector< pair<CScript, int64_t> > vecSend;
     CReserveKey reserveKey(wallet);
@@ -2286,7 +2288,12 @@ int mastercore::ClassAgnosticWalletTXBuilder(const string &senderAddress, const 
     if (!coinControl.HasSelected()) return MP_ERR_INPUTSELECT_FAIL;
 
     // Ask the wallet to create the transaction (note mining fee determined by Bitcoin Core params)
-    if (!wallet->CreateTransaction(vecSend, wtxNew, reserveKey, nFeeRet, strFailReason, &coinControl)) { return MP_ERR_CREATE_TX; }
+    std::vector<CRecipient> vRecipients;
+    for (std::vector<std::pair<CScript, int64_t> >::iterator it = vecSend.begin(); it != vecSend.end(); ++it) {
+        CRecipient recipient = {it->first, it->second, false};
+        vRecipients.push_back(recipient);
+    }
+    if (!wallet->CreateTransaction(vRecipients, wtxNew, reserveKey, nFeeRet, nChangePosRet, strFailReason, &coinControl)) { return MP_ERR_CREATE_TX; }
 
     // If this request is only to create, but not commit the transaction then display it and exit
     if (!commit) {
@@ -2352,7 +2359,7 @@ int CMPTxList::setLastAlert(int blockHeight)
         uint256 hash;
         hash.SetHex(lastAlertTxid);
         CTransaction wtx;
-        uint256 blockHash = 0;
+        uint256 blockHash;
         if (!GetTransaction(hash, wtx, blockHash, true)) //can't find transaction
         {
             PrintToLog("DEBUG ALERT Unable to load lastAlertTxid, transaction not found\n");
@@ -2402,12 +2409,12 @@ uint256 CMPTxList::findMetaDExCancel(const uint256 txid)
       // obtain the existing affected tx count
       if (3 <= vstr.size())
       {
-          if (vstr[0] == txidStr) { delete it; cancelTxid.SetHex(skey.ToString()); return cancelTxid; }
+          if (vstr[0] == txidStr) { cancelTxid.SetHex(skey.ToString()); }
       }
   }
 
   delete it;
-  return 0;
+  return cancelTxid;
 }
 
 int CMPTxList::getNumberOfMetaDExCancels(const uint256 txid)

@@ -91,16 +91,7 @@ QT_FORMS_UI = \
   qt/forms/sendcoinsdialog.ui \
   qt/forms/sendcoinsentry.ui \
   qt/forms/signverifymessagedialog.ui \
-  qt/forms/transactiondescdialog.ui \
-  qt/forms/sendmpdialog.ui \
-  qt/forms/lookupaddressdialog.ui \
-  qt/forms/lookupspdialog.ui \
-  qt/forms/lookuptxdialog.ui \
-  qt/forms/txhistorydialog.ui \
-  qt/forms/metadexcanceldialog.ui \
-  qt/forms/metadexdialog.ui \
-  qt/forms/tradehistorydialog.ui \
-  qt/forms/balancesdialog.ui
+  qt/forms/transactiondescdialog.ui
 
 QT_MOC_CPP = \
   qt/moc_addressbookpage.cpp \
@@ -145,16 +136,7 @@ QT_MOC_CPP = \
   qt/moc_utilitydialog.cpp \
   qt/moc_walletframe.cpp \
   qt/moc_walletmodel.cpp \
-  qt/moc_walletview.cpp \
-  qt/moc_sendmpdialog.cpp \
-  qt/moc_lookupaddressdialog.cpp \
-  qt/moc_lookupspdialog.cpp \
-  qt/moc_lookuptxdialog.cpp \
-  qt/moc_txhistorydialog.cpp \
-  qt/moc_balancesdialog.cpp \
-  qt/moc_metadexdialog.cpp \
-  qt/moc_metadexcanceldialog.cpp \
-  qt/moc_tradehistorydialog.cpp
+  qt/moc_walletview.cpp
 
 BITCOIN_MM = \
   qt/macdockiconhandler.mm \
@@ -209,6 +191,7 @@ BITCOIN_QT_H = \
   qt/receiverequestdialog.h \
   qt/recentrequeststablemodel.h \
   qt/rpcconsole.h \
+  qt/scicon.h \
   qt/sendcoinsdialog.h \
   qt/sendcoinsentry.h \
   qt/signverifymessagedialog.h \
@@ -225,37 +208,26 @@ BITCOIN_QT_H = \
   qt/walletmodel.h \
   qt/walletmodeltransaction.h \
   qt/walletview.h \
-  qt/winshutdownmonitor.h \
-  qt/lookupaddressdialog.h \
-  qt/lookupspdialog.h \
-  qt/lookuptxdialog.h \
-  qt/txhistorydialog.h \
-  qt/balancesdialog.h \
-  qt/omnicore_init.h \
-  qt/metadexdialog.h \
-  qt/metadexcanceldialog.h \
-  qt/tradehistorydialog.h \
-  qt/sendmpdialog.h \
-  qt/omnicore_qtutils.h
+  qt/winshutdownmonitor.h
 
 RES_ICONS = \
   qt/res/icons/add.png \
   qt/res/icons/address-book.png \
+  qt/res/icons/about.png \
+  qt/res/icons/about_qt.png \
   qt/res/icons/bitcoin.ico \
   qt/res/icons/bitcoin.png \
-  qt/res/icons/bitcoin_testnet.ico \
-  qt/res/icons/bitcoin_testnet.png \
   qt/res/icons/clock1.png \
   qt/res/icons/clock2.png \
   qt/res/icons/clock3.png \
   qt/res/icons/clock4.png \
   qt/res/icons/clock5.png \
   qt/res/icons/configure.png \
-  qt/res/icons/connect0_16.png \
-  qt/res/icons/connect1_16.png \
-  qt/res/icons/connect2_16.png \
-  qt/res/icons/connect3_16.png \
-  qt/res/icons/connect4_16.png \
+  qt/res/icons/connect0.png \
+  qt/res/icons/connect1.png \
+  qt/res/icons/connect2.png \
+  qt/res/icons/connect3.png \
+  qt/res/icons/connect4.png \
   qt/res/icons/debugwindow.png \
   qt/res/icons/edit.png \
   qt/res/icons/editcopy.png \
@@ -266,11 +238,12 @@ RES_ICONS = \
   qt/res/icons/eye_plus.png \
   qt/res/icons/filesave.png \
   qt/res/icons/history.png \
+  qt/res/icons/info.png \
   qt/res/icons/key.png \
   qt/res/icons/lock_closed.png \
   qt/res/icons/lock_open.png \
+  qt/res/icons/open.png \
   qt/res/icons/overview.png \
-  qt/res/icons/qrcode.png \
   qt/res/icons/quit.png \
   qt/res/icons/receive.png \
   qt/res/icons/remove.png \
@@ -283,26 +256,8 @@ RES_ICONS = \
   qt/res/icons/tx_input.png \
   qt/res/icons/tx_output.png \
   qt/res/icons/tx_mined.png \
-  qt/res/icons/unit_btc.png \
-  qt/res/icons/unit_mbtc.png \
-  qt/res/icons/unit_ubtc.png \
-  qt/res/icons/token_msc.png \
-  qt/res/icons/token_btc.png \
-  qt/res/icons/mp_balances.png \
-  qt/res/icons/mp_exchange.png \
-  qt/res/icons/mp_history.png \
-  qt/res/icons/mp_home.png \
-  qt/res/icons/mp_meta_cancelled.png \
-  qt/res/icons/mp_meta_filled.png \
-  qt/res/icons/mp_meta_open.png \
-  qt/res/icons/mp_meta_partial.png \
-  qt/res/icons/mp_meta_partialclosed.png \
-  qt/res/icons/mp_meta_pending.png \
-  qt/res/icons/mp_receive.png \
-  qt/res/icons/mp_send.png \
-  qt/res/icons/mp_sp.png \
-  qt/res/icons/mp_toolbox.png \
-  qt/res/icons/transaction_invalid.png
+  qt/res/icons/warning.png \
+  qt/res/icons/verify.png
 
 BITCOIN_QT_CPP = \
   qt/bitcoinaddressvalidator.cpp \
@@ -321,10 +276,14 @@ BITCOIN_QT_CPP = \
   qt/qvalidatedlineedit.cpp \
   qt/qvaluecombobox.cpp \
   qt/rpcconsole.cpp \
+  qt/scicon.cpp \
   qt/splashscreen.cpp \
   qt/trafficgraphwidget.cpp \
-  qt/utilitydialog.cpp \
-  qt/winshutdownmonitor.cpp
+  qt/utilitydialog.cpp
+
+if TARGET_WINDOWS
+BITCOIN_QT_CPP += qt/winshutdownmonitor.cpp
+endif
 
 if ENABLE_WALLET
 BITCOIN_QT_CPP += \
@@ -353,24 +312,10 @@ BITCOIN_QT_CPP += \
   qt/walletframe.cpp \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
-  qt/walletview.cpp \
-  qt/sendmpdialog.cpp \
-  qt/lookupaddressdialog.cpp \
-  qt/lookupspdialog.cpp \
-  qt/lookuptxdialog.cpp \
-  qt/txhistorydialog.cpp \
-  qt/balancesdialog.cpp \
-  qt/omnicore_init.cpp \
-  qt/metadexdialog.cpp \
-  qt/metadexcanceldialog.cpp \
-  qt/tradehistorydialog.cpp \
-  qt/omnicore_qtutils.cpp
+  qt/walletview.cpp
 endif
 
-RES_IMAGES = \
-  qt/res/images/about.png \
-  qt/res/images/splash.png \
-  qt/res/images/splash_testnet.png
+RES_IMAGES = 
 
 RES_MOVIES = $(wildcard qt/res/movies/spinner-*.png)
 
@@ -424,7 +369,7 @@ qt_bitcoin_qt_LIBTOOLFLAGS = --tag CXX
 #locale/foo.ts -> locale/foo.qm
 QT_QM=$(QT_TS:.ts=.qm)
 
-.SECONDARY: $(QT_QM)
+SECONDARY: $(QT_QM)
 
 qt/bitcoinstrings.cpp: $(libbitcoin_server_a_SOURCES) $(libbitcoin_wallet_a_SOURCES)
 	@test -n $(XGETTEXT) || echo "xgettext is required for updating translations"

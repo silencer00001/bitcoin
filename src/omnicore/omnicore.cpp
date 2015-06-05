@@ -2054,6 +2054,7 @@ int mastercore_shutdown()
         delete _my_sps;
         _my_sps = NULL;
     }
+    mastercoreInitialized = false;
 
     PrintToLog("\nOmni Core shutdown completed\n");
     PrintToLog("Shutdown time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));

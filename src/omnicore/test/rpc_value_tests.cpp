@@ -1,3 +1,5 @@
+#include "test/test_bitcoin.h"
+
 #include "omnicore/rpcvalues.h"
 
 #include "rpcprotocol.h"
@@ -12,7 +14,7 @@
 using json_spirit::Value;
 using json_spirit::Object;
 
-BOOST_AUTO_TEST_SUITE(omnicore_rpc_value_tests)
+BOOST_FIXTURE_TEST_SUITE(omnicore_rpc_value_tests, TestingSetup)
 
 static Value ValueFromString(const std::string& str)
 {

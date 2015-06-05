@@ -64,12 +64,12 @@ TestingSetup::TestingSetup()
         for (int i=0; i < nScriptCheckThreads-1; i++)
             threadGroup.create_thread(&ThreadScriptCheck);
         RegisterNodeSignals(GetNodeSignals());
-        mastercore_shutdown();
 }
 
 TestingSetup::~TestingSetup()
 {
         UnregisterNodeSignals(GetNodeSignals());
+        mastercore_shutdown();
         threadGroup.interrupt_all();
         threadGroup.join_all();
 #ifdef ENABLE_WALLET

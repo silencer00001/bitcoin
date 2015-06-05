@@ -1,3 +1,5 @@
+#include "test/test_bitcoin.h"
+
 #include "omnicore/script.h"
 
 #include "amount.h"
@@ -14,7 +16,7 @@
 // Is resetted to a norm value in each test
 extern CFeeRate minRelayTxFee;
 
-BOOST_AUTO_TEST_SUITE(omnicore_script_dust_tests)
+BOOST_FIXTURE_TEST_SUITE(omnicore_script_dust_tests, TestingSetup)
 
 BOOST_AUTO_TEST_CASE(dust_threshold_pubkey_hash)
 {

@@ -1,3 +1,5 @@
+#include "test/test_bitcoin.h"
+
 #include "omnicore/rpcrequirements.h"
 
 #include "json/json_spirit_value.h"
@@ -10,7 +12,7 @@
 
 using json_spirit::Object;
 
-BOOST_AUTO_TEST_SUITE(omnicore_rpc_requirements_tests)
+BOOST_FIXTURE_TEST_SUITE(omnicore_rpc_requirements_tests, TestingSetup)
 
 BOOST_AUTO_TEST_CASE(rpcrequirements_universal)
 {
@@ -31,7 +33,6 @@ BOOST_AUTO_TEST_CASE(rpcrequirements_universal)
     BOOST_CHECK_NO_THROW(RequireSaneReferenceAmount(0));
     BOOST_CHECK_NO_THROW(RequireSaneReferenceAmount(1));
     BOOST_CHECK_NO_THROW(RequireSaneReferenceAmount(1000000));
-    BOOST_CHECK_NO_THROW(RequireHeightInChain(0));
 }
 
 BOOST_AUTO_TEST_CASE(rpcrequirements_universal_failure)

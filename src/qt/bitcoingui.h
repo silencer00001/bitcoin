@@ -1,5 +1,5 @@
-// Copyright (c) 2011-2014 The Bitcoin developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Copyright (c) 2011-2014 The Bitcoin Core developers
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_QT_BITCOINGUI_H
@@ -93,12 +93,14 @@ private:
     QAction *toolboxAction;
     QAction *exchangeAction;
     QAction *sendCoinsAction;
+    QAction *sendCoinsMenuAction;
     QAction *usedSendingAddressesAction;
     QAction *usedReceivingAddressesAction;
     QAction *signMessageAction;
     QAction *verifyMessageAction;
     QAction *aboutAction;
     QAction *receiveCoinsAction;
+    QAction *receiveCoinsMenuAction;
     QAction *optionsAction;
     QAction *toggleHideAction;
     QAction *encryptWalletAction;
@@ -119,7 +121,7 @@ private:
     int spinnerFrame;
 
     /** Create the main UI actions. */
-    void createActions(const NetworkStyle *networkStyle);
+    void createActions();
     /** Create the menu bar and sub-menus. */
     void createMenuBar();
     /** Create the toolbars */
@@ -144,8 +146,8 @@ signals:
 public slots:
     /** Set number of connections shown in the UI */
     void setNumConnections(int count);
-    /** Set number of blocks shown in the UI */
-    void setNumBlocks(int count);
+    /** Set number of blocks and last block date shown in the UI */
+    void setNumBlocks(int count, const QDateTime& blockDate);
 
     /** Notify the user of an event from the core network or transaction handling code.
        @param[in] title     the message box / notification title
@@ -166,7 +168,7 @@ public slots:
     bool handlePaymentRequest(const SendCoinsRecipient& recipient);
 
     /** Show incoming transaction notification for new transactions. */
-    void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address);
+    void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address, const QString& label);
 #endif // ENABLE_WALLET
 
 private slots:

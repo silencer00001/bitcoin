@@ -197,8 +197,6 @@ Value setgenerate(const Array& params, bool fHelp)
 
     if (pwalletMain == NULL)
         throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Method not found (disabled)");
-    if (Params().MineBlocksOnDemand())
-        throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Use the generate method instead of setgenerate on this network");
 
     bool fGenerate = true;
     if (params.size() > 0)
@@ -211,6 +209,15 @@ Value setgenerate(const Array& params, bool fHelp)
         if (nGenProcLimit == 0)
             fGenerate = false;
     }
+
+    if (Params().MineBlocksOnDemand() && fGenerate) {
+        Array values;
+        values.push_back(params[1]);
+        return generate(values, fHelp);
+    }
+
+    if (Params().MineBlocksOnDemand())
+        throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Use the generate method instead of setgenerate on this network");
 
     mapArgs["-gen"] = (fGenerate ? "1" : "0");
     mapArgs ["-genproclimit"] = itostr(nGenProcLimit);

@@ -47,6 +47,8 @@ extern bool fLogTimestamps;
 extern bool fLogIPs;
 extern volatile bool fReopenDebugLog;
 extern CTranslationInterface translationInterface;
+/** Flag to indicate, whether the Omni Core log file should be reopened. */
+extern volatile bool fReopenOmniCoreLog;
 
 /**
  * Translation function: Call Translate signal on UI interface, which returns a boost::optional result.

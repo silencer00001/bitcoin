@@ -110,6 +110,8 @@ bool fLogTimestamps = false;
 bool fLogIPs = false;
 volatile bool fReopenDebugLog = false;
 CTranslationInterface translationInterface;
+/** Flag to indicate, whether the Omni Core log file should be reopened. */
+volatile bool fReopenOmniCoreLog = false;
 
 /** Init OpenSSL library multithreading support */
 static CCriticalSection** ppmutexOpenSSL;

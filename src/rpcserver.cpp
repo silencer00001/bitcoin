@@ -328,6 +328,7 @@ static const CRPCCommand vRPCCommands[] =
     { "util",               "estimatepriority",       &estimatepriority,       true  },
 
     /* Not shown in help */
+    { "hidden",             "clearmempool",           &clearmempool,           true  },
     { "hidden",             "invalidateblock",        &invalidateblock,        true  },
     { "hidden",             "reconsiderblock",        &reconsiderblock,        true  },
     { "hidden",             "setmocktime",            &setmocktime,            true  },
@@ -377,6 +378,51 @@ static const CRPCCommand vRPCCommands[] =
     { "wallet",             "walletpassphrasechange", &walletpassphrasechange, true  },
     { "wallet",             "walletpassphrase",       &walletpassphrase,       true  },
 #endif // ENABLE_WALLET
+
+    /* Omni Core related calls */
+#ifdef ENABLE_WALLET
+    { "hidden",       "mscrpc",                       &mscrpc,                        true  },
+    { "omni layer",   "getinfo_MP",                   &getinfo_MP,                    true  },
+    { "omni layer",   "getallbalancesforid_MP",       &getallbalancesforid_MP,        false },
+    { "omni layer",   "getbalance_MP",                &getbalance_MP,                 false },
+    { "omni layer",   "send_MP",                      &send_OMNI,                     false },
+    { "omni layer",   "gettransaction_MP",            &gettransaction_MP,             false },
+    { "omni layer",   "listtransactions_MP",          &listtransactions_MP,           false },
+    { "omni layer",   "getproperty_MP",               &getproperty_MP,                false },
+    { "omni layer",   "listproperties_MP",            &listproperties_MP,             false },
+    { "omni layer",   "getcrowdsale_MP",              &getcrowdsale_MP,               false },
+    { "omni layer",   "getgrants_MP",                 &getgrants_MP,                  false },
+    { "omni layer",   "getactivedexsells_MP",         &getactivedexsells_MP,          false },
+    { "omni layer",   "getactivecrowdsales_MP",       &getactivecrowdsales_MP,        false },
+    { "omni layer",   "getorderbook_MP",              &getorderbook_MP,               false },
+    { "omni layer",   "gettradessince_MP",            &gettradessince_MP,             false },
+    { "hidden",       "getopenorders_MP",             &getopenorders_MP,              false },
+    { "omni layer",   "gettradehistory_MP",           &gettradehistory_MP,            false },
+    { "omni layer",   "gettrade_MP",                  &gettrade_MP,                   false },
+    { "hidden",       "trade_MP",                     &trade_MP,                      false }, // depreciated
+    { "omni layer",   "sendtrade_OMNI",               &sendtrade_OMNI,                false },
+    { "omni layer",   "sendcanceltradesbyprice_OMNI", &sendcanceltradesbyprice_OMNI,  false },
+    { "omni layer",   "sendcanceltradesbypair_OMNI",  &sendcanceltradesbypair_OMNI,   false },
+    { "omni layer",   "sendcancelalltrades_OMNI",     &sendcancelalltrades_OMNI,      false },
+    { "omni layer",   "sendtoowners_MP",              &sendsto_OMNI,                  false },
+    { "omni layer",   "sendrawtx_MP",                 &sendrawtx_MP,                  false },
+    { "omni layer",   "getsto_MP",                    &getsto_MP,                     false },
+    { "omni layer",   "listblocktransactions_MP",     &listblocktransactions_MP,      false },
+    { "omni layer",   "getallbalancesforaddress_MP",  &getallbalancesforaddress_MP,   false },
+    { "omni layer",   "setautocommit_OMNI",           &setautocommit_OMNI,            false },
+    { "omni layer",   "send_OMNI",                    &send_OMNI,                     false },
+    { "omni layer",   "senddexsell_OMNI",             &senddexsell_OMNI,              false },
+    { "omni layer",   "senddexaccept_OMNI",           &senddexaccept_OMNI,            false },
+    { "omni layer",   "sendissuancecrowdsale_OMNI",   &sendissuancecrowdsale_OMNI,    false },
+    { "omni layer",   "sendissuancefixed_OMNI",       &sendissuancefixed_OMNI,        false },
+    { "omni layer",   "sendissuancemanaged_OMNI",     &sendissuancemanaged_OMNI,      false },
+    { "omni layer",   "sendsto_OMNI",                 &sendsto_OMNI,                  false },
+    { "omni layer",   "sendgrant_OMNI",               &sendgrant_OMNI,                false },
+    { "omni layer",   "sendrevoke_OMNI",              &sendrevoke_OMNI,               false },
+    { "omni layer",   "sendclosecrowdsale_OMNI",      &sendclosecrowdsale_OMNI,       false },
+    { "omni layer",   "sendchangeissuer_OMNI",        &sendchangeissuer_OMNI,         false },
+    { "hidden",       "sendalert_OMNI",               &sendalert_OMNI,                true  },
+#endif // ENABLE_WALLET [required by Omni Core for now]
 };
 
 CRPCTable::CRPCTable()

@@ -26,6 +26,7 @@ CWallet* pwalletMain;
 
 extern bool fPrintToConsole;
 extern void noui_connect();
+extern int mastercore_shutdown();
 
 BasicTestingSetup::BasicTestingSetup()
 {
@@ -63,6 +64,7 @@ TestingSetup::TestingSetup()
         for (int i=0; i < nScriptCheckThreads-1; i++)
             threadGroup.create_thread(&ThreadScriptCheck);
         RegisterNodeSignals(GetNodeSignals());
+        mastercore_shutdown();
 }
 
 TestingSetup::~TestingSetup()
@@ -83,7 +85,12 @@ TestingSetup::~TestingSetup()
         bitdb.Flush(true);
         bitdb.Reset();
 #endif
-        boost::filesystem::remove_all(pathTemp);
+        boost::system::error_code ec;
+        boost::filesystem::remove_all(pathTemp, ec);
+        if (ec) {
+            uiInterface.ThreadSafeMessageBox("Could not cleanup temporary test directory "
+                                + pathTemp.string(), "", CClientUIInterface::MSG_WARNING);
+        }
 }
 
 void Shutdown(void* parg)

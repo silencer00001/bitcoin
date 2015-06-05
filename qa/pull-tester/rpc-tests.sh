@@ -32,6 +32,7 @@ testScripts=(
     'merkle_blocks.py'
     'signrawtransactions.py'
     'walletbackup.py'
+    'mempool_clear_test.py'
 );
 testScriptsExt=(
     'bipdersig-p2p.py'

@@ -39,10 +39,11 @@ matrix:
     - compiler: ": 64-bit"
       env: HOST=x86_64-unknown-linux-gnu RUN_OMNIJ_TESTS=true RUN_TESTS=true GOAL="install" BITCOIN_CONFIG="--enable-glibc-back-compat --enable-reduce-exports"
     - compiler: ": Win64"
-      env: HOST=x86_64-w64-mingw32 GOAL="install" BITCOIN_CONFIG="--enable-gui --enable-reduce-exports" MAKEJOBS="-j2"
+      env: HOST=x86_64-w64-mingw32 GOAL="deploy" BITCOIN_CONFIG="--enable-gui --enable-reduce-exports" MAKEJOBS="-j2"
       addons:
         apt:
           packages:
+            - nsis
             - gcc-mingw-w64-x86-64
             - g++-mingw-w64-x86-64
             - binutils-mingw-w64-x86-64
@@ -56,10 +57,11 @@ matrix:
             - g++-multilib
             - bc
     - compiler: ": Win32"
-      env: HOST=i686-w64-mingw32 GOAL="install" BITCOIN_CONFIG="--enable-gui --enable-reduce-exports" MAKEJOBS="-j2"
+      env: HOST=i686-w64-mingw32 GOAL="deploy" BITCOIN_CONFIG="--enable-gui --enable-reduce-exports" MAKEJOBS="-j2"
       addons:
         apt:
           packages:
+            - nsis
             - gcc-mingw-w64-i686
             - g++-mingw-w64-i686
             - binutils-mingw-w64-i686

@@ -16,6 +16,7 @@
 #include "omnicore/mdex.h"
 #include "omnicore/omnicore.h"
 #include "omnicore/sp.h"
+#include "omnicore/transactions.h"
 
 #include <stdint.h>
 #include <stdio.h> // printf!

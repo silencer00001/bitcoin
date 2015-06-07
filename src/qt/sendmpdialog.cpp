@@ -16,6 +16,7 @@
 #include "omnicore/parse_string.h"
 #include "omnicore/pending.h"
 #include "omnicore/sp.h"
+#include "omnicore/transactions.h"
 
 #include "amount.h"
 #include "base58.h"
@@ -142,8 +143,8 @@ void SendMPDialog::updateFrom()
     }
 
     // warning label will be lit if insufficient fees for a typical simple send of 2KB or less
-    int64_t inputTotal = feeCheck(currentSetFromAddress);
-    int64_t minWarn = 3 * minRelayTxFee.GetFee(200) + CWallet::minTxFee.GetFee(2000); // based on 3x <200 byte outputs (change/reference/data) & total tx size of <2KB
+    int64_t inputTotal = FeeCheck(currentSetFromAddress);
+    int64_t minWarn = FeeThreshold();
     if (inputTotal >= minWarn) {
         ui->feeWarningLabel->setVisible(false);
     } else {

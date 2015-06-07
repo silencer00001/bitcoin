@@ -12,6 +12,7 @@
 #include "omnicore/rpcrequirements.h"
 #include "omnicore/rpcvalues.h"
 #include "omnicore/sp.h"
+#include "omnicore/transactions.h"
 #include "omnicore/tx.h"
 
 #include "rpcserver.h"

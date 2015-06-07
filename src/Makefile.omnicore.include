@@ -18,6 +18,7 @@ OMNICORE_H = \
   omnicore/script.h \
   omnicore/sp.h \
   omnicore/sto.h \
+  omnicore/transactions.h \
   omnicore/tx.h \
   omnicore/utils.h \
   omnicore/version.h
@@ -41,6 +42,7 @@ OMNICORE_CPP = \
   omnicore/script.cpp \
   omnicore/sp.cpp \
   omnicore/sto.cpp \
+  omnicore/transactions.cpp \
   omnicore/tx.cpp \
   omnicore/utils.cpp \
   omnicore/version.cpp

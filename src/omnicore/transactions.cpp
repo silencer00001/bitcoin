@@ -1,38 +1,107 @@
 #include "omnicore/transactions.h"
 
-#include "omnicore/errors.h"
-#include "omnicore/omnicore.h"
 #include "omnicore/encoding.h"
+#include "omnicore/errors.h"
 #include "omnicore/log.h"
+#include "omnicore/omnicore.h"
 #include "omnicore/script.h"
 
 #include "base58.h"
-#include "uint256.h"
-#include "util.h"
+#include "coincontrol.h"
 #include "core_io.h"
 #include "init.h"
-#include "sync.h"
+#include "primitives/transaction.h"
 #include "pubkey.h"
 #include "script/script.h"
 #include "script/standard.h"
-#include "primitives/transaction.h"
-#include "coincontrol.h"
+#include "sync.h"
+#include "uint256.h"
+#include "util.h"
 #include "wallet.h"
 
 #include <stdint.h>
+#include <map>
 #include <string>
 #include <utility>
-#include <map>
 #include <vector>
 
 namespace mastercore
 {
 
+static bool GetTransactionInputs(const std::vector<COutPoint>& txInputs, std::vector<CTxOut>& txOutputsRet)
+{
+    txOutputsRet.clear();
+    txOutputsRet.reserve(txInputs.size());
+
+    // Gather outputs for all transaction inputs  
+    for (std::vector<COutPoint>::const_iterator it = txInputs.begin(); it != txInputs.end(); ++it) {
+        const COutPoint& outpoint = *it;
+
+        CTransaction prevTx;
+        uint256 prevTxBlock;
+        if (!GetTransaction(outpoint.hash, prevTx, prevTxBlock, false)) {
+            PrintToConsole("%s() ERROR: get transaction failed\n", __func__);
+            return false;
+        }
+        CTxOut prevTxOut = prevTx.vout[outpoint.n];
+        txOutputsRet.push_back(prevTxOut);
+    }
+    // Sanity check
+    return (txInputs.size() == txOutputsRet.size());
+}
+
+static bool CheckInput(const CTxOut& txOut, int nHeight, CTxDestination& dest)
+{
+    txnouttype whichType;
+
+    if (!GetOutputType(txOut.scriptPubKey, whichType)) {
+        PrintToConsole("%s() ERROR: failed to retrieve output type\n", __func__);
+        return false;
+    }
+    if (!IsAllowedOutputType(whichType, nHeight)) {
+        PrintToConsole("%s() ERROR: output type is not allowed\n", __func__);
+        return false;
+    }
+    if (!ExtractDestination(txOut.scriptPubKey, dest)) {
+        PrintToConsole("%s() ERROR: failed to retrieve destination\n", __func__);
+        return false;
+    }
+
+    return true;
+}
+
+static bool CheckTransactionInputs(const std::vector<CTxOut>& txInputs, std::string& strSender, int64_t& amountIn, int nHeight=9999999)
+{
+    amountIn = 0;
+    strSender.clear();
+
+    for (std::vector<CTxOut>::const_iterator it = txInputs.begin(); it != txInputs.end(); ++it) {
+        const CTxOut& txOut = *it;
+
+        CTxDestination dest;
+        if (!CheckInput(txOut, nHeight, dest)) {
+            PrintToConsole("%s() ERROR: transaction input not accepted\n", __func__);
+            return false;
+        }
+
+        CBitcoinAddress address(dest);
+        if (strSender.empty()) {
+            strSender = address.ToString();
+        }
+        if (strSender != address.ToString()) {
+            PrintToConsole("%s() ERROR: inputs must refer to the same address\n", __func__);
+            return false;
+        }
+
+        amountIn += txOut.nValue;
+    }
+
+    return true;
+}
+
 static int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, int64_t additional) {
     CWallet* pwallet = pwalletMain;
-    if (NULL == pwallet) {
-        return 0;
-    }
+    if (!pwallet) { return 0; }
 
     int64_t n_max = (COIN * (20 * (0.0001))); // assume 20 kB max tx size at 0.0001 per kB
     int64_t n_total = 0; // total output funds collected
@@ -47,87 +116,49 @@ static int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinCon
             it != pwallet->mapWallet.end(); ++it) {
         const uint256& wtxid = it->first;
         const CWalletTx* pcoin = &(*it).second;
-        bool bIsMine;
-        bool bIsSpent;
 
         if (pcoin->IsTrusted()) {
-            const int64_t nAvailable = pcoin->GetAvailableCredit();
-
-            if (!nAvailable)
-                continue;
-
-            for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
-                txnouttype whichType;
-                if (!GetOutputType(pcoin->vout[i].scriptPubKey, whichType))
-                    continue;
-
-                if (!IsAllowedOutputType(whichType, nHeight))
-                    continue;
+            for (unsigned int n = 0; n < pcoin->vout.size(); n++) {
+                const CTxOut& txOut = pcoin->vout[n];
 
                 CTxDestination dest;
-                if (!ExtractDestination(pcoin->vout[i].scriptPubKey, dest))
+                if (!CheckInput(txOut, nHeight, dest)) {
                     continue;
-
-                bIsMine = IsMine(*pwallet, dest);
-                bIsSpent = pwallet->IsSpent(wtxid, i);
-
-                if (!bIsMine || bIsSpent)
+                }
+                if (!IsMine(*pwallet, dest)) {
                     continue;
-
-                int64_t n = bIsSpent ? 0 : pcoin->vout[i].nValue;
-
+                }
+                if (pwallet->IsSpent(wtxid, n)) {
+                    continue;
+                }
                 std::string sAddress = CBitcoinAddress(dest).ToString();
                 if (msc_debug_tokens)
-                    PrintToLog("%s:IsMine()=%s:IsSpent()=%s:%s: i=%d, nValue= %lu\n",
-                        sAddress, bIsMine ? "yes" : "NO",
-                        bIsSpent ? "YES" : "no", wtxid.ToString(), i, n);
+                    PrintToLog("%s:IsMine()=yes:IsSpent()=no:%s: n=%d, nValue=%d\n",
+                        sAddress, wtxid.ToString(), n, txOut.nValue);
 
                 // only use funds from the sender's address
                 if (fromAddress == sAddress) {
-                    COutPoint outpt(wtxid, i);
-                    coinControl.Select(outpt);
+                    COutPoint outpoint(wtxid, n);
+                    coinControl.Select(outpoint);
 
-                    n_total += n;
+                    n_total += txOut.nValue;
 
-                    if (n_max <= n_total)
+                    if (n_max <= n_total) {
                         break;
+                    }
                 }
             }
         }
 
-        if (n_max <= n_total)
+        if (n_max <= n_total) {
             break;
+        }
     }
 
     return n_total;
 }
 
-int64_t FeeThreshold()
-{
-    // based on 3x <200 byte outputs (change/reference/data) & total tx size of <2KB
-    return 3 * minRelayTxFee.GetFee(200) + CWallet::minTxFee.GetFee(2000);
-}
-
-int64_t FeeCheck(const std::string& address)
-{
-    // check the supplied address against selectCoins to determine if sufficient fees for send
-    CCoinControl coinControl;
-    return SelectCoins(address, coinControl, 0);
-}
-
-// This function determines whether it is valid to use a Class C transaction for a given payload size
-static bool UseEncodingClassC(size_t nDataSize)
-{
-    size_t nTotalSize = nDataSize + 2; // Marker "om"
-    bool fDataEnabled = GetBoolArg("-datacarrier", true);
-    int nBlockNow = GetHeight();
-    if (!IsAllowedOutputType(TX_NULL_DATA, nBlockNow)) {
-        fDataEnabled = false;
-    }
-    return nTotalSize <= nMaxDatacarrierBytes && fDataEnabled;
-}
-
-bool AddressToPubKey(const std::string& sender, CPubKey& pubKey)
+static bool AddressToPubKey(const std::string& sender, CPubKey& pubKey)
 {
     CWallet* pwallet = pwalletMain;
     if (!pwallet) { return false; }
@@ -155,7 +186,19 @@ bool AddressToPubKey(const std::string& sender, CPubKey& pubKey)
     return true;
 }
 
-int PrepareTransaction(const std::string& senderAddress, const std::string& receiverAddress, const std::string& redemptionAddress,
+// This function determines whether it is valid to use a Class C transaction for a given payload size
+static bool UseEncodingClassC(size_t nDataSize)
+{
+    size_t nTotalSize = nDataSize + 2; // Marker "om"
+    bool fDataEnabled = GetBoolArg("-datacarrier", true);
+    int nBlockNow = GetHeight();
+    if (!IsAllowedOutputType(TX_NULL_DATA, nBlockNow)) {
+        fDataEnabled = false;
+    }
+    return nTotalSize <= nMaxDatacarrierBytes && fDataEnabled;
+}
+
+static int PrepareTransaction(const std::string& senderAddress, const std::string& receiverAddress, const std::string& redemptionAddress,
         int64_t referenceAmount, const std::vector<unsigned char>& data, std::vector<std::pair<CScript, int64_t> >& vecSend)
 {
     // Determine the class to send the transaction via - default is Class C
@@ -185,7 +228,6 @@ int PrepareTransaction(const std::string& senderAddress, const std::string& rece
 
     return 0;
 }
-
 // This function requests the wallet create an Omni transaction using the supplied parameters and payload
 int ClassAgnosticWalletTXBuilder(const std::string& senderAddress, const std::string& receiverAddress, const std::string& redemptionAddress,
         int64_t referenceAmount, const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit)
@@ -215,7 +257,7 @@ int ClassAgnosticWalletTXBuilder(const std::string& senderAddress, const std::st
 
     // Ask the wallet to create the transaction (note mining fee determined by Bitcoin Core params)
     if (!pwallet->CreateTransaction(vecSend, wtxNew, reserveKey, nFeeRet, strFailReason, &coinControl)) {
-        PrintToLog("%s() ERROR: %s\n", __FUNCTION__, strFailReason);
+        PrintToLog("%s() ERROR: %s\n", __func__, strFailReason);
         return MP_ERR_CREATE_TX;
     }
 
@@ -224,7 +266,7 @@ int ClassAgnosticWalletTXBuilder(const std::string& senderAddress, const std::st
         rawHex = EncodeHexTx(wtxNew);
     } else {
         // Commit the transaction to the wallet and broadcast)
-        PrintToLog("%s():%s; nFeeRet = %lu, line %d, file: %s\n", __FUNCTION__, wtxNew.ToString(), nFeeRet, __LINE__, __FILE__);
+        PrintToLog("%s():%s; nFeeRet = %lu, line %d, file: %s\n", __func__, wtxNew.ToString(), nFeeRet, __LINE__, __FILE__);
         if (!pwallet->CommitTransaction(wtxNew, reserveKey)) return MP_ERR_COMMIT_TX;
         txid = wtxNew.GetHash();
     }
@@ -232,87 +274,13 @@ int ClassAgnosticWalletTXBuilder(const std::string& senderAddress, const std::st
     return 0;
 }
 
-static bool GetTransactionInputs(const std::vector<COutPoint>& txInputs, std::vector<CTxOut>& txOutputsRet)
-{
-    txOutputsRet.clear();
-    txOutputsRet.reserve(txInputs.size());
-
-    // Gather outputs for all transaction inputs  
-    for (std::vector<COutPoint>::const_iterator it = txInputs.begin(); it != txInputs.end(); ++it) {
-        const COutPoint& outpoint = *it;
-
-        CTransaction prevTx;
-        uint256 prevTxBlock;
-        if (!GetTransaction(outpoint.hash, prevTx, prevTxBlock, false)) {
-            PrintToConsole("%s() ERROR: get transaction failed\n", __func__);
-            return false;
-        }
-        // Sanity check
-        if (prevTx.vout.size() < outpoint.n) {
-            PrintToConsole("%s() ERROR: first sanity check failed (0 < %d || %d < %d\n", __func__, outpoint.n, prevTx.vout.size(), outpoint.n);
-            return false;
-        }
-        CTxOut prevTxOut = prevTx.vout[outpoint.n];
-        txOutputsRet.push_back(prevTxOut);
-        PrintToConsole("%s() pushed an output\n", __func__);
-    }
-
-    // Sanity check
-    return (txInputs.size() == txOutputsRet.size());
-}
-
-static bool CheckTransactionInputs(const std::vector<CTxOut>& txInputs, std::string& strSender, int64_t& amountIn, int nHeight=9999999)
-{
-    amountIn = 0;
-    strSender.clear();
-
-    for (std::vector<CTxOut>::const_iterator it = txInputs.begin(); it != txInputs.end(); ++it) {
-        const CScript& scriptPubKey = it->scriptPubKey;
-        const int64_t amount = it->nValue;
-
-        txnouttype whichType;
-        if (!GetOutputType(scriptPubKey, whichType)) {
-            PrintToConsole("%s() ERROR: failed to retrieve output type\n", __func__);
-            return false;
-        }
-
-        if (!IsAllowedOutputType(whichType, nHeight)) {
-            PrintToConsole("%s() ERROR: output type is not allowed\n", __func__);
-            return false;
-        }
-
-        CTxDestination dest;
-        if (!ExtractDestination(scriptPubKey, dest)) {
-            PrintToConsole("%s() ERROR: failed to retrieve destination\n", __func__);
-            return false;
-        }
-
-        CBitcoinAddress address(dest);
-        if (strSender.empty()) {
-            strSender = address.ToString();
-        }
-
-        if (strSender != address.ToString()) {
-            PrintToConsole("%s() ERROR: inputs must refer to the same address\n", __func__);
-            return false;
-        }
-
-        amountIn += amount;
-    }
-
-    return true;
-}
-
 int ClassAgnosticWalletTXBuilder(const std::vector<COutPoint>& txInputs, const std::string& receiverAddress,
         const std::vector<unsigned char>& payload, const CPubKey& pubKey, std::string& rawTxHex, int64_t txFee)
 {
-    
     int omniTxClass = OMNI_CLASS_C;
     if (!UseEncodingClassC(payload.size())) {
         omniTxClass = OMNI_CLASS_B;
     }
-    
-    PrintToConsole("%s(): using class %d\n", __func__, omniTxClass);
 
     std::vector<CTxOut> txOutputs;
     if (!GetTransactionInputs(txInputs, txOutputs)) {
@@ -335,13 +303,13 @@ int ClassAgnosticWalletTXBuilder(const std::vector<COutPoint>& txInputs, const s
                 return MP_REDEMP_BAD_VALIDATION;
             }
             if (!OmniCore_Encode_ClassB(strSender, pubKey, payload, vecSend)) {
-                PrintToConsole("%s() ERROR: failed to embed payload\n", __func__);
+                PrintToConsole("%s() ERROR: failed to embed class B payload\n", __func__);
                 return MP_ENCODING_ERROR;
             }
         break;
         case OMNI_CLASS_C:
             if (!OmniCore_Encode_ClassC(payload, vecSend)) {
-                PrintToConsole("%s() ERROR: failed to embed payload\n", __func__);
+                PrintToConsole("%s() ERROR: failed to embed class C payload\n", __func__);
                 return MP_ENCODING_ERROR;
             }
         break;
@@ -376,8 +344,6 @@ int ClassAgnosticWalletTXBuilder(const std::vector<COutPoint>& txInputs, const s
     CScript scriptChange = GetScriptForDestination(CBitcoinAddress(strSender).Get());
     CTxOut rawTxOut(amountChange, scriptChange);
 
-    // Never create dust outputs; if we would, just
-    // add the dust to the fee.
     if (!rawTxOut.IsDust(::minRelayTxFee)) {
         // Insert change txn at random position:
         std::vector<CTxOut>::iterator position = rawTx.vout.begin()+GetRandInt(rawTx.vout.size()+1);
@@ -388,6 +354,19 @@ int ClassAgnosticWalletTXBuilder(const std::vector<COutPoint>& txInputs, const s
     PrintToConsole("%s() result: %s\n", __func__, rawTxHex);
 
     return 0;
+}
+
+int64_t FeeThreshold()
+{
+    // based on 3x <200 byte outputs (change/reference/data) & total tx size of <2KB
+    return 3 * minRelayTxFee.GetFee(200) + CWallet::minTxFee.GetFee(2000);
+}
+
+int64_t FeeCheck(const std::string& address)
+{
+    // check the supplied address against selectCoins to determine if sufficient fees for send
+    CCoinControl coinControl;
+    return SelectCoins(address, coinControl, 0);
 }
 
 

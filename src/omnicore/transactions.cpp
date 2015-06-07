@@ -232,5 +232,163 @@ int ClassAgnosticWalletTXBuilder(const std::string& senderAddress, const std::st
     return 0;
 }
 
+static bool GetTransactionInputs(const std::vector<COutPoint>& txInputs, std::vector<CTxOut>& txOutputsRet)
+{
+    txOutputsRet.clear();
+    txOutputsRet.reserve(txInputs.size());
+
+    // Gather outputs for all transaction inputs  
+    for (std::vector<COutPoint>::const_iterator it = txInputs.begin(); it != txInputs.end(); ++it) {
+        const COutPoint& outpoint = *it;
+
+        CTransaction prevTx;
+        uint256 prevTxBlock;
+        if (!GetTransaction(outpoint.hash, prevTx, prevTxBlock, false)) {
+            PrintToConsole("%s() ERROR: get transaction failed\n", __func__);
+            return false;
+        }
+        // Sanity check
+        if (prevTx.vout.size() < outpoint.n) {
+            PrintToConsole("%s() ERROR: first sanity check failed (0 < %d || %d < %d\n", __func__, outpoint.n, prevTx.vout.size(), outpoint.n);
+            return false;
+        }
+        CTxOut prevTxOut = prevTx.vout[outpoint.n];
+        txOutputsRet.push_back(prevTxOut);
+        PrintToConsole("%s() pushed an output\n", __func__);
+    }
+
+    // Sanity check
+    return (txInputs.size() == txOutputsRet.size());
+}
+
+static bool CheckTransactionInputs(const std::vector<CTxOut>& txInputs, std::string& strSender, int64_t& amountIn, int nHeight=9999999)
+{
+    amountIn = 0;
+    strSender.clear();
+
+    for (std::vector<CTxOut>::const_iterator it = txInputs.begin(); it != txInputs.end(); ++it) {
+        const CScript& scriptPubKey = it->scriptPubKey;
+        const int64_t amount = it->nValue;
+
+        txnouttype whichType;
+        if (!GetOutputType(scriptPubKey, whichType)) {
+            PrintToConsole("%s() ERROR: failed to retrieve output type\n", __func__);
+            return false;
+        }
+
+        if (!IsAllowedOutputType(whichType, nHeight)) {
+            PrintToConsole("%s() ERROR: output type is not allowed\n", __func__);
+            return false;
+        }
+
+        CTxDestination dest;
+        if (!ExtractDestination(scriptPubKey, dest)) {
+            PrintToConsole("%s() ERROR: failed to retrieve destination\n", __func__);
+            return false;
+        }
+
+        CBitcoinAddress address(dest);
+        if (strSender.empty()) {
+            strSender = address.ToString();
+        }
+
+        if (strSender != address.ToString()) {
+            PrintToConsole("%s() ERROR: inputs must refer to the same address\n", __func__);
+            return false;
+        }
+
+        amountIn += amount;
+    }
+
+    return true;
+}
+
+int ClassAgnosticWalletTXBuilder(const std::vector<COutPoint>& txInputs, const std::string& receiverAddress,
+        const std::vector<unsigned char>& payload, const CPubKey& pubKey, std::string& rawTxHex, int64_t txFee)
+{
+    
+    int omniTxClass = OMNI_CLASS_C;
+    if (!UseEncodingClassC(payload.size())) {
+        omniTxClass = OMNI_CLASS_B;
+    }
+    
+    PrintToConsole("%s(): using class %d\n", __func__, omniTxClass);
+
+    std::vector<CTxOut> txOutputs;
+    if (!GetTransactionInputs(txInputs, txOutputs)) {
+        PrintToConsole("%s() ERROR: failed to get transaction inputs\n", __func__);
+        return false;
+    }
+
+    std::string strSender;
+    int64_t amountIn = 0;
+    if (!CheckTransactionInputs(txOutputs, strSender, amountIn)) {
+        PrintToConsole("%s() ERROR: failed to check transaction inputs\n", __func__);
+        return false;
+    }
+
+    std::vector<std::pair<CScript, int64_t> > vecSend;
+    switch (omniTxClass) {
+        case OMNI_CLASS_B:
+            if (!pubKey.IsFullyValid()) {
+                PrintToConsole("%s() ERROR: public key for class B redemption is invalid\n", __func__);
+                return MP_REDEMP_BAD_VALIDATION;
+            }
+            if (!OmniCore_Encode_ClassB(strSender, pubKey, payload, vecSend)) {
+                PrintToConsole("%s() ERROR: failed to embed payload\n", __func__);
+                return MP_ENCODING_ERROR;
+            }
+        break;
+        case OMNI_CLASS_C:
+            if (!OmniCore_Encode_ClassC(payload, vecSend)) {
+                PrintToConsole("%s() ERROR: failed to embed payload\n", __func__);
+                return MP_ENCODING_ERROR;
+            }
+        break;
+    }
+
+    if (!receiverAddress.empty()) {
+        CScript scriptPubKey = GetScriptForDestination(CBitcoinAddress(receiverAddress).Get());
+        vecSend.push_back(std::make_pair(scriptPubKey, GetDustThreshold(scriptPubKey)));
+    }
+
+    CMutableTransaction rawTx;
+    for (std::vector<COutPoint>::const_iterator it = txInputs.begin(); it != txInputs.end(); ++it) {
+        const COutPoint& outpoint = *it;
+        CTxIn input(outpoint);
+        rawTx.vin.push_back(input);
+    }
+
+    int64_t amountOut = 0;
+    for (std::vector<std::pair<CScript, int64_t> >::const_iterator it = vecSend.begin(); it != vecSend.end(); ++it) {
+        const CScript& scriptPubKey = it->first;
+        const int64_t amount = it->second;
+        CTxOut out(amount, scriptPubKey);
+        rawTx.vout.push_back(out);
+        amountOut += amount;
+    }
+
+    int64_t amountChange = amountIn - amountOut - txFee;
+    if (amountChange < 0) {
+        PrintToConsole("%s() ERROR: insufficient input amount\n", __func__);
+    }
+
+    CScript scriptChange = GetScriptForDestination(CBitcoinAddress(strSender).Get());
+    CTxOut rawTxOut(amountChange, scriptChange);
+
+    // Never create dust outputs; if we would, just
+    // add the dust to the fee.
+    if (!rawTxOut.IsDust(::minRelayTxFee)) {
+        // Insert change txn at random position:
+        std::vector<CTxOut>::iterator position = rawTx.vout.begin()+GetRandInt(rawTx.vout.size()+1);
+        rawTx.vout.insert(position, rawTxOut);
+    }
+
+    rawTxHex = EncodeHexTx(rawTx);
+    PrintToConsole("%s() result: %s\n", __func__, rawTxHex);
+
+    return 0;
+}
+
 
 } // namespace mastercore

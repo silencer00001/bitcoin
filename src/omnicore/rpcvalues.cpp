@@ -4,10 +4,17 @@
 
 #include "base58.h"
 #include "rpcprotocol.h"
+#include "primitives/transaction.h"
+#include "uint256.h"
+#include "rpcserver.h"
 
 #include "json/json_spirit_value.h"
+#include "json/json_spirit_utils.h"
+
+#include <boost/foreach.hpp>
 
 #include <string>
+#include <vector>
 
 using mastercore::StrToInt64;
 
@@ -141,5 +148,28 @@ uint8_t ParseMetaDExAction(const json_spirit::Value& value)
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid action (1, 2, 3, 4 only)");
     }
     return static_cast<uint8_t>(action);
+}
+
+std::vector<COutPoint> ParseOutpoints(const json_spirit::Value& value)
+{
+    json_spirit::Array inputs = value.get_array();
+    std::vector<COutPoint> vOutpoints;
+
+    BOOST_FOREACH(const json_spirit::Value& input, inputs) {
+        const json_spirit::Object& o = input.get_obj();
+        uint256 txid = ParseHashO(o, "txid");
+        const json_spirit::Value& vout_v = json_spirit::find_value(o, "vout");
+        if (vout_v.type() != json_spirit::int_type) {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Missing vout key");
+        }
+        int nOutput = vout_v.get_int();
+        if (nOutput < 0) {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Vout must be positive");
+        }
+        COutPoint outpoint(txid, nOutput);
+        vOutpoints.push_back(outpoint);
+    }
+
+    return vOutpoints;
 }
 

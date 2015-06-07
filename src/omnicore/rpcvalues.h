@@ -1,10 +1,13 @@
 #ifndef OMNICORE_RPCVALUES_H
 #define OMNICORE_RPCVALUES_H
 
+class COutPoint;
+
 #include "json/json_spirit_value.h"
 
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 std::string ParseAddress(const json_spirit::Value& value);
 uint32_t ParsePropertyId(const json_spirit::Value& value);
@@ -21,6 +24,7 @@ int64_t ParseDeadline(const json_spirit::Value& value);
 uint8_t ParseEarlyBirdBonus(const json_spirit::Value& value);
 uint8_t ParseIssuerBonus(const json_spirit::Value& value);
 uint8_t ParseMetaDExAction(const json_spirit::Value& value);
+std::vector<COutPoint> ParseOutpoints(const json_spirit::Value& value);
 
 
 #endif // OMNICORE_RPCVALUES_H

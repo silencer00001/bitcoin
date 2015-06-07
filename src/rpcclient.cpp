@@ -150,6 +150,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "sendalert_OMNI", 2 },
     { "sendalert_OMNI", 3 },
     { "sendalert_OMNI", 4 },
+
+    { "createsend_OMNI", 0 },
+    { "createsend_OMNI", 2 },
 };
 
 class CRPCConvertTable

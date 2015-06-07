@@ -95,6 +95,51 @@ Value send_OMNI(const Array& params, bool fHelp)
     }
 }
 
+Value createsend_OMNI(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 4 || params.size() > 5)
+        throw runtime_error(
+            "createsend_OMNI [{\"txid\":\"id\",\"vout\":n},...] \"toaddress\" propertyid \"amount\" ( pubkey )\n"
+            "\nCreates a simple send for a given amount and currency/property ID.\n"
+            "\nParameters:\n"
+            "Outputs       : the outputs to spent\n"
+            "ToAddress     : the address to send to\n"
+            "PropertyID    : the id of the smart property to send\n"
+            "Amount        : the amount to send\n"
+            "Result:\n"
+            "txhex         (string) The raw transaction\n"
+        );
+
+    // obtain parameters & info
+    std::vector<COutPoint> txInputs = ParseOutpoints(params[0]);
+    std::string toAddress = ParseAddress(params[1]);
+    uint32_t propertyId = ParsePropertyId(params[2]);
+    int64_t amount = ParseAmount(params[3], isPropertyDivisible(propertyId));
+
+    // perform checks
+    RequireExistingProperty(propertyId);
+
+    CPubKey pubKey;
+    if (params.size() > 4) {
+        std::vector<unsigned char> vchPubKey = ParseHexV(params[4], "redeeming pubkey");
+        pubKey.Set(vchPubKey.begin(), vchPubKey.end());
+    }
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_SimpleSend(propertyId, amount);
+
+    // request the wallet build the transaction (and if needed commit it)
+    std::string rawTxHex;
+    int result = ClassAgnosticWalletTXBuilder(txInputs, toAddress, payload, pubKey, rawTxHex);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    }
+
+    return rawTxHex;
+}
+
 // senddexsell_OMNI - DEx sell offer
 Value senddexsell_OMNI(const Array& params, bool fHelp)
 {

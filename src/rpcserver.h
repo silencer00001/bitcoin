@@ -271,6 +271,8 @@ extern json_spirit::Value sendcanceltradesbypair_OMNI(const json_spirit::Array& 
 extern json_spirit::Value sendcancelalltrades_OMNI(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value sendalert_OMNI(const json_spirit::Array& params, bool fHelp);
 
+extern json_spirit::Value createsend_OMNI(const json_spirit::Array& params, bool fHelp);
+
 // in rest.cpp
 extern bool HTTPReq_REST(AcceptedConnection *conn,
                   std::string& strURI,

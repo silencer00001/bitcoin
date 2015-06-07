@@ -393,6 +393,8 @@ static const CRPCCommand vRPCCommands[] =
     { "omni layer",   "sendclosecrowdsale_OMNI",      &sendclosecrowdsale_OMNI,       false,  false,  true },
     { "omni layer",   "sendchangeissuer_OMNI",        &sendchangeissuer_OMNI,         false,  false,  true },
     { "hidden",       "sendalert_OMNI",               &sendalert_OMNI,                true,   false,  true },
+
+    { "omni layer raw",   "createsend_OMNI",          &createsend_OMNI,               true,   false,  false },
 #endif // ENABLE_WALLET [required by Omni Core for now]
 };
 

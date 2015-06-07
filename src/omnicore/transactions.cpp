@@ -127,16 +127,71 @@ static bool UseEncodingClassC(size_t nDataSize)
     return nTotalSize <= nMaxDatacarrierBytes && fDataEnabled;
 }
 
+bool AddressToPubKey(const std::string& sender, CPubKey& pubKey)
+{
+    CWallet* pwallet = pwalletMain;
+    if (!pwallet) { return false; }
+
+    CKeyID keyID;
+    CBitcoinAddress address(sender);
+
+    if (address.IsScript()) {
+        PrintToLog("%s() ERROR: redemption address %s must not be a script hash\n", __func__, sender);
+        return false;
+    }
+    if (!address.GetKeyID(keyID)) {
+        PrintToLog("%s() ERROR: redemption address %s is invalid\n", __func__, sender);
+        return false;
+    }
+    if (!pwallet->GetPubKey(keyID, pubKey)) {
+        PrintToLog("%s() ERROR: failed to retrieve public key for redemption address %s from wallet\n", __func__, sender);
+        return false;
+    }
+    if (!pubKey.IsFullyValid()) {
+        PrintToLog("%s() ERROR: retrieved invalid public key for redemption address %s\n", __func__, sender);
+        return false;
+    }
+
+    return true;
+}
+
+int PrepareTransaction(const std::string& senderAddress, const std::string& receiverAddress, const std::string& redemptionAddress,
+        int64_t referenceAmount, const std::vector<unsigned char>& data, std::vector<std::pair<CScript, int64_t> >& vecSend)
+{
+    // Determine the class to send the transaction via - default is Class C
+    int omniTxClass = OMNI_CLASS_C;
+    if (!UseEncodingClassC(data.size())) omniTxClass = OMNI_CLASS_B;
+
+    // Encode the data outputs
+    switch (omniTxClass) {
+        case OMNI_CLASS_B: {
+            CPubKey redeemingPubKey;
+            std::string str = redemptionAddress;
+            if (str.empty()) str = senderAddress; // TODO: this seems laborious
+            if (!AddressToPubKey(str, redeemingPubKey)) return MP_REDEMP_BAD_VALIDATION;
+            if (!OmniCore_Encode_ClassB(senderAddress, redeemingPubKey, data, vecSend)) return MP_ENCODING_ERROR;
+        break; }
+        case OMNI_CLASS_C:
+            if (!OmniCore_Encode_ClassC(data, vecSend)) return MP_ENCODING_ERROR;
+        break;
+    }
+
+    // Then add a pay-to-pubkey-hash output for the recipient (if needed)
+    // Note: we do this last as we want this to be the highest vout
+    if (!receiverAddress.empty()) {
+        CScript scriptPubKey = GetScriptForDestination(CBitcoinAddress(receiverAddress).Get());
+        vecSend.push_back(std::make_pair(scriptPubKey, std::max(referenceAmount, GetDustThreshold(scriptPubKey))));
+    }
+
+    return 0;
+}
+
 // This function requests the wallet create an Omni transaction using the supplied parameters and payload
 int ClassAgnosticWalletTXBuilder(const std::string& senderAddress, const std::string& receiverAddress, const std::string& redemptionAddress,
         int64_t referenceAmount, const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit)
 {
     CWallet* pwallet = pwalletMain;
     if (!pwallet) { return MP_ERR_WALLET_ACCESS; }
-
-    // Determine the class to send the transaction via - default is Class C
-    int omniTxClass = OMNI_CLASS_C;
-    if (!UseEncodingClassC(data.size())) omniTxClass = OMNI_CLASS_B;
 
     // Prepare the transaction - first setup some vars
     CCoinControl coinControl;
@@ -146,43 +201,17 @@ int ClassAgnosticWalletTXBuilder(const std::string& senderAddress, const std::st
     std::string strFailReason;
     CReserveKey reserveKey(pwallet);
 
-    // Next, we set the change address to the sender
-    coinControl.destChange = CBitcoinAddress(senderAddress).Get();
-
     // Select the inputs
     // TODO: check, if enough coins were selected
     if (!SelectCoins(senderAddress, coinControl, referenceAmount)) { return MP_INPUTS_INVALID; }
     if (!coinControl.HasSelected()) { return MP_ERR_INPUTSELECT_FAIL; }
 
-    // Encode the data outputs
-    switch (omniTxClass) {
-        case OMNI_CLASS_B: {
-            CBitcoinAddress address;
-            CPubKey redeemingPubKey;
-            if (!redemptionAddress.empty()) { address.SetString(redemptionAddress); } else { address.SetString(senderAddress); }
-            if (address.IsValid()) { // validate the redemption address
-                if (address.IsScript()) {
-                    PrintToLog("%s() ERROR: Redemption Address must be specified !\n", __FUNCTION__);
-                    return MP_REDEMP_ILLEGAL; // ^ misleading error (TODO fix)
-                } else {
-                    CKeyID keyID;
-                    if (!address.GetKeyID(keyID)) return MP_REDEMP_BAD_KEYID;
-                    if (!pwallet->GetPubKey(keyID, redeemingPubKey)) return MP_REDEMP_FETCH_ERR_PUBKEY;
-                    if (!redeemingPubKey.IsFullyValid()) return MP_REDEMP_INVALID_PUBKEY;
-                }
-            } else return MP_REDEMP_BAD_VALIDATION;
-            if (!OmniCore_Encode_ClassB(senderAddress, redeemingPubKey, data, vecSend)) { return MP_ENCODING_ERROR; }
-        break; }
-        case OMNI_CLASS_C:
-            if (!OmniCore_Encode_ClassC(data, vecSend)) { return MP_ENCODING_ERROR; }
-        break;
-    }
+    // Next, we set the change address to the sender
+    coinControl.destChange = CBitcoinAddress(senderAddress).Get();
 
-    // Then add a paytopubkeyhash output for the recipient (if needed) - note we do this last as we want this to be the highest vout
-    if (!receiverAddress.empty()) {
-        CScript scriptPubKey = GetScriptForDestination(CBitcoinAddress(receiverAddress).Get());
-        vecSend.push_back(std::make_pair(scriptPubKey, std::max(referenceAmount, GetDustThreshold(scriptPubKey))));
-    }
+    // Encode the data outputs
+    int rc = PrepareTransaction(senderAddress, receiverAddress, redemptionAddress, referenceAmount, data, vecSend);
+    if (rc != 0) { return rc; }
 
     // Ask the wallet to create the transaction (note mining fee determined by Bitcoin Core params)
     if (!pwallet->CreateTransaction(vecSend, wtxNew, reserveKey, nFeeRet, strFailReason, &coinControl)) {

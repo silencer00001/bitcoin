@@ -153,6 +153,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
 
     { "createsend_OMNI", 0 },
     { "createsend_OMNI", 2 },
+    { "createsend_OMNI", 4 },
 };
 
 class CRPCConvertTable

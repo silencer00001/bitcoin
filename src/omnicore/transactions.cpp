@@ -279,6 +279,8 @@ int ClassAgnosticWalletTXBuilder(const std::vector<COutPoint>& txInputs, const s
         omniTxClass = OMNI_CLASS_B;
     }
 
+    PrintToConsole("%s() creating class: %d\n", __func__, omniTxClass);
+
     std::vector<CTxOut> txOutputs;
     if (!GetTransactionInputs(txInputs, txOutputs)) {
         PrintToConsole("%s() ERROR: failed to get transaction inputs\n", __func__);
@@ -287,7 +289,7 @@ int ClassAgnosticWalletTXBuilder(const std::vector<COutPoint>& txInputs, const s
 
     std::string strSender;
     int64_t amountIn = 0;
-    if (!CheckTransactionInputs(txOutputs, strSender, amountIn)) {
+    if (!CheckTransactionInputs(txOutputs, strSender, amountIn, GetHeight())) {
         PrintToConsole("%s() ERROR: failed to check transaction inputs\n", __func__);
         return false;
     }

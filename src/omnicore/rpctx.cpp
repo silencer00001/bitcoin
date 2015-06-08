@@ -97,17 +97,37 @@ Value send_OMNI(const Array& params, bool fHelp)
 
 Value createsend_OMNI(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 4 || params.size() > 5)
+    if (fHelp || params.size() < 4 || params.size() > 6)
         throw runtime_error(
-            "createsend_OMNI [{\"txid\":\"id\",\"vout\":n},...] \"toaddress\" propertyid \"amount\" ( pubkey )\n"
-            "\nCreates a simple send for a given amount and currency/property ID.\n"
-            "\nParameters:\n"
-            "Outputs       : the outputs to spent\n"
-            "ToAddress     : the address to send to\n"
-            "PropertyID    : the id of the smart property to send\n"
-            "Amount        : the amount to send\n"
-            "Result:\n"
-            "txhex         (string) The raw transaction\n"
+            "createsend_OMNI [{\"txid\":\"id\",\"vout\":n},...] \"toaddress\" propertyid \"amount\" ( fee pubkey )\n"
+
+            "\nCreates a raw simple send transaction.\n"
+
+            "\nNote: transactions with a payload size up to \"datacarriersize\" are created as class C transactions,"
+            " while transactions with larger payloads are created as class B transactions. Providing a public key to"
+            " redeem multisig dust is only mandatory for class B transactions.\n"
+
+            "\nArguments:\n"
+            "1. outpoints            (string, required) A json array of json objects\n"
+            "     [\n"
+            "       {\n"
+            "         \"txid\":\"hash\",   (string, required) the transaction hash\n"
+            "         \"vout\":n         (number, required) the output number\n"
+            "       }\n"
+            "       ,...\n"
+            "     ]\n"
+            "2. toaddress              (string, required) the address to send to\n"
+            "3. propertyid             (number, required) the identifier of the property to transfer\n"
+            "4. amount                 (string, required) the amount to transfer\n"
+            "5. fee                    (number, optional) the transaction fee (default: 0.0001 BTC)\n"
+            "6. pubkey                 (string, optional) a public key that can spent multisig dust\n"
+
+            "\nResult:\n"
+            "transaction               (string) the hex-encoded raw transaction\n"
+
+            "\nExamples\n"
+            + HelpExampleCli("createsend_OMNI", "")
+            + HelpExampleRpc("createsend_OMNI", "")
         );
 
     // obtain parameters & info
@@ -116,23 +136,26 @@ Value createsend_OMNI(const Array& params, bool fHelp)
     uint32_t propertyId = ParsePropertyId(params[2]);
     int64_t amount = ParseAmount(params[3], isPropertyDivisible(propertyId));
 
-    // perform checks
-    RequireExistingProperty(propertyId);
+    int64_t txFee = 10000;
+    if (params.size() > 4) {
+        txFee = AmountFromValue(params[4]);
+    }
 
     CPubKey pubKey;
-    if (params.size() > 4) {
-        std::vector<unsigned char> vchPubKey = ParseHexV(params[4], "redeeming pubkey");
+    if (params.size() > 5) {
+        PrintToConsole("public key provided: %s\n", params[5].get_str());
+        std::vector<unsigned char> vchPubKey = ParseHexV(params[5], "redeeming pubkey");
         pubKey.Set(vchPubKey.begin(), vchPubKey.end());
     }
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_SimpleSend(propertyId, amount);
 
-    // request the wallet build the transaction (and if needed commit it)
+    // build the raw transaction
     std::string rawTxHex;
-    int result = ClassAgnosticWalletTXBuilder(txInputs, toAddress, payload, pubKey, rawTxHex);
+    int result = ClassAgnosticWalletTXBuilder(txInputs, toAddress, payload, pubKey, rawTxHex, txFee);
 
-    // check error and return the txid (or raw hex depending on autocommit)
+    // check error and return the raw hex
     if (result != 0) {
         throw JSONRPCError(result, error_str(result));
     }

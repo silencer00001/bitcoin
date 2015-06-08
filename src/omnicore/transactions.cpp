@@ -55,15 +55,12 @@ static bool CheckInput(const CTxOut& txOut, int nHeight, CTxDestination& dest)
     txnouttype whichType;
 
     if (!GetOutputType(txOut.scriptPubKey, whichType)) {
-        PrintToConsole("%s() ERROR: failed to retrieve output type\n", __func__);
         return false;
     }
     if (!IsAllowedOutputType(whichType, nHeight)) {
-        PrintToConsole("%s() ERROR: output type is not allowed\n", __func__);
         return false;
     }
     if (!ExtractDestination(txOut.scriptPubKey, dest)) {
-        PrintToConsole("%s() ERROR: failed to retrieve destination\n", __func__);
         return false;
     }
 
@@ -257,7 +254,7 @@ int ClassAgnosticWalletTXBuilder(const std::string& senderAddress, const std::st
 
     // Ask the wallet to create the transaction (note mining fee determined by Bitcoin Core params)
     if (!pwallet->CreateTransaction(vecSend, wtxNew, reserveKey, nFeeRet, strFailReason, &coinControl)) {
-        PrintToLog("%s() ERROR: %s\n", __func__, strFailReason);
+        PrintToConsole("%s() ERROR: %s\n", __func__, strFailReason);
         return MP_ERR_CREATE_TX;
     }
 
@@ -323,6 +320,7 @@ int ClassAgnosticWalletTXBuilder(const std::vector<COutPoint>& txInputs, const s
     CMutableTransaction rawTx;
     for (std::vector<COutPoint>::const_iterator it = txInputs.begin(); it != txInputs.end(); ++it) {
         const COutPoint& outpoint = *it;
+
         CTxIn input(outpoint);
         rawTx.vin.push_back(input);
     }
@@ -331,6 +329,7 @@ int ClassAgnosticWalletTXBuilder(const std::vector<COutPoint>& txInputs, const s
     for (std::vector<std::pair<CScript, int64_t> >::const_iterator it = vecSend.begin(); it != vecSend.end(); ++it) {
         const CScript& scriptPubKey = it->first;
         const int64_t amount = it->second;
+
         CTxOut out(amount, scriptPubKey);
         rawTx.vout.push_back(out);
         amountOut += amount;
@@ -345,9 +344,7 @@ int ClassAgnosticWalletTXBuilder(const std::vector<COutPoint>& txInputs, const s
     CTxOut rawTxOut(amountChange, scriptChange);
 
     if (!rawTxOut.IsDust(::minRelayTxFee)) {
-        // Insert change txn at random position:
-        std::vector<CTxOut>::iterator position = rawTx.vout.begin()+GetRandInt(rawTx.vout.size()+1);
-        rawTx.vout.insert(position, rawTxOut);
+        rawTx.vout.push_back(rawTxOut);
     }
 
     rawTxHex = EncodeHexTx(rawTx);

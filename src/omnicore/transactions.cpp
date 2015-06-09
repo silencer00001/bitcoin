@@ -155,28 +155,31 @@ static int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinCon
     return n_total;
 }
 
-static bool AddressToPubKey(const std::string& sender, CPubKey& pubKey)
+static bool AddressToPubKey(const std::string& key, CPubKey& pubKey)
 {
-    CWallet* pwallet = pwalletMain;
-    if (!pwallet) { return false; }
+#ifdef ENABLE_WALLET
+    // Case 1: Bitcoin address and the key is in the wallet
+    CBitcoinAddress address(key);
+    if (pwalletMain && address.IsValid()) {
+        CKeyID keyID;
+        if (!address.GetKeyID(keyID)) {
+            PrintToLog("%s() ERROR: redemption address %s does not refer to a public key\n", __func__, key);
+            return false;
+        }
+        if (!pwalletMain->GetPubKey(keyID, pubKey)) {
+            PrintToLog("%s() ERROR: no public key in wallet for redemption address %s\n", __func__, key);
+            return false;
+        }
+    }
+    // Case 2: Hex-encoded public key
+    else
+#endif
+    if (IsHex(key)) {
+        pubKey = CPubKey(ParseHex(key));
+    }
 
-    CKeyID keyID;
-    CBitcoinAddress address(sender);
-
-    if (address.IsScript()) {
-        PrintToLog("%s() ERROR: redemption address %s must not be a script hash\n", __func__, sender);
-        return false;
-    }
-    if (!address.GetKeyID(keyID)) {
-        PrintToLog("%s() ERROR: redemption address %s is invalid\n", __func__, sender);
-        return false;
-    }
-    if (!pwallet->GetPubKey(keyID, pubKey)) {
-        PrintToLog("%s() ERROR: failed to retrieve public key for redemption address %s from wallet\n", __func__, sender);
-        return false;
-    }
     if (!pubKey.IsFullyValid()) {
-        PrintToLog("%s() ERROR: retrieved invalid public key for redemption address %s\n", __func__, sender);
+        PrintToLog("%s() ERROR: invalid redemption key %s\n", __func__, key);
         return false;
     }
 
@@ -206,9 +209,9 @@ static int PrepareTransaction(const std::string& senderAddress, const std::strin
     switch (omniTxClass) {
         case OMNI_CLASS_B: {
             CPubKey redeemingPubKey;
-            std::string str = redemptionAddress;
-            if (str.empty()) str = senderAddress; // TODO: this seems laborious
-            if (!AddressToPubKey(str, redeemingPubKey)) return MP_REDEMP_BAD_VALIDATION;
+            std::string redemptionStr = redemptionAddress;
+            if (redemptionStr.empty()) redemptionStr = senderAddress;
+            if (!AddressToPubKey(redemptionStr, redeemingPubKey)) return MP_REDEMP_BAD_VALIDATION;
             if (!OmniCore_Encode_ClassB(senderAddress, redeemingPubKey, data, vecSend)) return MP_ENCODING_ERROR;
         break; }
         case OMNI_CLASS_C:

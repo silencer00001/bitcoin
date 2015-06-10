@@ -19,7 +19,8 @@ int ClassAgnosticWalletTXBuilder(const std::string& senderAddress, const std::st
         int64_t referenceAmount, const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit);
 
 int ClassAgnosticWalletTXBuilder(const std::vector<COutPoint>& inputs, const std::string& receiverAddress,
-        const std::vector<unsigned char>& payload, const CPubKey& pubKey, std::string& rawTxHex, int64_t txFee = 10000);
+        const std::vector<unsigned char>& payload, const CPubKey& pubKey, std::string& rawTxHex,
+        int64_t txFee = 10000, int64_t referenceAmount = 0);
 
 }
 

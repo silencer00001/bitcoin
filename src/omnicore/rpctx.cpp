@@ -99,7 +99,7 @@ Value createsend_OMNI(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 4 || params.size() > 6)
         throw runtime_error(
-            "createsend_OMNI [{\"txid\":\"id\",\"vout\":n},...] \"toaddress\" propertyid \"amount\" ( fee pubkey )\n"
+            "createsend_OMNI [{\"txid\":\"id\",\"vout\":n},...] \"toaddress\" propertyid \"amount\" ( fee reference pubkey )\n"
 
             "\nCreates a raw simple send transaction.\n"
 
@@ -120,7 +120,8 @@ Value createsend_OMNI(const Array& params, bool fHelp)
             "3. propertyid             (number, required) the identifier of the property to transfer\n"
             "4. amount                 (string, required) the amount to transfer\n"
             "5. fee                    (number, optional) the transaction fee (default: 0.0001 BTC)\n"
-            "6. pubkey                 (string, optional) a public key that can spent multisig dust\n"
+            "6. referenceamount        (number, optional) a bitcoin amount sent to the receiver (minimal by default)\n"
+            "7. pubkey                 (string, optional) a public key that can spent multisig dust\n"
 
             "\nResult:\n"
             "transaction               (string) the hex-encoded raw transaction\n"
@@ -141,10 +142,15 @@ Value createsend_OMNI(const Array& params, bool fHelp)
         txFee = AmountFromValue(params[4]);
     }
 
-    CPubKey pubKey;
+    int64_t referenceAmount = 0;
     if (params.size() > 5) {
-        PrintToConsole("public key provided: %s\n", params[5].get_str());
-        std::vector<unsigned char> vchPubKey = ParseHexV(params[5], "redeeming pubkey");
+        referenceAmount = AmountFromValue(params[5]);
+    }
+
+    CPubKey pubKey;
+    if (params.size() > 6) {
+        PrintToConsole("public key provided: %s\n", params[6].get_str());
+        std::vector<unsigned char> vchPubKey = ParseHexV(params[6], "redeeming pubkey");
         pubKey.Set(vchPubKey.begin(), vchPubKey.end());
     }
 
@@ -153,7 +159,7 @@ Value createsend_OMNI(const Array& params, bool fHelp)
 
     // build the raw transaction
     std::string rawTxHex;
-    int result = ClassAgnosticWalletTXBuilder(txInputs, toAddress, payload, pubKey, rawTxHex, txFee);
+    int result = ClassAgnosticWalletTXBuilder(txInputs, toAddress, payload, pubKey, rawTxHex, txFee, referenceAmount);
 
     // check error and return the raw hex
     if (result != 0) {

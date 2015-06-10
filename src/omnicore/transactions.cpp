@@ -275,7 +275,8 @@ int ClassAgnosticWalletTXBuilder(const std::string& senderAddress, const std::st
 }
 
 int ClassAgnosticWalletTXBuilder(const std::vector<COutPoint>& txInputs, const std::string& receiverAddress,
-        const std::vector<unsigned char>& payload, const CPubKey& pubKey, std::string& rawTxHex, int64_t txFee)
+        const std::vector<unsigned char>& payload, const CPubKey& pubKey, std::string& rawTxHex, int64_t txFee,
+        int64_t referenceAmount)
 {
     int omniTxClass = OMNI_CLASS_C;
     if (!UseEncodingClassC(payload.size())) {
@@ -319,7 +320,9 @@ int ClassAgnosticWalletTXBuilder(const std::vector<COutPoint>& txInputs, const s
 
     if (!receiverAddress.empty()) {
         CScript scriptPubKey = GetScriptForDestination(CBitcoinAddress(receiverAddress).Get());
-        vecSend.push_back(std::make_pair(scriptPubKey, GetDustThreshold(scriptPubKey)));
+        int64_t outputAmount = std::max(GetDustThreshold(scriptPubKey), referenceAmount);
+
+        vecSend.push_back(std::make_pair(scriptPubKey, outputAmount));
     }
 
     CMutableTransaction rawTx;

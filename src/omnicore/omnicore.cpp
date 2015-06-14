@@ -2209,6 +2209,13 @@ int mastercore_shutdown()
     return 0;
 }
 
+static int64_t nHandlerCalls = 0;
+static int64_t nTimePendingDelete = 0;
+static int64_t nTimeParseTransaction = 0;
+static int64_t nTimeInterpretPacket = 0;
+static int64_t nTimeRecordTx = 0;
+static int64_t nTimeTotal = 0;
+
 // this is called for every new transaction that comes in (actually in block parsing loop)
 int mastercore_handler_tx(const CTransaction &tx, int nBlock, unsigned int idx, CBlockIndex const * pBlockIndex)
 {
@@ -2216,11 +2223,17 @@ int mastercore_handler_tx(const CTransaction &tx, int nBlock, unsigned int idx, 
         mastercore_init();
     }
 
+    nHandlerCalls++;
+    int64_t nTime1 = GetTimeMicros();
+
     // clear pending, if any
     // NOTE1: Every incoming TX is checked, not just MP-ones because:
     // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
     // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
     PendingDelete(tx.GetHash());
+
+    int64_t nTime2 = GetTimeMicros(); nTimePendingDelete += (nTime2 - nTime1);
+    LogPrint("bench", "  - PendingDelete(): %.3fms (%.3fms/tx) [%.3fs]\n", 0.001 * (nTime2 - nTime1), 0.001 * nTimePendingDelete / nHandlerCalls, nTimePendingDelete * 0.000001);
 
     CMPTransaction mp_obj;
     // save the augmented offer or accept amount into the database as well (expecting them to be numerically lower than that in the blockchain)
@@ -2229,17 +2242,30 @@ int mastercore_handler_tx(const CTransaction &tx, int nBlock, unsigned int idx, 
     if (nBlock < nWaterlineBlock) return -1; // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
 
     pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, pBlockIndex->GetBlockTime());
+
+    int64_t nTime3 = GetTimeMicros(); nTimeParseTransaction += (nTime3 - nTime2);
+    LogPrint("bench", "  - ParseTransaction(): %.3fms (%.3fms/tx) [%.3fs]\n", 0.001 * (nTime3 - nTime2), 0.001 * nTimeParseTransaction / nHandlerCalls, nTimeParseTransaction * 0.000001);
+
     if (0 == pop_ret) {
         // true MP transaction, validity (such as insufficient funds, or offer not found) is determined elsewhere
 
         interp_ret = mp_obj.interpretPacket();
         if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
 
+        int64_t nTime4 = GetTimeMicros(); nTimeInterpretPacket += (nTime4 - nTime3);
+        LogPrint("bench", "    - InterpretPacket(): %.3fms (%.3fms/tx) [%.3fs]\n", 0.001 * (nTime4 - nTime3), 0.001 * nTimeInterpretPacket / nHandlerCalls, nTimeInterpretPacket * 0.000001);
+
         // of course only MP-related TXs get recorded
         bool bValid = (0 <= interp_ret);
 
         p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
+
+        int64_t nTime5 = GetTimeMicros(); nTimeRecordTx += (nTime5 - nTime4);
+        LogPrint("bench", "    - RecordTx(): %.3fms (%.3fms/tx) [%.3fs]\n", 0.001 * (nTime5 - nTime4), 0.001 * nTimeRecordTx / nHandlerCalls, nTimeRecordTx * 0.000001);
     }
+
+    int64_t nTime6 = GetTimeMicros(); nTimeTotal += (nTime6 - nTime1);
+    LogPrint("bench", "- Transaction handler: %.3fms (%.3fms/tx) [%.3fs, %d calls]\n", 0.001 * (nTime6 - nTime1), 0.001 * nTimeTotal / nHandlerCalls, nTimeTotal * 0.000001, nHandlerCalls);
 
     return interp_ret;
 }
@@ -3386,8 +3412,14 @@ int validity = 0;
   return true;
 }
 
+static int64_t nTimeHandlerBegin = 0;
+static int64_t nBeginHandlerCalls = 0;
+
 int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockIndex)
 {
+    int64_t nTime1 = GetTimeMicros();
+    nBeginHandlerCalls++;
+
     if (reorgRecoveryMode > 0) {
         reorgRecoveryMode = 0; // clear reorgRecovery here as this is likely re-entrant
 
@@ -3416,8 +3448,20 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
     eraseExpiredCrowdsale(pBlockIndex);
 
+    int64_t nTime2 = GetTimeMicros(); nTimeHandlerBegin += (nTime2 - nTime1);
+    LogPrint("bench", "- Begin block handler: %.3fms (%.3fms/block) [%.3fs, %d calls]\n", 0.001 * (nTime2 - nTime1), 0.001 * nTimeHandlerBegin / nBeginHandlerCalls, nTimeHandlerBegin * 0.000001, nBeginHandlerCalls);
+
     return 0;
 }
+
+static int64_t nTimeEraseAccepts = 0;
+static int64_t nTimeDecMSC = 0;
+static int64_t nTimeSetTotals = 0;
+static int64_t nTimeCheckExpired = 0;
+static int64_t nTimeSignal = 0;
+static int64_t nTimeSaveState = 0;
+static int64_t nTimeEndHandler = 0;
+static int64_t nEndHandlerCalls = 0;
 
 // called once per block, after the block has been processed
 // TODO: consolidate into *handler_block_begin() << need to adjust Accept expiry check.............
@@ -3428,6 +3472,9 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
     if (!mastercoreInitialized) {
         mastercore_init();
     }
+
+    int64_t nTime1 = GetTimeMicros();
+    nEndHandlerCalls++;
 
     // for every new received block must do:
     // 1) remove expired entries from the accept list (per spec accept entries are
@@ -3442,6 +3489,9 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
             __FUNCTION__, how_many_erased, nBlockNow, __LINE__, __FILE__);
     }
 
+    int64_t nTime15 = GetTimeMicros(); nTimeEraseAccepts += (nTime15 - nTime1);
+    LogPrint("bench", "  - Erase expired accepts: %.3fms (%.3fms/block) [%.3fs]\n", 0.001 * (nTime15 - nTime1), 0.001 * nTimeEraseAccepts / nEndHandlerCalls, nTimeEraseAccepts * 0.000001);
+
     // calculate devmsc as of this block and update the Exodus' balance
     devmsc = calculate_and_update_devmsc(pBlockIndex->GetBlockTime());
 
@@ -3450,21 +3500,39 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
             devmsc, getMPbalance(exodus_address, OMNI_PROPERTY_MSC, BALANCE));
     }
 
+    int64_t nTime2 = GetTimeMicros(); nTimeDecMSC += (nTime2 - nTime15);
+    LogPrint("bench", "  - Update DevMSC: %.3fms (%.3fms/block) [%.3fs]\n", 0.001 * (nTime2 - nTime15), 0.001 * nTimeDecMSC / nEndHandlerCalls, nTimeDecMSC * 0.000001);
+
     // get the total MSC for this wallet, for QT display
     set_wallet_totals();
 
+    int64_t nTime3 = GetTimeMicros(); nTimeSetTotals += (nTime3 - nTime2);
+    LogPrint("bench", "  - Set wallet totals: %.3fms (%.3fms/block) [%.3fs]\n", 0.001 * (nTime3 - nTime2), 0.001 * nTimeSetTotals / nEndHandlerCalls, nTimeSetTotals * 0.000001);
+
     // check the alert status, do we need to do anything else here?
     CheckExpiredAlerts(nBlockNow, pBlockIndex->GetBlockTime());
+
+    int64_t nTime4 = GetTimeMicros(); nTimeCheckExpired += (nTime4 - nTime3);
+    LogPrint("bench", "  - Check expired alerts: %.3fms (%.3fms/block) [%.3fs]\n", 0.001 * (nTime4 - nTime3), 0.001 * nTimeCheckExpired / nEndHandlerCalls, nTimeCheckExpired * 0.000001);
 
     // force an update of the UI once per processed block containing Omni transactions
     if (countMP > 0) { // there were Omni transactions in this block
         uiInterface.OmniStateChanged();
     }
 
+    int64_t nTime5 = GetTimeMicros(); nTimeSignal += (nTime5 - nTime4);
+    LogPrint("bench", "  - State changed UI signal: %.3fms (%.3fms/block) [%.3fs]\n", 0.001 * (nTime5 - nTime4), 0.001 * nTimeSignal / nEndHandlerCalls, nTimeSignal * 0.000001);
+
     // save out the state after this block
     if (writePersistence(nBlockNow)) {
         mastercore_save_state(pBlockIndex);
     }
+
+    int64_t nTime6 = GetTimeMicros(); nTimeSaveState += (nTime6 - nTime5);
+    LogPrint("bench", "  - Save state to disk: %.3fms (%.3fms/block) [%.3fs]\n", 0.001 * (nTime6 - nTime5), 0.001 * nTimeSaveState / nEndHandlerCalls, nTimeSaveState * 0.000001);
+
+    nTimeEndHandler += (nTime6 - nTime1);
+    LogPrint("bench", "- End block handler: %.3fms (%.3fms/block) [%.3fs, %d calls]\n", 0.001 * (nTime6 - nTime1), 0.001 * nTimeEndHandler / nEndHandlerCalls, nTimeEndHandler * 0.000001, nEndHandlerCalls);
 
     return 0;
 }

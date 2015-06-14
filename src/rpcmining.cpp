@@ -110,9 +110,13 @@ Value getgenerate(const Array& params, bool fHelp)
     return GetBoolArg("-gen", false);
 }
 
+#include "utiltime.h"
 
 Value setgenerate(const Array& params, bool fHelp)
 {
+    static unsigned int nMinedBlocks = 0;
+    static int64_t nTimeTotal = 0;
+
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
             "setgenerate generate ( genproclimit )\n"
@@ -135,6 +139,8 @@ Value setgenerate(const Array& params, bool fHelp)
             "\nUsing json rpc\n"
             + HelpExampleRpc("setgenerate", "true, 1")
         );
+    
+    int64_t nTime = GetTimeMicros();
 
     if (pwalletMain == NULL)
         throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Method not found (disabled)");
@@ -187,8 +193,16 @@ Value setgenerate(const Array& params, bool fHelp)
             if (!ProcessNewBlock(state, NULL, pblock))
                 throw JSONRPCError(RPC_INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
             ++nHeight;
+            ++nMinedBlocks;
             blockHashes.push_back(pblock->GetHash().GetHex());
         }
+        reservekey.KeepKey();
+
+        nTime = GetTimeMicros() - nTime;
+        nTimeTotal += nTime;
+        LogPrintf("setgenerate: mined blocks=%d, time=%.3f ms (%.3f ms total, %.3f ms/block)\n",
+                nMinedBlocks, 0.001 * nTime, 0.001 * nTimeTotal, 0.001 * nTimeTotal / nMinedBlocks);
+
         return blockHashes;
     }
     else // Not -regtest: start generate thread, return immediately

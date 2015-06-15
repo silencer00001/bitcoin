@@ -25,6 +25,9 @@
 #include "macdockiconhandler.h"
 #endif
 
+// TODO: this might not be the best place for these actions
+#include "omnicore/omnicore.h"
+
 #include "init.h"
 #include "ui_interface.h"
 #include "util.h"
@@ -467,6 +470,9 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
 
         // Update Omni pending status
         connect(clientModel, SIGNAL(refreshOmniPending(bool)), this, SLOT(setOmniPendingStatus(bool)));
+
+        // Update Omni wallet totals
+        connect(clientModel, SIGNAL(refreshOmniWallet()), this, SLOT(setOmniWalletTotals()));
 
         rpcConsole->setClientModel(clientModel);
 #ifdef ENABLE_WALLET
@@ -964,17 +970,6 @@ bool BitcoinGUI::handlePaymentRequest(const SendCoinsRecipient& recipient)
     return false;
 }
 
-void BitcoinGUI::setOmniPendingStatus(bool pending)
-{
-    if (!pending) {
-        labelOmniPendingIcon->hide();
-    } else {
-        labelOmniPendingIcon->show();
-        labelOmniPendingIcon->setPixmap(QIcon(":/icons/hourglass").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
-        labelOmniPendingIcon->setToolTip(tr("You have Omni transactions awaiting confirmation."));
-    }
-}
-
 void BitcoinGUI::setEncryptionStatus(int status)
 {
     switch(status)
@@ -1003,6 +998,25 @@ void BitcoinGUI::setEncryptionStatus(int status)
         break;
     }
 }
+
+/** Show or hide pending status for Omni layer transactions. */
+void BitcoinGUI::setOmniPendingStatus(bool pending)
+{
+    if (!pending) {
+        labelOmniPendingIcon->hide();
+    } else {
+        labelOmniPendingIcon->show();
+        labelOmniPendingIcon->setPixmap(QIcon(":/icons/hourglass").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
+        labelOmniPendingIcon->setToolTip(tr("You have Omni transactions awaiting confirmation."));
+    }
+}
+
+/** Set updated Omni layer wallet balances. */
+void BitcoinGUI::setOmniWalletTotals()
+{
+    set_wallet_totals();
+}
+
 #endif // ENABLE_WALLET
 
 void BitcoinGUI::showNormalIfMinimized(bool fToggleHidden)

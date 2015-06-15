@@ -127,14 +127,22 @@ void ClientModel::updateNumConnections(int numConnections)
     emit numConnectionsChanged(numConnections);
 }
 
+/** Emits a refreshOmniState signal. */
 void ClientModel::updateOmniState()
 {
     emit refreshOmniState();
 }
 
+/** Emits a refreshOmniPending signal. */
 void ClientModel::updateOmniPending(bool pending)
 {
     emit refreshOmniPending(pending);
+}
+
+/** Emits a refreshOmniWallet signal. */
+void ClientModel::updateOmniWallet()
+{
+    emit refreshOmniWallet();
 }
 
 void ClientModel::updateAlert(const QString &hash, int status)
@@ -211,17 +219,23 @@ QString ClientModel::formatClientStartupTime() const
     return QDateTime::fromTime_t(nClientStartupTime).toString();
 }
 
-// Handlers for core signals
+/** Triggered by each block that contains Omni layer transactions. */
 static void OmniStateChanged(ClientModel *clientmodel)
 {
-    // This will be triggered for each block that contains Omni layer transactions
     QMetaObject::invokeMethod(clientmodel, "updateOmniState", Qt::QueuedConnection);
 }
 
+/** Triggered when Omni pending map adds/removes transactions. */
 static void OmniPendingChanged(ClientModel *clientmodel, bool pending)
 {
-    // Triggered when Omni pending map adds/removes transactions
     QMetaObject::invokeMethod(clientmodel, "updateOmniPending", Qt::QueuedConnection, Q_ARG(bool, pending));
+}
+
+/** Triggered when Omni wallet balances have changed. */
+static void OmniWalletChanged(ClientModel *clientmodel)
+{
+    qDebug() << "OmniWalletChanged";
+    QMetaObject::invokeMethod(clientmodel, "updateOmniWallet", Qt::QueuedConnection);
 }
 
 static void ShowProgress(ClientModel *clientmodel, const std::string &title, int nProgress)
@@ -255,6 +269,7 @@ void ClientModel::subscribeToCoreSignals()
     uiInterface.NotifyAlertChanged.connect(boost::bind(NotifyAlertChanged, this, _1, _2));
     uiInterface.OmniStateChanged.connect(boost::bind(OmniStateChanged, this));
     uiInterface.OmniPendingChanged.connect(boost::bind(OmniPendingChanged, this, _1));
+    uiInterface.OmniWalletChanged.connect(boost::bind(OmniWalletChanged, this));
 }
 
 void ClientModel::unsubscribeFromCoreSignals()
@@ -265,4 +280,5 @@ void ClientModel::unsubscribeFromCoreSignals()
     uiInterface.NotifyAlertChanged.disconnect(boost::bind(NotifyAlertChanged, this, _1, _2));
     uiInterface.OmniStateChanged.disconnect(boost::bind(OmniStateChanged, this));
     uiInterface.OmniPendingChanged.disconnect(boost::bind(OmniPendingChanged, this, _1));
+    uiInterface.OmniWalletChanged.disconnect(boost::bind(OmniWalletChanged, this));
 }

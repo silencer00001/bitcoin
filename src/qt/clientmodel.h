@@ -89,8 +89,6 @@ signals:
     void numBlocksChanged(int count);
     void alertsChanged(const QString &warnings);
     void bytesChanged(quint64 totalBytesIn, quint64 totalBytesOut);
-    void refreshOmniState();
-    void refreshOmniPending(bool pending);
 
     //! Fired when a message should be reported to the user
     void message(const QString &title, const QString &message, unsigned int style);
@@ -98,12 +96,28 @@ signals:
     // Show progress dialog e.g. for verifychain
     void showProgress(const QString &title, int nProgress);
 
+    //! Fired when there are new confirmed Omni layer transactions.
+    void refreshOmniState();
+
+    //! Fired when the confirmation state of an Omni layer transaction changed.
+    void refreshOmniPending(bool pending);
+
+    //! Fired when an Omni layer wallet balance changed.
+    void refreshOmniWallet();
+
 public slots:
     void updateTimer();
     void updateNumConnections(int numConnections);
     void updateAlert(const QString &hash, int status);
+
+    //! Emits a refreshOmniState signal.
     void updateOmniState();
+
+    //! Emits a refreshOmniPending signal.
     void updateOmniPending(bool pending);
+
+    //! Emits a refreshOmniWallet signal.
+    void updateOmniWallet();
 };
 
 #endif // BITCOIN_QT_CLIENTMODEL_H

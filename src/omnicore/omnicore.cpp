@@ -604,7 +604,9 @@ uint32_t mastercore::GetNextPropertyId(bool maineco)
 //       include change addresses).  with current transaction load, about 0.02 - 0.06 seconds is spent on this function
 void set_wallet_totals()
 {
-    //zero balances
+    PrintToLog("%s(): updating..\n", __func__);
+
+    // zero balances
     global_balance_money.clear();
     global_balance_reserved.clear();
     global_wallet_property_list.clear();
@@ -3303,7 +3305,7 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
 
     // force an update of the UI once per processed block containing Omni transactions
     if (countMP > 0) { // there were Omni transactions in this block
-        set_wallet_totals();
+        uiInterface.OmniWalletChanged();
         uiInterface.OmniStateChanged();
     }
 

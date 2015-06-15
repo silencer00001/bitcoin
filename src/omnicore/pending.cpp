@@ -89,9 +89,9 @@ void PendingAdd(const uint256& txid, const std::string& sendingAddress, const st
         my_pending.insert(std::make_pair(txid, pending));
     }
 
-    // after adding a transaction to pending the available balance may now be reduced, refresh wallet totals
-    set_wallet_totals();
-    uiInterface.OmniPendingChanged(true); // after adding it is a safe assumption that pending map now contains txn(s)
+    // after adding a transaction to pending the available balance may now be reduced
+    uiInterface.OmniWalletChanged();
+    uiInterface.OmniPendingChanged(true);
     uiInterface.OmniStateChanged();
 }
 
@@ -110,8 +110,10 @@ void PendingDelete(const uint256& txid)
         if (src_amount) update_tally_map(pending.src, pending.prop, pending.amount, PENDING);
         my_pending.erase(it);
 
-        // if pending map is now empty following deletion, trigger a status change
-        if (my_pending.empty()) uiInterface.OmniPendingChanged(false);
+        // if pending map is now empty following deletion, hide the pending status
+        if (my_pending.empty()) {
+            uiInterface.OmniPendingChanged(false);
+        }
     }
 }
 

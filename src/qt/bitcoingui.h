@@ -163,11 +163,17 @@ public slots:
        @see WalletModel::EncryptionStatus
     */
     void setEncryptionStatus(int status);
-    void setOmniPendingStatus(bool pending);
+
     bool handlePaymentRequest(const SendCoinsRecipient& recipient);
 
     /** Show incoming transaction notification for new transactions. */
     void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address);
+
+    /** Show or hide pending status for Omni layer transactions. */
+    void setOmniPendingStatus(bool pending);
+
+    /** Set updated Omni layer wallet balances. */
+    void setOmniWalletTotals();
 #endif // ENABLE_WALLET
 
 private slots:

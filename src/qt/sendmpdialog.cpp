@@ -89,6 +89,8 @@ void SendMPDialog::setWalletModel(WalletModel *model)
 
 void SendMPDialog::updatePropSelector()
 {
+    LOCK(cs_tally);
+
     uint32_t nextPropIdMainEco = GetNextPropertyId(true);  // these allow us to end the for loop at the highest existing
     uint32_t nextPropIdTestEco = GetNextPropertyId(false); // property ID rather than a fixed value like 100000 (optimization)
     QString spId = ui->propertyComboBox->itemData(ui->propertyComboBox->currentIndex()).toString();
@@ -167,7 +169,9 @@ void SendMPDialog::updateProperty()
     // populate from address selector
     QString spId = ui->propertyComboBox->itemData(ui->propertyComboBox->currentIndex()).toString();
     uint32_t propertyId = spId.toUInt();
+
     LOCK(cs_tally);
+
     for (std::map<string, CMPTally>::iterator my_it = mp_tally_map.begin(); my_it != mp_tally_map.end(); ++my_it) {
         string address = (my_it->first).c_str();
         uint32_t id = 0;

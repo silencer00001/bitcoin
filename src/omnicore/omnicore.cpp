@@ -95,6 +95,8 @@ using std::vector;
 using namespace mastercore;
 
 
+CCriticalSection cs_tally;
+
 // comment out MY_HACK & others here - used for Unit Testing only !
 // #define MY_HACK
 
@@ -279,8 +281,6 @@ std::string FormatMP(unsigned int property, int64_t n, bool fSign)
 }
 
 string const CMPSPInfo::watermarkKey("watermark");
-
-CCriticalSection cs_tally;
 
 OfferMap mastercore::my_offers;
 AcceptMap mastercore::my_accepts;
@@ -599,12 +599,17 @@ uint32_t mastercore::GetNextPropertyId(bool maineco)
   }
 }
 
+static int64_t nNumWalletUpdates = 0;
+static int64_t nTimeWalletUpdates = 0;
+
 // TODO: optimize efficiency -- iterate only over wallet's addresses in the future
 // NOTE: if we loop over wallet addresses we miss tokens that may be in change addresses (since mapAddressBook does not
 //       include change addresses).  with current transaction load, about 0.02 - 0.06 seconds is spent on this function
 void set_wallet_totals()
 {
-    PrintToLog("%s(): updating..\n", __func__);
+    int64_t nTimeNow = GetTimeMicros();
+
+    LOCK(cs_tally);
 
     // zero balances
     global_balance_money.clear();
@@ -635,6 +640,11 @@ void set_wallet_totals()
             global_balance_reserved[propertyId] += getMPbalance(address, propertyId, ACCEPT_RESERVE);
         }
     }
+
+    int64_t nTimeSpent = GetTimeMicros() - nTimeNow;
+    ++nNumWalletUpdates;
+    nTimeWalletUpdates += nTimeSpent;
+    PrintToConsole("%s(): updated! benchmark: %.3f ms, %.3f ms/update, %.3f ms total for %d updates\n", __func__, 0.001 * nTimeSpent, 0.001 * nTimeWalletUpdates / nNumWalletUpdates, 0.001 * nTimeWalletUpdates, nNumWalletUpdates);
 }
 
 int TXExodusFundraiser(const CTransaction &wtx, const string &sender, int64_t ExodusHighestValue, int nBlock, unsigned int nTime)

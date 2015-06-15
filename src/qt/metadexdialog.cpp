@@ -53,8 +53,10 @@ MetaDExDialog::MetaDExDialog(QWidget *parent) :
     walletModel(0)
 {
     ui->setupUi(this);
-    //open
-    global_metadex_market = 3;
+    {
+        LOCK(cs_tally);
+        global_metadex_market = 3;
+    }
 
     //prep lists
     ui->buyList->setColumnCount(3);
@@ -162,7 +164,10 @@ void MetaDExDialog::SwitchMarket()
     }
 
     // with checks complete change the market to the entered property ID and perform a full refresh
-    global_metadex_market = searchPropertyId;
+    {
+        LOCK(cs_tally);
+        global_metadex_market = searchPropertyId;
+    }
     ui->buyAmountLE->clear();
     ui->buyPriceLE->clear();
     ui->sellAmountLE->clear();
@@ -182,7 +187,11 @@ void MetaDExDialog::buyClicked(int row, int col)
     // If the cheapest price is not chosen, make the assumption that user wants to sell down to that price point
     if (row != 0) {
         int64_t totalAmount = 0;
-        bool divisible = isPropertyDivisible(global_metadex_market);
+        bool divisible = false;
+        {
+            LOCK(cs_tally);
+            divisible = isPropertyDivisible(global_metadex_market);
+        }
         for (int i = 0; i <= row; i++) {
             QTableWidgetItem* amountCell = ui->buyList->item(i,1);
             int64_t amount = StrToInt64(amountCell->text().toStdString(), divisible);
@@ -214,7 +223,11 @@ void MetaDExDialog::sellClicked(int row, int col)
     // If the cheapest price is not chosen, make the assumption that user wants to buy all available up to that price point
     if (row != 0) {
         int64_t totalAmount = 0;
-        bool divisible = isPropertyDivisible(global_metadex_market);
+        bool divisible = false;
+        {
+            LOCK(cs_tally);
+            divisible = isPropertyDivisible(global_metadex_market);
+        }
         for (int i = 0; i <= row; i++) {
             QTableWidgetItem* amountCell = ui->sellList->item(i,1);
             int64_t amount = StrToInt64(amountCell->text().toStdString(), divisible);
@@ -275,6 +288,8 @@ void MetaDExDialog::AddRow(bool useBuyList, bool includesMe, const string& price
 // This function loops through the MetaDEx and updates the list of buy/sell offers
 void MetaDExDialog::UpdateOffers()
 {
+    LOCK(cs_tally);
+
     for (int useBuyList = 0; useBuyList < 2; ++useBuyList) {
         if (useBuyList) { ui->buyList->setRowCount(0); } else { ui->sellList->setRowCount(0); }
         bool testeco = isTestEcosystemProperty(global_metadex_market);
@@ -320,6 +335,8 @@ void MetaDExDialog::UpdateOffers()
 // This function updates the balance for the currently selected sell address
 void MetaDExDialog::UpdateSellAddressBalance()
 {
+    LOCK(cs_tally);
+
     QString currentSetSellAddress = ui->sellAddressCombo->currentText();
     if (currentSetSellAddress.isEmpty()) {
         ui->yourSellBalanceLabel->setText(QString::fromStdString("Your balance: N/A"));
@@ -349,7 +366,10 @@ void MetaDExDialog::UpdateBuyAddressBalance()
         ui->buyAddressFeeWarningLabel->setVisible(false);
     } else {
         unsigned int propertyId = OMNI_PROPERTY_MSC;
-        if (global_metadex_market >= TEST_ECO_PROPERTY_1) propertyId = OMNI_PROPERTY_TMSC;
+        {
+            LOCK(cs_tally);
+            if (global_metadex_market >= TEST_ECO_PROPERTY_1) propertyId = OMNI_PROPERTY_TMSC;
+        }
         int64_t balanceAvailable = getUserAvailableMPbalance(currentSetBuyAddress.toStdString(), propertyId);
         ui->yourBuyBalanceLabel->setText(QString::fromStdString("Your balance: " + FormatDivisibleMP(balanceAvailable) + getTokenLabel(propertyId)));
         // warning label will be lit if insufficient fees for MetaDEx payload (28 bytes)
@@ -365,6 +385,8 @@ void MetaDExDialog::UpdateBuyAddressBalance()
 // This function performs a full refresh of all elements - for example when switching markets
 void MetaDExDialog::FullRefresh()
 {
+    LOCK(cs_tally);
+
     // populate market information
     unsigned int propertyId = global_metadex_market;
     string propNameStr = getPropertyName(propertyId);
@@ -375,9 +397,6 @@ void MetaDExDialog::FullRefresh()
     } else {
         ui->marketLabel->setText(QString::fromStdString("Trade " + propNameStr + " (#" + FormatIndivisibleMP(propertyId) + ") for Mastercoin"));
     }
-
-    // TODO: take a look at locks, what do we need here?
-    LOCK(cs_tally);
 
     // get currently selected addresses
     QString currentSetBuyAddress = ui->buyAddressCombo->currentText();
@@ -473,7 +492,11 @@ void MetaDExDialog::recalcSellTotal()
 // This function recalulates a total price display from user fields
 void MetaDExDialog::recalcTotal(bool useBuyFields)
 {
-    unsigned int propertyId = global_metadex_market;
+    unsigned int propertyId = 0;
+    {
+        LOCK(cs_tally);
+        propertyId = global_metadex_market;
+    }
     bool divisible = isPropertyDivisible(propertyId);
     bool testeco = isTestEcosystemProperty(propertyId);
     int64_t price = 0, amount = 0;
@@ -504,7 +527,11 @@ void MetaDExDialog::recalcTotal(bool useBuyFields)
 
 void MetaDExDialog::sendTrade(bool sell)
 {
-    unsigned int propertyId = global_metadex_market;
+    unsigned int propertyId = 0;
+    {
+        LOCK(cs_tally);
+        propertyId = global_metadex_market;
+    }
     bool divisible = isPropertyDivisible(propertyId);
     bool testeco = false;
     if (propertyId >= TEST_ECO_PROPERTY_1) testeco = true;
@@ -547,13 +574,19 @@ void MetaDExDialog::sendTrade(bool sell)
         price = StrToInt64(ui->sellPriceLE->text().toStdString(),true);
         if(divisible) { amountDes = (amountSell * price)/COIN; } else { amountDes = amountSell * price; }
         if(testeco) { propertyIdDes = 2; } else { propertyIdDes = 1; }
-        propertyIdSell = global_metadex_market;
+        {
+            LOCK(cs_tally);
+            propertyIdSell = global_metadex_market;
+        }
     } else {
         amountDes = StrToInt64(ui->buyAmountLE->text().toStdString(),divisible);
         price = StrToInt64(ui->buyPriceLE->text().toStdString(),true);
         if(divisible) { amountSell = (amountDes * price)/COIN; } else { amountSell = amountDes * price; }
         if(testeco) { propertyIdSell = 2; } else { propertyIdSell = 1; }
-        propertyIdDes = global_metadex_market;
+        {
+            LOCK(cs_tally);
+            propertyIdDes = global_metadex_market;
+        }
     }
     if ((0>=amountDes) || (0>=amountSell) || (0>=propertyIdDes) || (0>=propertyIdSell)) {
         QMessageBox::critical( this, "Unable to send MetaDEx transaction",

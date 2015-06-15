@@ -126,6 +126,9 @@ void BalancesDialog::UpdatePropSelector()
     QString spId = ui->propSelectorWidget->itemData(ui->propSelectorWidget->currentIndex()).toString();
     ui->propSelectorWidget->clear();
     ui->propSelectorWidget->addItem("Wallet Totals (Summary)","2147483646"); //use last possible ID for summary for now
+
+    LOCK(cs_tally);
+
     // populate property selector
     for (std::set<uint32_t>::iterator it = global_wallet_property_list.begin() ; it != global_wallet_property_list.end(); ++it) {
         uint32_t propertyId = *it;
@@ -160,6 +163,9 @@ void BalancesDialog::AddRow(const std::string& label, const std::string& address
 void BalancesDialog::PopulateBalances(unsigned int propertyId)
 {
     ui->balancesTable->setRowCount(0); // fresh slate (note this will automatically cleanup all existing QWidgetItems in the table)
+
+    LOCK(cs_tally);
+
     //are we summary?
     if(propertyId==2147483646) {
         ui->balancesTable->setHorizontalHeaderItem(0, new QTableWidgetItem("Property ID"));
@@ -177,7 +183,7 @@ void BalancesDialog::PopulateBalances(unsigned int propertyId)
     } else {
         ui->balancesTable->setHorizontalHeaderItem(0, new QTableWidgetItem("Label"));
         ui->balancesTable->setHorizontalHeaderItem(1, new QTableWidgetItem("Address"));
-        LOCK(cs_tally);
+
         bool propertyIsDivisible = isPropertyDivisible(propertyId); // only fetch the SP once, not for every address
 
         // iterate mp_tally_map looking for addresses that hold a balance in propertyId

@@ -599,11 +599,16 @@ uint32_t mastercore::GetNextPropertyId(bool maineco)
   }
 }
 
+static int64_t nTotalsCalls = 0;
+static int64_t nTotalsTime = 0;
+
 // TODO: optimize efficiency -- iterate only over wallet's addresses in the future
 // NOTE: if we loop over wallet addresses we miss tokens that may be in change addresses (since mapAddressBook does not
 //       include change addresses).  with current transaction load, about 0.02 - 0.06 seconds is spent on this function
 void set_wallet_totals()
 {
+    int64_t nTimeStart = GetTimeMicros();
+
     LOCK(cs_tally);
 
     //zero balances
@@ -640,6 +645,11 @@ void set_wallet_totals()
             global_balance_reserved[propertyId] += tally.getMoney(propertyId, METADEX_RESERVE);
         }
     }
+
+    int64_t nTime = GetTimeMicros() - nTimeStart;
+    ++nTotalsCalls;
+    nTotalsTime += nTime;
+    PrintToConsole("%s(): %.3f ms, %.3f ms/update, %.6f s total for %d calls\n", __func__, 0.001 * nTime, 0.001 * nTotalsTime / nTotalsCalls, 0.000001 * nTotalsTime, nTotalsCalls);
 }
 
 int TXExodusFundraiser(const CTransaction &wtx, const string &sender, int64_t ExodusHighestValue, int nBlock, unsigned int nTime)

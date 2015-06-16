@@ -21,7 +21,6 @@
 #include "base58.h"
 #include "main.h"
 #include "sync.h"
-#include "tinyformat.h"
 #include "uint256.h"
 #include "wallet.h"
 
@@ -93,11 +92,13 @@ void SendMPDialog::updatePropSelector()
     QString spId = ui->propertyComboBox->itemData(ui->propertyComboBox->currentIndex()).toString();
     ui->propertyComboBox->clear();
 
+    LOCK(cs_tally);
+
     for (std::set<uint32_t>::iterator it = global_wallet_property_list.begin() ; it != global_wallet_property_list.end(); ++it) {
         uint32_t propertyId = *it;
         if (global_balance_money[propertyId] > 0 || global_balance_reserved[propertyId] > 0) {
             CMPSPInfo::Entry sp;
-            if (!_my_sps->getSP(propertyId, sp)) continue;
+            if (!_my_sps->getSP(propertyId, sp)) { continue; }
 
             QString spId = QString::number(propertyId);
             QString spName = QString::fromStdString(getPropertyName(propertyId));

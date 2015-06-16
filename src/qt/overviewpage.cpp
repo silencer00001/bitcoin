@@ -288,8 +288,10 @@ void OverviewPage::updateOmni()
     // alert status when we're notified of an Omni state change
     updateAlerts();
 
+    LOCK(cs_tally);
+
     // always show MSC
-    UpdatePropertyBalance(1, global_balance_money[1], global_balance_reserved[1]);
+    UpdatePropertyBalance(1,global_balance_money[1],global_balance_reserved[1]);
 
     // loop properties and update overview
     for (std::set<uint32_t>::iterator it = global_wallet_property_list.begin() ; it != global_wallet_property_list.end(); ++it) {

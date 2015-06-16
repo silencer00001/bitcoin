@@ -124,7 +124,7 @@ void MetaDExDialog::OrderRefresh()
 void MetaDExDialog::SwitchMarket()
 {
     // perform some checks on the input data before attempting to switch market
-    int64_t searchPropertyId = 0;
+    uint32_t searchPropertyId = 0;
     string searchText = ui->switchLineEdit->text().toStdString();
     // check for empty field
     if (searchText.empty()) {
@@ -134,7 +134,7 @@ void MetaDExDialog::SwitchMarket()
     }
     // check that we can cast the field to numerical OK
     try {
-        searchPropertyId = boost::lexical_cast<int64_t>(searchText);
+        searchPropertyId = boost::lexical_cast<uint32_t>(searchText);
     } catch(const boost::bad_lexical_cast &e) { // error casting, searchText likely not numerical
         QMessageBox::critical( this, "Unable to switch market",
         "The property ID entered was not a valid number." );
@@ -324,7 +324,7 @@ void MetaDExDialog::UpdateSellAddressBalance()
         ui->yourSellBalanceLabel->setText(QString::fromStdString("Your balance: N/A"));
         ui->sellAddressFeeWarningLabel->setVisible(false);
     } else {
-        unsigned int propertyId = global_metadex_market;
+        uint32_t propertyId = global_metadex_market;
         int64_t balanceAvailable = getUserAvailableMPbalance(currentSetSellAddress.toStdString(), propertyId);
         string sellBalStr;
         if (isPropertyDivisible(propertyId)) { sellBalStr = FormatDivisibleMP(balanceAvailable); } else { sellBalStr = FormatIndivisibleMP(balanceAvailable); }
@@ -347,7 +347,7 @@ void MetaDExDialog::UpdateBuyAddressBalance()
         ui->yourBuyBalanceLabel->setText(QString::fromStdString("Your balance: N/A"));
         ui->buyAddressFeeWarningLabel->setVisible(false);
     } else {
-        unsigned int propertyId = OMNI_PROPERTY_MSC;
+        uint32_t propertyId = OMNI_PROPERTY_MSC;
         if (global_metadex_market >= TEST_ECO_PROPERTY_1) propertyId = OMNI_PROPERTY_TMSC;
         int64_t balanceAvailable = getUserAvailableMPbalance(currentSetBuyAddress.toStdString(), propertyId);
         ui->yourBuyBalanceLabel->setText(QString::fromStdString("Your balance: " + FormatDivisibleMP(balanceAvailable) + getTokenLabel(propertyId)));
@@ -365,7 +365,7 @@ void MetaDExDialog::UpdateBuyAddressBalance()
 void MetaDExDialog::FullRefresh()
 {
     // populate market information
-    unsigned int propertyId = global_metadex_market;
+    uint32_t propertyId = global_metadex_market;
     string propNameStr = getPropertyName(propertyId);
     bool testeco = false;
     if (propertyId >= TEST_ECO_PROPERTY_1) testeco = true;
@@ -472,7 +472,7 @@ void MetaDExDialog::recalcSellTotal()
 // This function recalulates a total price display from user fields
 void MetaDExDialog::recalcTotal(bool useBuyFields)
 {
-    unsigned int propertyId = global_metadex_market;
+    uint32_t propertyId = global_metadex_market;
     bool divisible = isPropertyDivisible(propertyId);
     bool testeco = isTestEcosystemProperty(propertyId);
     int64_t price = 0, amount = 0;
@@ -503,7 +503,7 @@ void MetaDExDialog::recalcTotal(bool useBuyFields)
 
 void MetaDExDialog::sendTrade(bool sell)
 {
-    unsigned int propertyId = global_metadex_market;
+    uint32_t propertyId = global_metadex_market;
     bool divisible = isPropertyDivisible(propertyId);
     bool testeco = false;
     if (propertyId >= TEST_ECO_PROPERTY_1) testeco = true;
@@ -536,11 +536,11 @@ void MetaDExDialog::sendTrade(bool sell)
     }
 
     // use strToInt64 function to get the amounts, using divisibility of the property
-    int64_t amountDes;
-    int64_t amountSell;
-    int64_t price;
-    unsigned int propertyIdDes;
-    unsigned int propertyIdSell;
+    int64_t amountDes = 0;
+    int64_t amountSell = 0;
+    int64_t price = 0;
+    uint32_t propertyIdDes = 0;
+    uint32_t propertyIdSell = 0;
     if(sell) {
         amountSell = StrToInt64(ui->sellAmountLE->text().toStdString(),divisible);
         price = StrToInt64(ui->sellPriceLE->text().toStdString(),true);

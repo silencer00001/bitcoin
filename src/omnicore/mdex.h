@@ -1,6 +1,7 @@
 #ifndef OMNICORE_MDEX_H
 #define OMNICORE_MDEX_H
 
+#include "sync.h"
 #include "uint256.h"
 
 #include <boost/lexical_cast.hpp>
@@ -102,6 +103,7 @@ struct MetaDEx_compare
     bool operator()(const CMPMetaDEx& lhs, const CMPMetaDEx& rhs) const;
 };
 
+extern CCriticalSection cs_metadex;
 // ---------------
 //! Set of objects sorted by block+idx
 typedef std::set<CMPMetaDEx, MetaDEx_compare> md_Set; 

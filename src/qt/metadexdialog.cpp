@@ -18,6 +18,9 @@
 #include "omnicore/pending.h"
 #include "omnicore/sp.h"
 
+#include "omnicore/log.h"
+#include "utiltime.h"
+
 #include "amount.h"
 #include "sync.h"
 #include "uint256.h"
@@ -271,12 +274,20 @@ void MetaDExDialog::AddRow(bool useBuyList, bool includesMe, const string& price
     }
 }
 
+static int64_t nTotalsCalls = 0;
+static int64_t nTotalsTime = 0;
+
 // This function loops through the MetaDEx and updates the list of buy/sell offers
 void MetaDExDialog::UpdateOffers()
 {
+    int64_t nTimeStart = GetTimeMicros();
+
     for (int useBuyList = 0; useBuyList < 2; ++useBuyList) {
         if (useBuyList) { ui->buyList->setRowCount(0); } else { ui->sellList->setRowCount(0); }
         bool testeco = isTestEcosystemProperty(global_metadex_market);
+
+        LOCK(cs_metadex);
+
         for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
             if ((!useBuyList) && (my_it->first != global_metadex_market)) { continue; } // not the property we're looking for, don't waste any more work
             if ((useBuyList) && (((!testeco) && (my_it->first != OMNI_PROPERTY_MSC)) || ((testeco) && (my_it->first != OMNI_PROPERTY_TMSC)))) continue;
@@ -314,6 +325,10 @@ void MetaDExDialog::UpdateOffers()
     // update the balances for the buy and sell addreses
     UpdateBuyAddressBalance();
     UpdateSellAddressBalance();
+
+    int64_t nTime = GetTimeMicros() - nTimeStart;
+    ++nTotalsCalls; nTotalsTime += nTime;
+    PrintToConsole("MetaDExDialog::UpdateOffers(): %.3f ms, %.3f ms/update, %.6f s total for %d calls\n", 0.001 * nTime, 0.001 * nTotalsTime / nTotalsCalls, 0.000001 * nTotalsTime, nTotalsCalls);
 }
 
 // This function updates the balance for the currently selected sell address

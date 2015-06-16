@@ -8,6 +8,7 @@
 
 #include "chain.h"
 #include "main.h"
+#include "sync.h"
 #include "tinyformat.h"
 #include "uint256.h"
 
@@ -27,11 +28,15 @@
 
 using namespace mastercore;
 
+CCriticalSection mastercore::cs_metadex;
+
 //! Global map for price and order data
 md_PropertiesMap mastercore::metadex;
 
 md_PricesMap* mastercore::get_Prices(uint32_t prop)
 {
+    LOCK(cs_metadex);
+
     md_PropertiesMap::iterator it = metadex.find(prop);
 
     if (it != metadex.end()) return &(it->second);
@@ -41,6 +46,8 @@ md_PricesMap* mastercore::get_Prices(uint32_t prop)
 
 md_Set* mastercore::get_Indexes(md_PricesMap* p, rational_t price)
 {
+    LOCK(cs_metadex);
+
     md_PricesMap::iterator it = p->find(price);
 
     if (it != p->end()) return &(it->second);
@@ -139,6 +146,8 @@ static MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
     if (msc_debug_metadex1) PrintToLog("%s(%s: prop=%d, desprop=%d, desprice= %s);newo: %s\n",
         __FUNCTION__, pnew->getAddr(), propertyForSale, propertyDesired, xToString(pnew->inversePrice()), pnew->ToString());
+
+    LOCK(cs_metadex);
 
     md_PricesMap* const ppriceMap = get_Prices(propertyDesired);
 
@@ -418,6 +427,8 @@ bool MetaDEx_compare::operator()(const CMPMetaDEx &lhs, const CMPMetaDEx &rhs) c
 
 bool mastercore::MetaDEx_INSERT(const CMPMetaDEx& objMetaDEx)
 {
+    LOCK(cs_metadex);
+
     // Create an empty price map (to use in case price map for this property does not already exist)
     md_PricesMap temp_prices;
     // Attempt to obtain the price map for the property
@@ -491,6 +502,9 @@ int mastercore::MetaDEx_CANCEL_AT_PRICE(const uint256& txid, unsigned int block,
 {
     int rc = METADEX_ERROR -20;
     CMPMetaDEx mdex(sender_addr, 0, prop, amount, property_desired, amount_desired, 0, 0, CMPTransaction::CANCEL_AT_PRICE);
+
+    LOCK(cs_metadex);
+
     md_PricesMap* prices = get_Prices(prop);
     const CMPMetaDEx* p_mdex = NULL;
 
@@ -544,6 +558,9 @@ int mastercore::MetaDEx_CANCEL_AT_PRICE(const uint256& txid, unsigned int block,
 int mastercore::MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t prop, uint32_t property_desired)
 {
     int rc = METADEX_ERROR -30;
+
+    LOCK(cs_metadex);
+
     md_PricesMap* prices = get_Prices(prop);
     const CMPMetaDEx* p_mdex = NULL;
 
@@ -603,6 +620,9 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
 
     PrintToLog("<<<<<<\n");
 
+    {
+    LOCK(cs_metadex);
+
     for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
         unsigned int prop = my_it->first;
 
@@ -642,6 +662,9 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
             }
         }
     }
+
+    }
+
     PrintToLog(">>>>>>\n");
 
     if (msc_debug_metadex2) MetaDEx_debug_print();
@@ -653,6 +676,8 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
 // allows search to be optimized if propertyIdForSale is specified
 bool mastercore::MetaDEx_isOpen(const uint256& txid, uint32_t propertyIdForSale)
 {
+    LOCK(cs_metadex);
+
     for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
         if (propertyIdForSale != 0 && propertyIdForSale != my_it->first) continue;
         md_PricesMap & prices = my_it->second;
@@ -669,6 +694,8 @@ bool mastercore::MetaDEx_isOpen(const uint256& txid, uint32_t propertyIdForSale)
 
 void mastercore::MetaDEx_debug_print(bool bShowPriceLevel, bool bDisplay)
 {
+    LOCK(cs_metadex);
+
     PrintToLog("<<<\n");
     for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
         uint32_t prop = my_it->first;

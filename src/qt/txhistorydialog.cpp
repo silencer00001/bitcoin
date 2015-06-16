@@ -16,6 +16,9 @@
 #include "omnicore/sp.h"
 #include "omnicore/tx.h"
 
+#include "omnicore/log.h"
+#include "utiltime.h"
+
 #include "init.h"
 #include "main.h"
 #include "primitives/transaction.h"
@@ -396,8 +399,13 @@ int TXHistoryDialog::PopulateHistoryMap()
     return nProcessed;
 }
 
+static int64_t nTotalConfirmationsCalls = 0;
+static int64_t nTotalConfirmationsTime = 0;
+
 void TXHistoryDialog::UpdateConfirmations()
 {
+    int64_t nTimeStart = GetTimeMicros();
+
     int chainHeight = chainActive.Height(); // get the chain height
     int rowCount = ui->txHistoryTable->rowCount();
     for (int row = 0; row < rowCount; row++) {
@@ -429,10 +437,20 @@ void TXHistoryDialog::UpdateConfirmations()
         iconCell->setIcon(ic);
         ui->txHistoryTable->setItem(row, 2, iconCell);
     }
+
+    int64_t nTime = GetTimeMicros() - nTimeStart;
+    ++nTotalConfirmationsCalls; nTotalConfirmationsTime += nTime;
+    PrintToConsole("TXHistoryDialog::UpdateConfirmations(): %.3f ms, %.3f ms/update, %.6f s total for %d calls\n", 0.001 * nTime, 0.001 * nTotalConfirmationsTime / nTotalConfirmationsCalls, 0.000001 * nTotalConfirmationsTime, nTotalConfirmationsCalls);
+
 }
+
+static int64_t nTotalHistoryCalls = 0;
+static int64_t nTotalHistoryTime = 0;
 
 void TXHistoryDialog::UpdateHistory()
 {
+    int64_t nTimeStart = GetTimeMicros();
+
     // now moved to a new methodology where historical transactions are stored in a map in memory (effectively a cache) so we can compare our
     // history table against the cache.  This allows us to avoid reparsing transactions repeatedly and provides a diff to modify the table without
     // repopuplating all the rows top to bottom each refresh.
@@ -491,6 +509,11 @@ void TXHistoryDialog::UpdateHistory()
         }
         ui->txHistoryTable->setSortingEnabled(true); // re-enable sorting
     }
+
+    int64_t nTime = GetTimeMicros() - nTimeStart;
+    ++nTotalHistoryCalls; nTotalHistoryTime += nTime;
+    PrintToConsole("TXHistoryDialog::UpdateHistory(): %.3f ms, %.3f ms/update, %.6f s total for %d calls\n", 0.001 * nTime, 0.001 * nTotalHistoryTime / nTotalHistoryCalls, 0.000001 * nTotalHistoryTime, nTotalHistoryCalls);
+
     UpdateConfirmations();
 }
 

@@ -85,6 +85,8 @@ void MetaDExCancelDialog::setWalletModel(WalletModel *model)
  */
 void MetaDExCancelDialog::UpdateAddressSelector()
 {
+    LOCK(cs_metadex);
+
     for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
         md_PricesMap & prices = my_it->second;
         for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
@@ -132,6 +134,8 @@ void MetaDExCancelDialog::UpdateCancelCombo()
     }
 
     ui->cancelCombo->clear();
+
+    LOCK(cs_metadex);
 
     for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
         md_PricesMap & prices = my_it->second;
@@ -253,6 +257,9 @@ void MetaDExCancelDialog::SendCancelTransaction()
 
     int64_t amountForSale = 0, amountDesired = 0;
 
+    {
+    LOCK(cs_metadex);
+
     if (action == 2) { // do not attempt to reverse calc values from price, pull suitable ForSale/Desired amounts from metadex map
         bool matched = false;
         for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
@@ -273,6 +280,8 @@ void MetaDExCancelDialog::SendCancelTransaction()
             }
             if (matched) break;
         }
+    }
+
     }
 
     // TODO: print to log (?)

@@ -18,6 +18,9 @@
 #include "omnicore/omnicore.h"
 #include "omnicore/sp.h"
 
+#include "omnicore/log.h"
+#include "utiltime.h"
+
 #include "main.h"
 
 #include <sstream>
@@ -179,8 +182,13 @@ OverviewPage::~OverviewPage()
     delete ui;
 }
 
+static int64_t nTotalsCalls = 0;
+static int64_t nTotalsTime = 0;
+
 void OverviewPage::UpdatePropertyBalance(unsigned int propertyId, uint64_t available, uint64_t reserved)
 {
+    int64_t nTimeStart = GetTimeMicros();
+
     // look for this property, does it already exist in overview and if so are the balances correct?
     int existingItem = -1;
     for(int i=0; i < ui->overviewLW->count(); i++) {
@@ -280,6 +288,10 @@ void OverviewPage::UpdatePropertyBalance(unsigned int propertyId, uint64_t avail
         ui->overviewLW->item(existingItem)->setData(Qt::UserRole + 3, QVariant::fromValue<qulonglong>(reserved));
         ui->overviewLW->setItemWidget(ui->overviewLW->item(existingItem), listItem);
     }
+
+    int64_t nTime = GetTimeMicros() - nTimeStart;
+    ++nTotalsCalls; nTotalsTime += nTime;
+    PrintToConsole("OverviewPage::UpdatePropertyBalance(): %.3f ms, %.3f ms/update, %.6f s total for %d calls\n", 0.001 * nTime, 0.001 * nTotalsTime / nTotalsCalls, 0.000001 * nTotalsTime, nTotalsCalls);
 }
 
 void OverviewPage::updateOmni()

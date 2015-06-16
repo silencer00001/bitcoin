@@ -9,6 +9,9 @@
 #include "omnicore/omnicore.h"
 #include "omnicore/sp.h"
 
+#include "omnicore/log.h"
+#include "utiltime.h"
+
 #include "amount.h"
 #include "sync.h"
 #include "ui_interface.h"
@@ -274,10 +277,20 @@ void BalancesDialog::balancesCopyCol3()
     GUIUtil::setClipboard(ui->balancesTable->item(ui->balancesTable->currentRow(),3)->text());
 }
 
+static int64_t nTotalsCalls = 0;
+static int64_t nTotalsTime = 0;
+
 void BalancesDialog::balancesUpdated()
 {
+    return;
+    int64_t nTimeStart = GetTimeMicros();
+
     UpdatePropSelector();
     propSelectorChanged(); // refresh the table with the currently selected property ID
+
+    int64_t nTime = GetTimeMicros() - nTimeStart;
+    ++nTotalsCalls; nTotalsTime += nTime;
+    PrintToConsole("BalancesDialog::balancesUpdated(): %.3f ms, %.3f ms/update, %.6f s total for %d calls\n", 0.001 * nTime, 0.001 * nTotalsTime / nTotalsCalls, 0.000001 * nTotalsTime, nTotalsCalls);
 }
 
 // We override the virtual resizeEvent of the QWidget to adjust tables column

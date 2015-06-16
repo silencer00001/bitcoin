@@ -17,6 +17,9 @@
 #include "omnicore/pending.h"
 #include "omnicore/sp.h"
 
+#include "omnicore/log.h"
+#include "utiltime.h"
+
 #include "amount.h"
 #include "base58.h"
 #include "main.h"
@@ -346,9 +349,19 @@ void SendMPDialog::sendButtonClicked()
     sendMPTransaction();
 }
 
+static int64_t nTotalsCalls = 0;
+static int64_t nTotalsTime = 0;
+
 void SendMPDialog::balancesUpdated()
 {
+    return;
+    int64_t nTimeStart = GetTimeMicros();
+
     updatePropSelector();
     updateProperty();
     updateFrom();
+
+    int64_t nTime = GetTimeMicros() - nTimeStart;
+    ++nTotalsCalls; nTotalsTime += nTime;
+    PrintToConsole("SendMPDialog::balancesUpdated(): %.3f ms, %.3f ms/update, %.6f s total for %d calls\n", 0.001 * nTime, 0.001 * nTotalsTime / nTotalsCalls, 0.000001 * nTotalsTime, nTotalsCalls);
 }

@@ -604,6 +604,7 @@ void set_wallet_totals()
 {
     int64_t nTimeStart = GetTimeMicros();
 
+    {
     LOCK(cs_tally);
 
     //zero balances
@@ -641,10 +642,11 @@ void set_wallet_totals()
         }
     }
 
+    }
+
     int64_t nTime = GetTimeMicros() - nTimeStart;
-    ++nTotalsCalls;
-    nTotalsTime += nTime;
-    PrintToConsole("%s(): %.3f ms, %.3f ms/update, %.6f s total for %d calls\n", __func__, 0.001 * nTime, 0.001 * nTotalsTime / nTotalsCalls, 0.000001 * nTotalsTime, nTotalsCalls);
+    ++nTotalsCalls; nTotalsTime += nTime;
+    PrintToConsole("set_wallet_totals(): %.3f ms, %.3f ms/update, %.6f s total for %d calls\n", 0.001 * nTime, 0.001 * nTotalsTime / nTotalsCalls, 0.000001 * nTotalsTime, nTotalsCalls);
 }
 
 int TXExodusFundraiser(const CTransaction &wtx, const string &sender, int64_t ExodusHighestValue, int nBlock, unsigned int nTime)
@@ -1698,6 +1700,8 @@ static int write_mp_offers(ofstream &file, SHA256_CTX *shaCtx)
 
 static int write_mp_metadex(ofstream &file, SHA256_CTX *shaCtx)
 {
+  LOCK(cs_metadex);
+
   for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it)
   {
     md_PricesMap & prices = my_it->second;

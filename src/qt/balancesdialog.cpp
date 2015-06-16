@@ -11,6 +11,7 @@
 
 #include "amount.h"
 #include "sync.h"
+#include "tinyformat.h"
 #include "ui_interface.h"
 #include "wallet_ismine.h"
 
@@ -129,11 +130,11 @@ void BalancesDialog::UpdatePropSelector()
     // populate property selector
     for (std::set<uint32_t>::iterator it = global_wallet_property_list.begin() ; it != global_wallet_property_list.end(); ++it) {
         uint32_t propertyId = *it;
-        std::string spId = static_cast<ostringstream*>( &(ostringstream() << propertyId) )->str();
-        std::string spName = getPropertyName(propertyId).c_str();
-        if(spName.size()>20) spName=spName.substr(0,20)+"...";
+        QString spId = QString::number(propertyId);
+        QString spName = QString::fromStdString(getPropertyName(propertyId));
+        if (spName.size() > 20) { spName = spName.left(20).append("..."); }
         spName += " (#" + spId + ")";
-        ui->propSelectorWidget->addItem(spName.c_str(), spId.c_str());
+        ui->propSelectorWidget->addItem(spName, spId);
     }
     int propIdx = ui->propSelectorWidget->findData(spId);
     if (propIdx != -1) { ui->propSelectorWidget->setCurrentIndex(propIdx); }

@@ -289,21 +289,13 @@ void OverviewPage::updateOmni()
     updateAlerts();
 
     // always show MSC
-    UpdatePropertyBalance(1,global_balance_money[1],global_balance_reserved[1]);
+    UpdatePropertyBalance(1, global_balance_money[1], global_balance_reserved[1]);
+
     // loop properties and update overview
-    unsigned int propertyId;
-    unsigned int maxPropIdMainEco = GetNextPropertyId(true);  // these allow us to end the for loop at the highest existing
-    unsigned int maxPropIdTestEco = GetNextPropertyId(false); // property ID rather than a fixed value like 100000 (optimization)
-    // main eco
-    for (propertyId = 2; propertyId < maxPropIdMainEco; propertyId++) {
-        if ((global_balance_money[propertyId] > 0) || (global_balance_reserved[propertyId] > 0)) {
-            UpdatePropertyBalance(propertyId,global_balance_money[propertyId],global_balance_reserved[propertyId]);
-        }
-    }
-    // test eco
-    for (propertyId = 2147483647; propertyId < maxPropIdTestEco; propertyId++) {
-        if ((global_balance_money[propertyId] > 0) || (global_balance_reserved[propertyId] > 0)) {
-            UpdatePropertyBalance(propertyId,global_balance_money[propertyId],global_balance_reserved[propertyId]);
+    for (std::set<uint32_t>::iterator it = global_wallet_property_list.begin() ; it != global_wallet_property_list.end(); ++it) {
+        uint32_t propertyId = *it;
+        if (global_balance_money[propertyId] > 0 || global_balance_reserved[propertyId] > 0) {
+            UpdatePropertyBalance(propertyId, global_balance_money[propertyId], global_balance_reserved[propertyId]);
         }
     }
 }

@@ -13,6 +13,8 @@
 #include <boost/thread.hpp>
 #include <boost/test/unit_test.hpp>
 
+#include <stdio.h>
+
 BOOST_AUTO_TEST_SUITE(scheduler_tests)
 
 static void microTask(CScheduler& s, boost::mutex& mutex, int& counter, int delta, boost::chrono::system_clock::time_point rescheduleTime)
@@ -85,28 +87,42 @@ BOOST_AUTO_TEST_CASE(manythreads)
 
     // As soon as these are created they will start running and servicing the queue
     boost::thread_group microThreads;
-    for (int i = 0; i < 5; i++)
+    printf("passed: boost::thread_group microThreads;\n");
+    for (int i = 0; i < 5; i++) {
         microThreads.create_thread(boost::bind(&CScheduler::serviceQueue, &microTasks));
+        printf("passed: microThreads.create_thread(boost::bind(&CScheduler::serviceQueue, &microTasks)); [i=%d]\n", i);
+    }
 
     MicroSleep(600);
+    printf("passed: MicroSleep(600);\n");
     now = boost::chrono::system_clock::now();
+    printf("passed: now = boost::chrono::system_clock::now();\n");
 
     // More threads and more tasks:
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 5; i++) {
         microThreads.create_thread(boost::bind(&CScheduler::serviceQueue, &microTasks));
+        printf("passed: microThreads.create_thread(boost::bind(&CScheduler::serviceQueue, &microTasks)); [i=%d]\n", i);
+    }
     for (int i = 0; i < 100; i++) {
         boost::chrono::system_clock::time_point t = now + boost::chrono::microseconds(randomMsec(rng));
+        printf("passed: boost::chrono::system_clock::time_point t = now + boost::chrono::microseconds(randomMsec(rng)); [i=%d]\n", i);
         boost::chrono::system_clock::time_point tReschedule = now + boost::chrono::microseconds(500 + randomMsec(rng));
+        printf("passed: boost::chrono::system_clock::time_point tReschedule = now + boost::chrono::microseconds(500 + randomMsec(rng)); [i=%d]\n", i);
         int whichCounter = zeroToNine(rng);
+        printf("passed: int whichCounter = zeroToNine(rng); [i=%d, whichCounter=%d]\n", i, whichCounter);
         CScheduler::Function f = boost::bind(&microTask, boost::ref(microTasks),
                                              boost::ref(counterMutex[whichCounter]), boost::ref(counter[whichCounter]),
                                              randomDelta(rng), tReschedule);
+        printf("passed: CScheduler::Function f = boost::bind(...); [i=%d, whichCounter=%d]\n", i, whichCounter);
         microTasks.schedule(f, t);
+        printf("passed: microTasks.schedule(f, t); [i=%d, whichCounter=%d]\n", i, whichCounter);
     }
 
     // Drain the task queue then exit threads
     microTasks.stop(true);
+    printf("passed: microTasks.stop(true);\n");
     microThreads.join_all(); // ... wait until all the threads are done
+    printf("passed: microThreads.join_all();\n");
 
     int counterSum = 0;
     for (int i = 0; i < 10; i++) {

@@ -115,10 +115,9 @@ void MetaDExDialog::OrderRefresh()
     UpdateOffers();
     // check for pending transactions, could be more filtered to just trades here
     bool pending = false;
-    for(PendingMap::iterator my_it = my_pending.begin(); my_it != my_pending.end(); ++my_it)
     {
-        // if we get here there are pending transactions in the wallet, flag warning to MetaDEx
-        pending = true;
+        LOCK(cs_pending);
+        pending = !my_pending.empty();
     }
     if(pending) { ui->pendingLabel->setVisible(true); } else { ui->pendingLabel->setVisible(false); }
 }

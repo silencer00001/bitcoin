@@ -164,6 +164,9 @@ int TXHistoryDialog::PopulateHistoryMap()
 
     int64_t nProcessed = 0; // counter for how many transactions we've added to history this time
     // ### START PENDING TRANSACTIONS PROCESSING ###
+    {
+        LOCK(cs_pending);
+
     for(PendingMap::iterator it = my_pending.begin(); it != my_pending.end(); ++it)
     {
         // grab txid
@@ -201,6 +204,7 @@ int TXHistoryDialog::PopulateHistoryMap()
         if(isPropertyDivisible(propertyId)) {htxo.amount = "-"+FormatDivisibleShortMP(amount)+getTokenLabel(propertyId);} else {htxo.amount="-"+FormatIndivisibleMP(amount)+getTokenLabel(propertyId);} // pending always outbound
         txHistoryMap.insert(std::make_pair(txid, htxo));
         nProcessed += 1; // increase our counter so we don't go crazy on a wallet with too many transactions and lock up UI
+    }
     }
     // ### END PENDING TRANSACTIONS PROCESSING ###
 
@@ -541,6 +545,9 @@ void TXHistoryDialog::showDetails()
     txid.SetHex(ui->txHistoryTable->item(ui->txHistoryTable->currentRow(),0)->text().toStdString());
     std::string strTXText;
 
+    {
+        LOCK(cs_pending);
+
     // first of all check if the TX is a pending tx, if so grab details from pending map
     PendingMap::iterator it = my_pending.find(txid);
     if (it != my_pending.end()) {
@@ -563,6 +570,7 @@ void TXHistoryDialog::showDetails()
                 strTXText = write_string(Value(txobj), true);
             }
         }
+    }
     }
     if (!strTXText.empty()) {
         PopulateSimpleDialog(strTXText, "Transaction Information", "Transaction Information");

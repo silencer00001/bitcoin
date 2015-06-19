@@ -222,6 +222,9 @@ int TradeHistoryDialog::PopulateTradeHistoryMap()
     int64_t nProcessed = 0; // number of new entries, forms return code
 
     // ### START PENDING TRANSACTIONS PROCESSING ###
+    {
+        LOCK(cs_pending);
+
     for(PendingMap::iterator it = my_pending.begin(); it != my_pending.end(); ++it) {
         uint256 txid = it->first;
 
@@ -260,6 +263,7 @@ int TradeHistoryDialog::PopulateTradeHistoryMap()
         // add the new TradeHistoryObject to the map
         tradeHistoryMap.insert(std::make_pair(txid, objTH));
         nProcessed += 1;
+    }
     }
     // ### END PENDING TRANSACTIONS PROCESSING ###
 
@@ -522,6 +526,9 @@ void TradeHistoryDialog::showDetails()
     txid.SetHex(ui->tradeHistoryTable->item(ui->tradeHistoryTable->currentRow(),0)->text().toStdString());
     std::string strTXText;
 
+    {
+        LOCK(cs_pending);
+
     // first of all check if the TX is a pending tx, if so grab details from pending map
     PendingMap::iterator it = my_pending.find(txid);
     if (it != my_pending.end()) {
@@ -601,6 +608,7 @@ void TradeHistoryDialog::showDetails()
 
             strTXText = write_string(Value(txobj), true);
         }
+    }
     }
 
     if (!strTXText.empty()) {
